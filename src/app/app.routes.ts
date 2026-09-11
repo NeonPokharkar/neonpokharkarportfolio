@@ -982,7 +982,7 @@ export class EssayPageComponent {
     .next-links { display: flex; flex-wrap: wrap; gap: 24px; margin: 24px 0 0 32px; }
     .next-links a { color: #f45b36; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; }
     .next-links a:hover { color: #1c1b1a; }
-    .grades-table-wrap { margin-top: 18px; overflow-x: auto; }
+    .grades-table-wrap { margin-top: 18px; overflow-x: auto; overscroll-behavior: contain; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
     .grades-table {
       background: linear-gradient(180deg, #fffaf7 0%, #fff 100%);
       border: 1px solid #e7dfd7;
@@ -1021,6 +1021,8 @@ export class EssayPageComponent {
     .dummy-card p { color: #716f6a; font-size: 14px; line-height: 1.6; max-width: 400px; }
     @media (max-width: 800px) {
       .dummy-page { margin: 0 20px; padding: 75px 0 90px; }
+      .education-item { min-width: 0; }
+      .grades-table-wrap { max-width: 100%; }
       .profile-photo-wrap { margin: 28px 0 0; }
       .profile-vignette { display: none; }
       .biography-overlay {

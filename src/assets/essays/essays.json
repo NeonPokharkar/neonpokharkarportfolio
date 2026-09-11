@@ -1,0 +1,40 @@
+{
+  "essays": [
+    {
+      "slug": "designing-for-clarity",
+      "category": "Product thinking",
+      "title": "Designing for Value and Consumer via Empathy",
+      "summary": "Thoughts on making complex technical products easier to understand and use.",
+      "author": "Aditya Pokharkar",
+      "publishedAt": "2026-09-11T18:36:00+05:30",
+      "file": "designing-for-clarity.html"
+    },
+    {
+      "slug": "learning-in-public",
+      "category": "Personal practice",
+      "title": "Learning from scratch with Humility and Discipline",
+      "summary": "Experiments, observations, and ideas gathered while exploring new technologies.",
+      "author": "Aditya Pokharkar",
+      "publishedAt": "2026-09-11T18:36:00+05:30",
+      "file": "learning-in-public.html"
+    },
+    {
+      "slug": "the-economics-of-sustained-value",
+      "category": "Business thinking",
+      "title": "Cost Optimisation is the Backbone for Businesses",
+      "summary": "How businesses sustain the value of a service by continuously reducing the cost of delivering it.",
+      "author": "Aditya Pokharkar",
+      "publishedAt": "2026-09-11T18:36:00+05:30",
+      "file": "the-economics-of-sustained-value.html"
+    },
+    {
+      "slug": "the-slow-decay-of-organisational-value",
+      "category": "Organisational thinking",
+      "title": "Toxic actors and the silent decay of organisational value",
+      "summary": "How unchecked incompetence, upward management, and toxic behaviour can slowly drive away the people who make a company better.",
+      "author": "Aditya Pokharkar",
+      "publishedAt": "2026-09-11T19:05:00+05:30",
+      "file": "the-slow-decay-of-organisational-value.html"
+    }
+  ]
+}

@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+
+# Public essay content is available for indexing through the application routes.
+Allow: /essays/
+Allow: /assets/essays/
+

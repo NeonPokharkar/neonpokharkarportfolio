@@ -1,0 +1,37 @@
+{
+  "education": [
+    {
+      "period": "2018 — 2022",
+      "title": "B.Tech, Mechanical Engineering",
+      "detail": "Indian Institute of Technology, Varanasi ·",
+      "metric": "IIT BHU · 8.72 CGPA",
+      "grades": [
+        { "semester": "Sem I", "sgpa": "9.09" },
+        { "semester": "Sem II", "sgpa": "8.97" },
+        { "semester": "Sem III", "sgpa": "8.50" },
+        { "semester": "Sem IV", "sgpa": "8.00" },
+        { "semester": "Sem V", "sgpa": "9.24" },
+        { "semester": "Sem VI", "sgpa": "9.00" },
+        { "semester": "Sem VII", "sgpa": "8.98" },
+        { "semester": "Sem VIII", "sgpa": "8.15" }
+      ],
+      "achievements": [
+        { "text": "Recognized for excellence, creativity, and an inspiring personality." },
+        { "text": "Served as", "metric": "Joint Secretary", "suffix": " of the Film and Media Council’s Cine Club." },
+        { "text": "Contributed to cinematography and film-making initiatives." }
+      ]
+    },
+    {
+      "period": "2016 — 2018",
+      "title": "Science stream",
+      "detail": "Modern College of Arts, Commerce and Science ·",
+      "metric": "86.4%",
+      "achievements": [
+        { "text": "Won 4th place in competitive C++ coding among students pursuing master’s degrees.", "metric": "4th place" },
+        { "text": "Earned an All India Rank of", "metric": "3523 in JEE Advanced." },
+        { "text": "Earned an All India Rank of", "metric": "4184 in JEE Mains." },
+        { "text": "Scored", "metric": "181/200 in MHT CET Maharashtra." }
+      ]
+    }
+  ]
+}

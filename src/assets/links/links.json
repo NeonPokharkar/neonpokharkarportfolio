@@ -1,0 +1,29 @@
+{
+  "links": [
+    {
+      "title": "LinkedIn",
+      "description": "Professional updates, experience, and conversations about technology.",
+      "href": "https://www.linkedin.com/in/aditya-pokharkar-936030179"
+    },
+    {
+      "title": "GitHub",
+      "description": "Code, experiments, and selected projects from the journey so far.",
+      "href": "https://github.com/NeonPokharkar"
+    },
+    {
+      "title": "WhatsApp",
+      "description": "Start a conversation directly on WhatsApp.",
+      "href": "https://wa.me/917888194426"
+    },
+    {
+      "title": "Email",
+      "description": "Send me a message directly.",
+      "href": "mailto:theadityapokharkar@gmail.com"
+    },
+    {
+      "title": "Phone",
+      "description": "Share your purpose before requesting a call.",
+      "requiresReveal": true
+    }
+  ]
+}

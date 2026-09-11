@@ -1,0 +1,36 @@
+{
+  "hobbies": [
+    {
+      "title": "Cinematography and film-making",
+      "associatedHobby": "Film",
+      "act": "Exploring visual storytelling through framing, movement, light, and the emotional rhythm of a scene.",
+      "process": "Start with the feeling or idea to communicate, observe the space and available light, then shape shots and edits around the story rather than treating technique as an end in itself.",
+      "results": "A growing body of visual experiments and film-making practice developed through the Film and Media Council’s Cine Club.",
+      "photos": [],
+      "resultLinks": [
+        {
+          "label": "YouTube results",
+          "url": "https://www.youtube.com/"
+        },
+        {
+          "label": "Instagram results",
+          "url": "https://www.instagram.com/"
+        }
+      ]
+    },
+    {
+      "title": "Writing and reflective essays",
+      "associatedHobby": "Writing",
+      "act": "Turning observations about products, organisations, engineering, and human behaviour into structured essays.",
+      "process": "Begin with a question, separate instinct from observation, test the idea through examples, and revise until the thought becomes clear enough to share.",
+      "results": "A collection of thought essays connecting technical practice with product, business, and organisational ideas.",
+      "photos": [],
+      "resultLinks": [
+        {
+          "label": "Read the essays",
+          "url": "/essays"
+        }
+      ]
+    }
+  ]
+}

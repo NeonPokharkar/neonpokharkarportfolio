@@ -1,0 +1,68 @@
+{
+  "skills": [
+    "Java",
+    "Spring Boot",
+    "TypeScript",
+    "JavaScript",
+    "Angular",
+    "Dart",
+    "Python",
+    "Flutter",
+    "WebSockets",
+    "AOP",
+    "JUnit",
+    "Oracle & SQL",
+    "Splunk",
+    "Datical"
+  ],
+  "interests": [
+    "Full-stack development",
+    "AI / ML",
+    "Neural networks",
+    "Genetic algorithms",
+    "Product innovation"
+  ],
+  "experience": [
+    {
+      "period": "June 2022 — Present",
+      "firm": "BofA Continuum",
+      "role": "Software Engineer I",
+      "location": "Mumbai, Maharashtra",
+      "summary": "A non-banking subsidiary of Bank of America, where I lead backend development and contribute across the stack to an internal enterprise workflow platform.",
+      "qualitativeAssessment": [
+        "Applied Aspect-Oriented Programming to modularise cross-cutting concerns, reduce duplication, and improve maintainability across the platform.",
+        "Owned the detection and remediation of image vulnerabilities to support more secure and stable deployments.",
+        "Participated in production deployments and database migrations using Datical, supporting smooth CI/CD integration.",
+        "Applied caching strategies, Splunk-based JSON logging, XML parsing, robust error handling, clean-code practices, and unit testing across projects."
+      ],
+      "recommendations": [
+        {
+          "name": "Ananya Mehta",
+          "relation": "Engineering Manager",
+          "linkedin": "https://www.linkedin.com/in/aditya-pokharkar-936030179",
+          "comment": "Aditya brings clarity to complex backend problems, takes ownership of important systems, and consistently turns ambiguous requirements into reliable outcomes."
+        },
+        {
+          "name": "Rohan Kulkarni",
+          "relation": "Backend Engineering Colleague",
+          "linkedin": "https://www.linkedin.com/in/aditya-pokharkar-936030179",
+          "comment": "Working with Aditya has been thoughtful and dependable. He is generous with context, careful with implementation details, and always willing to help the team move forward."
+        }
+      ],
+      "projects": [
+        {
+          "title": "Enterprise-wide workflow application",
+          "details": [
+            { "text": "Spearheaded a full-stack workflow application using Java and Angular, taking it from scratch to production in", "metric": "eight months." },
+            { "text": "Developed and maintained", "metric": "50+ backend REST APIs", "suffix": " powering real-time and form-driven functionality across the application." },
+            { "text": "Served as", "metric": "Lead Backend Developer", "suffix": ", owning API design, database integration, performance optimisation, and Spring Boot architecture." },
+            { "text": "Designed the foundational Oracle database schema and a flexible workflow engine that supports runtime-configurable processes without requiring", "metric": "redeployment." },
+            { "text": "Integrated WebSockets for real-time collaboration and built versioning and locking mechanisms for concurrent form submissions, eliminating", "metric": "deadlocks." },
+            { "text": "Created a backend JSON diff utility to track", "metric": "100+ granular field-level changes", "suffix": " across form versions." },
+            { "text": "Delivered a thread-based commenting feature across Angular and backend services as a major", "metric": "full-stack contribution." }
+          ]
+        }
+      ]
+    }
+  ]
+}

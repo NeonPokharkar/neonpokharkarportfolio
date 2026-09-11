@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 900" role="img" aria-labelledby="title desc">
+  <title id="title">NBoard project preview placeholder</title>
+  <desc id="desc">A simple placeholder image for the NBoard Indic keyboard project.</desc>
+  <rect width="1600" height="900" fill="#1c1b1a"/>
+  <rect x="80" y="80" width="1440" height="740" fill="#f7f5f0"/>
+  <text x="140" y="260" fill="#f45b36" font-family="Arial, sans-serif" font-size="34" font-weight="700" letter-spacing="5">PROJECT PREVIEW</text>
+  <text x="140" y="390" fill="#1c1b1a" font-family="Arial, sans-serif" font-size="88" font-weight="700">NBoard</text>
+  <text x="140" y="475" fill="#716f6a" font-family="Arial, sans-serif" font-size="36">Indic keyboard · Java native development</text>
+  <rect x="140" y="590" width="520" height="90" fill="#f45b36"/>
+  <text x="180" y="650" fill="#ffffff" font-family="Arial, sans-serif" font-size="30" font-weight="700">DUMMY IMAGE</text>
+</svg>

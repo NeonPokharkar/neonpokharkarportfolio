@@ -1,0 +1,31 @@
+{
+  "toolkit": [
+    "Java",
+    "Spring Boot",
+    "TypeScript",
+    "JavaScript",
+    "Angular",
+    "Dart",
+    "Python",
+    "Flutter",
+    "WebSockets",
+    "AOP",
+    "JUnit",
+    "Oracle & SQL",
+    "Splunk",
+    "Datical"
+  ],
+  "interests": [
+    "Full-stack development",
+    "AI / ML",
+    "Neural networks",
+    "Genetic algorithms",
+    "Product innovation"
+  ],
+  "resumePath": "assets/Aditya-Pokharkar-Resume.pdf",
+  "email": "theadityapokharkar@gmail.com",
+  "phone": "+91 8999490870",
+  "linkedin": "https://www.linkedin.com/in/aditya-pokharkar-936030179",
+  "ollamaEndpoint": "http://localhost:11434/api/chat",
+  "ollamaModel": "gemma3:12b"
+}

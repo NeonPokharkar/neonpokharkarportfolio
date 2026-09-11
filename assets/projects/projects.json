@@ -1,0 +1,42 @@
+{
+  "projects": [
+    {
+      "title": "NBoard — Indic keyboard",
+      "timeline": "June 2020",
+      "tags": "Java · Native development",
+      "createdWith": "solely",
+      "trialLink": "https://github.com/NeonPokharkar",
+      "githubLink": "https://github.com/NeonPokharkar",
+      "photos": [
+        "assets/projects/nboard-placeholder.svg"
+      ],
+      "explanation": "A swipe-based native Java keyboard supporting 3+ Indic languages, including conjunct letter support and a language-agnostic layout system.",
+      "thoughtProcess": "The project focused on separating language behaviour from the keyboard structure so new layouts could be introduced through minimal file changes rather than a rewrite of the input system.",
+      "resultsSummary": "Produced a flexible native keyboard concept with multi-language support and a structure that could be extended without changing the core interaction model."
+    },
+    {
+      "title": "Genetic algorithm timetable",
+      "timeline": "May 2022",
+      "tags": "Java · Optimization",
+      "createdWith": "solely",
+      "trialLink": "https://github.com/NeonPokharkar",
+      "githubLink": "https://github.com/NeonPokharkar",
+      "photos": [],
+      "explanation": "A constraint-aware genetic algorithm for university timetable scheduling across multiple student groups.",
+      "thoughtProcess": "The approach modelled timetable generation as a search problem, using constraints and candidate populations to explore schedules instead of relying on a single manually designed arrangement.",
+      "resultsSummary": "Created an optimisation-based timetable generator capable of handling competing constraints and producing more efficient university schedules."
+    },
+    {
+      "title": "Enterprise workflow platform",
+      "timeline": "June 2022 — Present",
+      "tags": "Java · Spring Boot · Angular",
+      "createdWith": "group",
+      "trialLink": "https://github.com/NeonPokharkar",
+      "githubLink": "https://github.com/NeonPokharkar",
+      "photos": [],
+      "explanation": "A scalable workflow application built with Spring Boot and Angular, including REST APIs, real-time collaboration, versioning, locking, and threaded comments.",
+      "thoughtProcess": "The platform was designed around modular backend services, a flexible workflow engine, and clear ownership boundaries so changing enterprise requirements could be handled without rebuilding the entire system.",
+      "resultsSummary": "Delivered a production workflow platform with 50+ backend APIs and collaboration features supporting complex form-driven processes."
+    }
+  ]
+}

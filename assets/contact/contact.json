@@ -1,0 +1,59 @@
+{
+  "recipient": "theadityapokharkar@gmail.com",
+  "reasons": [
+    {
+      "value": "employment",
+      "label": "Employment offer",
+      "fields": [
+        { "key": "company", "label": "Company", "type": "text", "placeholder": "Company name", "required": true },
+        { "key": "contactPerson", "label": "HR or manager contact", "type": "text", "placeholder": "Name and role", "required": true },
+        { "key": "salaryProposal", "label": "Expected salary proposal", "type": "text", "placeholder": "Compensation range or proposal", "required": true },
+        { "key": "employmentDetails", "label": "Role and offer details", "type": "textarea", "placeholder": "Role, location, working model, and anything else useful.", "required": true }
+      ]
+    },
+    {
+      "value": "contract",
+      "label": "Contract opportunity",
+      "fields": [
+        { "key": "company", "label": "Company or client", "type": "text", "placeholder": "Company or client name", "required": true },
+        { "key": "contractScope", "label": "Contract scope", "type": "textarea", "placeholder": "What would you like me to deliver?", "required": true },
+        { "key": "budget", "label": "Budget or rate proposal", "type": "text", "placeholder": "Budget, rate, or range", "required": true },
+        { "key": "timeline", "label": "Expected timeline", "type": "text", "placeholder": "When would the work begin and end?", "required": true }
+      ]
+    },
+    {
+      "value": "project-suggestion",
+      "label": "Project suggestion",
+      "fields": [
+        { "key": "projectIdea", "label": "Project idea", "type": "textarea", "placeholder": "What should we build or explore?", "required": true },
+        { "key": "projectContext", "label": "Context and intended users", "type": "textarea", "placeholder": "Who is it for and what problem does it solve?", "required": true },
+        { "key": "projectTimeline", "label": "Possible timeline", "type": "text", "placeholder": "Any relevant dates or constraints" }
+      ]
+    },
+    {
+      "value": "partnership",
+      "label": "Partnership",
+      "fields": [
+        { "key": "organisation", "label": "Organisation", "type": "text", "placeholder": "Organisation or company name", "required": true },
+        { "key": "partnershipIdea", "label": "Partnership idea", "type": "textarea", "placeholder": "How could we work together?", "required": true },
+        { "key": "partnershipValue", "label": "Shared value", "type": "textarea", "placeholder": "What would each side contribute or gain?", "required": true }
+      ]
+    },
+    {
+      "value": "platform-invitation",
+      "label": "Invitation to a platform",
+      "fields": [
+        { "key": "platform", "label": "Platform or event", "type": "text", "placeholder": "Platform, podcast, event, or community", "required": true },
+        { "key": "invitationRole", "label": "Invitation details", "type": "textarea", "placeholder": "What would you like me to participate in?", "required": true },
+        { "key": "invitationDate", "label": "Proposed date or timeline", "type": "text", "placeholder": "Date, time, or deadline" }
+      ]
+    },
+    {
+      "value": "appreciation",
+      "label": "Appreciation for me or my work",
+      "fields": [
+        { "key": "appreciation", "label": "Your message", "type": "textarea", "placeholder": "What would you like to share?", "required": true }
+      ]
+    }
+  ]
+}

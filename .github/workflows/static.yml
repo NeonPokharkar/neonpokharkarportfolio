@@ -2,7 +2,7 @@ name: Deploy Angular to GitHub Pages
 
 on:
   push:
-    branches: ["main"] # Change to your default branch name if different
+    branches: ["main"] # Change to "master" if your default branch is named master
 
 permissions:
   contents: read
@@ -17,7 +17,7 @@ jobs:
   deploy:
     environment:
       name: github-pages
-      url: ${{ steps: deployment.outputs.page_url }}
+      url: ${{ steps.deployment.outputs.page_url }}
     runs-on: ubuntu-latest
     steps:
       - name: Checkout
@@ -41,9 +41,10 @@ jobs:
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          # Replace 'YOUR_PROJECT_NAME' with the actual project name from your angular.json file
-          # For Angular 17+, the build path usually ends with '/browser'
-          path: ./dist/neon-portfolio/browser 
+          # This points to the compiled production files. 
+          # Note: If your build fails here, you may need to check if your project folder name 
+          # inside dist/ is different, or remove '/browser' if using an older Angular version.
+          path: ./dist/neonpokharkarportfolio/browser 
 
       - name: Deploy to GitHub Pages
         id: deployment

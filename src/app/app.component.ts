@@ -80,6 +80,7 @@ export class AppComponent {
   protected clickPointerVisible = false;
   protected clickPointerX = 0;
   protected clickPointerY = 0;
+  protected menuOpen = false;
   private clickPointerTimer: ReturnType<typeof setTimeout> | undefined;
 
   protected get dialogueSide(): 'left' | 'right' {
@@ -184,6 +185,15 @@ export class AppComponent {
   protected updateCursorPosition(event: MouseEvent): void {
     this.cursorX = event.clientX;
     this.cursorY = event.clientY;
+  }
+
+  @HostListener('document:keydown.escape')
+  protected closeMenu(): void {
+    this.menuOpen = false;
+  }
+
+  protected toggleMenu(): void {
+    this.menuOpen = !this.menuOpen;
   }
 
   protected showClickPointer(event: MouseEvent): void {

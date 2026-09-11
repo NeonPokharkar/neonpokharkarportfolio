@@ -11,6 +11,7 @@
   100% { opacity: 0; transform: translate(-50%, -50%) scaleY(1); }
 }
 nav { display: flex; gap: 28px; }
+.menu-toggle, .nav-backdrop, .nav-drawer-header { display: none; }
 nav a, .header-link { font-size: 13px; font-weight: 600; }
 nav a { color: #716f6a; position: relative; transition: color .2s ease; }
 nav a:hover { color: #1c1b1a; }
@@ -204,9 +205,18 @@ footer { color: #716f6a; display: flex; font-size: 11px; justify-content: space-
 footer a { color: #1c1b1a; font-weight: 700; }
 
 @media (max-width: 800px) {
-  .site-header { padding: 22px 20px; }
-  nav { gap: 12px; }
-  nav a:nth-child(n+3), .header-link { display: none; }
+  .site-header { padding: 22px 20px; position: relative; z-index: 20; }
+  .menu-toggle { align-items: center; background: transparent; border: 0; color: #1c1b1a; cursor: pointer; display: flex; font-size: 11px; font-weight: 700; gap: 9px; letter-spacing: .08em; padding: 8px 0; text-transform: uppercase; }
+  .menu-toggle-icon { display: flex; flex-direction: column; gap: 4px; width: 20px; }
+  .menu-toggle-icon span { background: #1c1b1a; display: block; height: 2px; width: 100%; }
+  .nav-backdrop { background: #1c1b1a99; border: 0; display: block; inset: 0; position: fixed; z-index: 25; }
+  nav { background: #f7f5f0; box-shadow: -12px 0 35px #1c1b1a26; display: flex; flex-direction: column; gap: 0; height: 100dvh; justify-content: flex-start; padding: 26px 26px 40px; position: fixed; right: 0; top: 0; transform: translateX(100%); transition: transform .25s ease; width: min(82vw, 330px); z-index: 30; }
+  nav.menu-open { transform: translateX(0); }
+  nav a { border-bottom: 1px solid #dedbd4; color: #716f6a; font-size: 17px; padding: 16px 0; }
+  nav a.active { margin: 0; padding: 12px 14px; }
+  .nav-drawer-header { align-items: center; border-bottom: 1px solid #1c1b1a; display: flex; font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 700; justify-content: space-between; margin-bottom: 10px; padding-bottom: 18px; }
+  .nav-drawer-header button { background: transparent; border: 0; color: #1c1b1a; cursor: pointer; font-size: 30px; font-weight: 300; line-height: 1; padding: 0 2px; }
+  .header-link { display: none; }
   .hero { gap: 55px; grid-template-columns: 1fr; min-height: 0; padding: 75px 20px 85px; }
   .hero-art { justify-self: center; }
   .intro, .skills-section, .projects-section, .experience-section, .education-section { margin-left: 20px; margin-right: 20px; }

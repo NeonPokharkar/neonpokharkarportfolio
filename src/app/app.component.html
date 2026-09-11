@@ -1,0 +1,75 @@
+<header class="site-header">
+  <a class="logo" href="/" aria-label="Neon home">
+    <span class="logo-mark">✳</span>
+    <span>NEON</span>
+  </a>
+
+  <nav aria-label="Main navigation">
+    <a href="#services">Services</a>
+    <a href="#about">About</a>
+    <a href="#contact">Contact</a>
+  </nav>
+
+  <a class="header-link" href="#contact">Let's talk <span aria-hidden="true">↗</span></a>
+</header>
+
+<main>
+  <section class="hero">
+    <div class="hero-copy">
+      <p class="eyebrow"><span class="eyebrow-line"></span> Independent creative studio</p>
+      <h1>Make your <em>mark.</em></h1>
+      <p class="hero-description">
+        We help ambitious people and brands turn big ideas into meaningful digital experiences.
+      </p>
+      <a class="button button-dark" href="#contact">Start a project <span aria-hidden="true">↗</span></a>
+    </div>
+
+    <div class="hero-art" aria-label="Abstract colorful artwork" role="img">
+      <div class="sun"></div>
+      <div class="orbit orbit-one"></div>
+      <div class="orbit orbit-two"></div>
+      <div class="planet"></div>
+      <div class="spark spark-one">✦</div>
+      <div class="spark spark-two">✦</div>
+      <p>Ideas<br><span>in orbit</span></p>
+    </div>
+  </section>
+
+  <section class="intro" id="about">
+    <p class="eyebrow"><span class="eyebrow-line"></span> What we believe</p>
+    <p class="statement">Good work lives at the intersection of <span>clarity, curiosity,</span> and a little bit of magic.</p>
+  </section>
+
+  <section class="services-section" id="services">
+    <div class="section-heading">
+      <p class="eyebrow"><span class="eyebrow-line"></span> How we help</p>
+      <h2>From first thought<br>to <em>lasting impact.</em></h2>
+    </div>
+    <div class="service-list">
+      @for (service of services; track service.number) {
+        <article class="service-card">
+          <span class="service-number">{{ service.number }}</span>
+          <div>
+            <h3>{{ service.title }}</h3>
+            <p>{{ service.description }}</p>
+          </div>
+          <span class="service-arrow" aria-hidden="true">↗</span>
+        </article>
+      }
+    </div>
+  </section>
+
+  <section class="contact-section" id="contact">
+    <div>
+      <p class="eyebrow eyebrow-light"><span class="eyebrow-line"></span> Have a good feeling?</p>
+      <h2>Let's make<br><em>something real.</em></h2>
+    </div>
+    <a class="button button-light" href="mailto:hello&#64;neon.studio">hello&#64;neon.studio <span aria-hidden="true">↗</span></a>
+  </section>
+</main>
+
+<footer>
+  <span>© 2025 Neon Studio</span>
+  <span>Made for people with ideas.</span>
+  <a href="#top">Back to top ↑</a>
+</footer>

@@ -35,16 +35,16 @@ jobs:
       - name: Build Angular Application
         run: npm run build -- --configuration=production --base-href=/neonpokharkarportfolio/
 
+      - name: Prepare SPA fallback
+        run: cp ./dist/neon-portfolio/browser/index.html ./dist/neon-portfolio/browser/404.html
+
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
       - name: Upload Artifacts
         uses: actions/upload-pages-artifact@v3
         with:
-          # This points to the compiled production files. 
-          # Note: If your build fails here, you may need to check if your project folder name 
-          # inside dist/ is different, or remove '/browser' if using an older Angular version.
-          path: ./dist/neonpokharkarportfolio/browser 
+          path: ./dist/neon-portfolio/browser
 
       - name: Deploy to GitHub Pages
         id: deployment

@@ -1022,8 +1022,73 @@ export class EssayPageComponent {
     @media (max-width: 800px) {
       .dummy-page { margin: 0 20px; padding: 75px 0 90px; }
       .profile-photo-wrap { margin: 28px 0 0; }
-      .profile-overlay, .biography-overlay { left: 14px; min-height: 0; padding: 16px; right: 14px; width: auto; }
-      .profile-overlay { bottom: 14px; top: auto; }
+      .profile-vignette { display: none; }
+      .biography-overlay {
+        background: transparent;
+        border-top: 1px solid #d8d3ca;
+        color: #1c1b1a;
+        left: auto;
+        margin-top: 40px;
+        opacity: 1 !important;
+        padding: 28px 0 0;
+        position: static;
+        right: auto;
+        top: auto;
+        bottom: auto;
+        transition: none;
+        width: 100%;
+        z-index: auto;
+      }
+      .biography-overlay-label {
+        color: #f45b36;
+        font-size: 11px !important;
+        font-weight: 700;
+        letter-spacing: .12em;
+        margin-bottom: 16px !important;
+        text-transform: uppercase;
+      }
+      .biography-overlay p {
+        color: #1c1b1a;
+        font-size: 15px;
+        line-height: 1.65;
+        margin: 0;
+      }
+      .profile-overlay {
+        align-content: stretch;
+        background: transparent;
+        border-top: 1px solid #d8d3ca;
+        bottom: auto;
+        color: #1c1b1a;
+        display: grid;
+        gap: 24px;
+        left: auto;
+        margin-top: 40px;
+        min-height: 0;
+        opacity: 1 !important;
+        padding: 28px 0 0;
+        position: static;
+        right: auto;
+        text-align: left;
+        top: auto;
+        transition: none;
+        width: 100%;
+        z-index: auto;
+      }
+      .profile-overlay p {
+        color: #716f6a;
+        font-size: 15px;
+        line-height: 1.65;
+        margin: 0;
+      }
+      .profile-overlay strong {
+        color: #f45b36;
+        display: block;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: .12em;
+        margin-bottom: 8px;
+        text-transform: uppercase;
+      }
       .dummy-grid { grid-template-columns: 1fr; margin-top: 60px; }
       .dummy-card:nth-child(odd), .dummy-card:nth-child(even) { border-right: 0; padding-left: 0; padding-right: 0; }
       .experience-qualitative-header { display: block; }

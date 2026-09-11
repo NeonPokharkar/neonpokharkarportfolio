@@ -33,10 +33,12 @@ jobs:
         run: npm ci
 
       - name: Build Angular Application
-        run: npm run build -- --configuration=production --base-href=/neonpokharkarportfolio/
+        run: npm run build -- --configuration=production --base-href=/
 
       - name: Prepare SPA fallback
-        run: cp ./dist/neon-portfolio/browser/index.html ./dist/neon-portfolio/browser/404.html
+        run: |
+          cp ./dist/neon-portfolio/browser/index.html ./dist/neon-portfolio/browser/404.html
+          cp ./CNAME ./dist/neon-portfolio/browser/CNAME
 
       - name: Setup Pages
         uses: actions/configure-pages@v4

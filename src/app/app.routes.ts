@@ -2,6 +2,7 @@ import { Component, HostListener } from '@angular/core';
 import { ActivatedRoute, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Meta } from '@angular/platform-browser';
+import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
 
 interface PageContent {
   eyebrow: string;
@@ -38,6 +39,7 @@ interface ProfileManifest {
   email: string;
   phone: string;
   linkedin: string;
+  intelliChatEndpoint: string;
 }
 
 interface EducationEntry {
@@ -710,27 +712,38 @@ export class EssayPageComponent {
                   </div>
                 </div>
                 <p class="experience-summary">{{ firm.summary }}</p>
-                @if (firm.qualitativeAssessment?.length) {
-                  <section class="experience-qualitative">
-                    <div class="experience-qualitative-header">
-                      <div>
-                        <p class="experience-qualitative-label">Qualitative assessment</p>
-                      </div>
-                      <button
-                        class="experience-reload-button"
-                        type="button"
-                        title="This AI assessment is formed through a personal AI project. Check the Projects section to learn more."
-                        aria-label="Reload AI assessment. This AI assessment is formed through a personal AI project. Check the Projects section to learn more.">
-                        Reload AI assessment
-                      </button>
+                <section class="experience-qualitative">
+                  <div class="experience-qualitative-header">
+                    <div>
+                      <p class="experience-qualitative-label">Qualitative assessment</p>
+                      <p class="experience-qualitative-disclaimer">AI-generated from the experience details shown. Review for accuracy.</p>
                     </div>
+                    <button
+                      class="experience-reload-button"
+                      type="button"
+                      [disabled]="qualitativeAssessmentLoading === firm.firm"
+                      [attr.aria-busy]="qualitativeAssessmentLoading === firm.firm"
+                      (click)="reloadQualitativeAssessment(firm)"
+                      title="Generate an updated AI assessment from this experience."
+                      aria-label="Reload AI assessment">
+                      {{ qualitativeAssessmentLoading === firm.firm ? 'Generating...' : 'Reload AI assessment' }}
+                    </button>
+                  </div>
+                  @if (qualitativeAssessmentErrors[firm.firm]) {
+                    <p class="experience-assessment-error" role="alert">{{ qualitativeAssessmentErrors[firm.firm] }}</p>
+                  }
+                  @if (firm.qualitativeAssessment?.length) {
                     <ul>
-                      @for (detail of firm.qualitativeAssessment; track detail) {
+                      @for (detail of firm.qualitativeAssessment; track $index) {
                         <li>{{ detail }}</li>
                       }
                     </ul>
-                  </section>
-                }
+                  } @else if (qualitativeAssessmentLoading === firm.firm) {
+                    <p class="experience-assessment-status" aria-live="polite">Generating an assessment...</p>
+                  } @else {
+                    <p class="experience-assessment-status">No assessment is available yet. Select “Reload AI assessment” to generate one.</p>
+                  }
+                </section>
                 @if (firm.recommendations?.length) {
                   <details class="experience-recommendations">
                     <summary>Recommendations <span aria-hidden="true">+</span></summary>
@@ -932,6 +945,9 @@ export class EssayPageComponent {
     .experience-qualitative-disclaimer { color: #716f6a; font-size: 12px; line-height: 1.5; margin: 0; max-width: 650px; }
     .experience-reload-button { background: transparent; border: 1px solid #d8d3ca; color: #716f6a; cursor: pointer; flex: 0 0 auto; font: inherit; font-size: 10px; font-weight: 700; letter-spacing: .08em; padding: 9px 11px; text-transform: uppercase; }
     .experience-reload-button:hover { border-color: #f45b36; color: #f45b36; }
+    .experience-reload-button:disabled { cursor: wait; opacity: .6; }
+    .experience-assessment-error { color: #bd3c23; font-size: 12px; line-height: 1.5; margin: 0 0 12px; }
+    .experience-assessment-status { color: #716f6a; font-size: 13px; line-height: 1.5; margin: 0; }
     .experience-qualitative ul { display: grid; gap: 8px; margin: 0; padding-left: 18px; }
     .experience-qualitative li { color: #716f6a; font-size: 14px; line-height: 1.6; padding-left: 4px; }
     .experience-recommendations { border-top: 1px solid #e7dfd7; margin-top: 28px; padding-top: 18px; }
@@ -1122,6 +1138,8 @@ export class DummyPageComponent {
   protected profile: ProfileManifest | null = null;
   protected experience: ExperienceEntry[] = [];
   protected experienceLoadError = '';
+  protected qualitativeAssessmentLoading = '';
+  protected qualitativeAssessmentErrors: Record<string, string> = {};
   protected linksLoadError = '';
   protected education: EducationEntry[] = [];
   protected educationLoadError = '';
@@ -1211,6 +1229,84 @@ export class DummyPageComponent {
     } catch {
       this.experienceLoadError = 'Experience details could not be loaded right now.';
     }
+  }
+
+  protected async reloadQualitativeAssessment(firm: ExperienceEntry): Promise<void> {
+    if (this.qualitativeAssessmentLoading) {
+      return;
+    }
+
+    this.qualitativeAssessmentLoading = firm.firm;
+    this.qualitativeAssessmentErrors[firm.firm] = '';
+
+    try {
+      if (!this.profile?.intelliChatEndpoint) {
+        await this.loadProfile('assets/profile/profile.json');
+      }
+
+      const endpoint = this.profile?.intelliChatEndpoint;
+      if (!endpoint) {
+        throw new Error('The AI chat endpoint could not be loaded.');
+      }
+
+      const projectContext = firm.projects.flatMap((project) => [
+        `Project: ${project.title}`,
+        ...project.details.map((detail) =>
+          `- ${[detail.text, detail.metric, detail.suffix].filter(Boolean).join(' ')}`
+        )
+      ]);
+      const experienceContext = [
+        `Company: ${firm.firm}`,
+        `Role: ${firm.role}`,
+        `Period: ${firm.period}`,
+        `Location: ${firm.location}`,
+        `Summary: ${firm.summary}`,
+        ...projectContext
+      ].join('\n');
+
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: `Generate a recruiter-friendly qualitative assessment of ${firm.role} at ${firm.firm}. Return exactly four concise factual bullet points, each prefixed with "- ". Focus on engineering scope, ownership, collaboration, and impact. Use only the supplied facts; do not invent metrics, include reasoning or tool activity, add placeholders, or ask questions.`,
+          conversation_summary: `Experience details:\n${experienceContext}`,
+          last_relevant_conversation: `Existing qualitative assessment:\n${firm.qualitativeAssessment?.join('\n') ?? 'Not available.'}`
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`The AI chat server returned HTTP ${response.status}.`);
+      }
+
+      const assessment = this.formatQualitativeAssessment(await readIntelliChatFinalAnswer(response));
+      if (!assessment.length) {
+        throw new Error('The AI chat server returned no assessment points.');
+      }
+
+      firm.qualitativeAssessment = assessment;
+    } catch (error: unknown) {
+      this.qualitativeAssessmentErrors[firm.firm] = error instanceof Error
+        ? `AI assessment could not be refreshed. ${error.message}`
+        : 'AI assessment could not be refreshed.';
+    } finally {
+      this.qualitativeAssessmentLoading = '';
+    }
+  }
+
+  private formatQualitativeAssessment(answer: string): string[] {
+    const items: string[] = [];
+    for (const line of answer.split(/\r?\n/).map((part) => part.trim()).filter(Boolean)) {
+      const bullet = line.match(/^(?:[-*•]|\d+[.)])\s*(.+)$/);
+      if (bullet) {
+        items.push(bullet[1].trim());
+      } else if (items.length) {
+        items[items.length - 1] = `${items[items.length - 1]} ${line}`;
+      }
+    }
+
+    return items.length
+      ? items
+      : answer.split(/\n{2,}/).map((paragraph) => paragraph.replace(/\s+/g, ' ').trim()).filter(Boolean);
   }
 
   private async loadEducation(source: string): Promise<void> {

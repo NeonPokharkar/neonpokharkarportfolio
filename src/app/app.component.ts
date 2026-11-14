@@ -1,6 +1,7 @@
 import { Component, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
 
 interface PortfolioItem {
   number: string;
@@ -21,6 +22,7 @@ interface ExperienceManifestEntry {
   role: string;
   location: string;
   summary: string;
+  qualitativeAssessment?: string[];
   projects?: Array<{
     title: string;
     details: Array<{
@@ -230,84 +232,238 @@ export class AppComponent {
   ): Promise<Blob> {
     const { jsPDF } = await import('jspdf');
     const pdf = new jsPDF({ format: 'a4', unit: 'mm' });
-    const margin = 17;
+    pdf.setProperties({
+      title: 'Aditya Pokharkar - Resume',
+      author: 'Aditya Pokharkar',
+      subject: 'Software Engineer Resume'
+    });
+
+    const margin = 16;
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
     const contentWidth = pageWidth - margin * 2;
-    let cursorY = margin;
+    const navy: [number, number, number] = [31, 45, 61];
+    const blue: [number, number, number] = [38, 84, 132];
+    const body: [number, number, number] = [48, 56, 66];
+    const muted: [number, number, number] = [100, 108, 117];
+    const rule: [number, number, number] = [207, 215, 223];
+    let cursorY = 17;
+
+    const normalizeText = (text: string): string => text
+      .replace(/[–—]/g, '-')
+      .replace(/·/g, '|')
+      .replace(/[^\x20-\x7E]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+    const addContinuationHeader = (): void => {
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8);
+      pdf.setTextColor(...muted);
+      pdf.text('ADITYA POKHARKAR | SOFTWARE ENGINEER', margin, cursorY);
+      cursorY += 3;
+      pdf.setDrawColor(...rule);
+      pdf.line(margin, cursorY, pageWidth - margin, cursorY);
+      cursorY += 6;
+    };
 
     const ensureSpace = (height: number): void => {
       if (cursorY + height > pageHeight - margin) {
         pdf.addPage();
         cursorY = margin;
+        addContinuationHeader();
       }
     };
 
-    const addSection = (title: string): void => {
-      ensureSpace(12);
-      cursorY += 3;
-      pdf.setFont('helvetica', 'bold');
-      pdf.setFontSize(11);
-      pdf.setTextColor(244, 91, 54);
-      pdf.text(title.toUpperCase(), margin, cursorY);
-      cursorY += 6;
-      pdf.setTextColor(35, 33, 31);
-    };
-
-    const addText = (text: string, fontSize = 9, bold = false, indent = 0): void => {
-      const normalizedText = text.replace(/[^\x20-\x7E]/g, ' ').replace(/\s+/g, ' ').trim();
+    const addWrappedText = (
+      text: string,
+      fontSize = 9,
+      bold = false,
+      indent = 0,
+      after = 1
+    ): void => {
+      const normalizedText = normalizeText(text);
       if (!normalizedText) {
         return;
       }
 
       pdf.setFont('helvetica', bold ? 'bold' : 'normal');
       pdf.setFontSize(fontSize);
+      pdf.setTextColor(...body);
       const lines = pdf.splitTextToSize(normalizedText, contentWidth - indent);
-      const lineHeight = fontSize * 0.48;
+      const lineHeight = fontSize * 0.46;
+      ensureSpace(lines.length * lineHeight + after);
 
       for (const line of lines) {
-        ensureSpace(lineHeight);
         pdf.text(line, margin + indent, cursorY);
         cursorY += lineHeight;
       }
-      cursorY += 1.5;
+      cursorY += after;
+    };
+
+    const addLabeledText = (label: string, value: string): void => {
+      const normalizedValue = normalizeText(value);
+      if (!normalizedValue) {
+        return;
+      }
+
+      const labelText = `${label}: `;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(8.5);
+      const labelWidth = pdf.getTextWidth(labelText);
+      pdf.setFont('helvetica', 'normal');
+      const lines = pdf.splitTextToSize(normalizedValue, contentWidth - labelWidth);
+      const lineHeight = 4;
+      ensureSpace(lines.length * lineHeight + 1);
+      pdf.setTextColor(...navy);
+      pdf.setFont('helvetica', 'bold');
+      pdf.text(labelText, margin, cursorY);
+      pdf.setTextColor(...body);
+      pdf.setFont('helvetica', 'normal');
+      pdf.text(lines[0], margin + labelWidth, cursorY);
+      cursorY += lineHeight;
+
+      for (const line of lines.slice(1)) {
+        pdf.text(line, margin + labelWidth, cursorY);
+        cursorY += lineHeight;
+      }
+      cursorY += 1;
+    };
+
+    const addBullet = (text: string): void => {
+      const normalizedText = normalizeText(text);
+      if (!normalizedText) {
+        return;
+      }
+
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.7);
+      const lines = pdf.splitTextToSize(normalizedText, contentWidth - 5);
+      const lineHeight = 4;
+      ensureSpace(lines.length * lineHeight + 1);
+      pdf.setTextColor(...blue);
+      pdf.text('-', margin + 1, cursorY);
+      pdf.setTextColor(...body);
+      for (const line of lines) {
+        pdf.text(line, margin + 5, cursorY);
+        cursorY += lineHeight;
+      }
+      cursorY += 1;
+    };
+
+    const addSection = (title: string): void => {
+      ensureSpace(10);
+      cursorY += 1;
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(...navy);
+      pdf.text(title.toUpperCase(), margin, cursorY);
+      cursorY += 2;
+      pdf.setDrawColor(...rule);
+      pdf.line(margin, cursorY, pageWidth - margin, cursorY);
+      cursorY += 4;
     };
 
     pdf.setFont('helvetica', 'bold');
-    pdf.setFontSize(22);
-    pdf.setTextColor(35, 33, 31);
+    pdf.setFontSize(23);
+    pdf.setTextColor(...navy);
     pdf.text('Aditya Pokharkar', margin, cursorY);
-    cursorY += 7;
+    cursorY += 8;
+    pdf.setFont('helvetica', 'bold');
+    pdf.setFontSize(10);
+    pdf.setTextColor(...blue);
+    pdf.text('SOFTWARE ENGINEER | BACKEND & FULL-STACK', margin, cursorY);
+    cursorY += 5;
 
-    pdf.setFont('helvetica', 'normal');
-    pdf.setFontSize(8);
-    pdf.setTextColor(95, 91, 86);
-    addText(`${profile.email} | ${profile.phone} | ${profile.linkedin}`, 8);
-    cursorY += 2;
+    const contactDetails = [
+      profile.email,
+      profile.phone,
+      experience[0]?.location,
+      profile.linkedin.replace(/^https?:\/\//, '').replace(/\/$/, '')
+    ].filter((detail): detail is string => Boolean(detail));
+    addWrappedText(contactDetails.join(' | '), 8.3, false, 0, 2);
+    pdf.setDrawColor(...navy);
+    pdf.setLineWidth(0.5);
+    pdf.line(margin, cursorY, pageWidth - margin, cursorY);
+    cursorY += 5;
+
+    addSection('Professional Summary');
+    addWrappedText(
+      'Software Engineer building enterprise workflow platforms across backend and frontend. Experienced in Java, Spring Boot, Angular, Oracle, REST APIs, configurable workflows, and real-time collaboration, from system design through production delivery.',
+      9,
+      false,
+      0,
+      1
+    );
 
     addSection('Professional Experience');
     for (const entry of experience) {
-      addText(`${entry.role} | ${entry.firm}`, 10, true);
-      addText(`${entry.period} | ${entry.location}`, 8);
-      addText(entry.summary, 9);
+      const period = normalizeText(entry.period);
+      pdf.setFont('helvetica', 'bold');
+      pdf.setFontSize(10);
+      pdf.setTextColor(...navy);
+      pdf.text(normalizeText(entry.role), margin, cursorY);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(8.5);
+      pdf.setTextColor(...muted);
+      pdf.text(period, pageWidth - margin, cursorY, { align: 'right' });
+      cursorY += 4.5;
+      addWrappedText(`${entry.firm} | ${entry.location}`, 8.8, false, 0, 2);
 
       for (const project of entry.projects ?? []) {
-        addText(project.title, 9, true);
+        addWrappedText(project.title, 9, true, 0, 1);
         for (const detail of project.details) {
-          addText(`- ${detail.text} ${detail.metric ?? ''}${detail.suffix ?? ''}`, 8.5, false, 3);
+          addBullet(`${detail.text} ${detail.metric ?? ''} ${detail.suffix ?? ''}`);
         }
       }
-      cursorY += 2;
+
+      for (const assessment of entry.qualitativeAssessment ?? []) {
+        addBullet(assessment);
+      }
     }
 
     addSection('Education');
     for (const entry of education) {
-      addText(`${entry.title} | ${entry.period}`, 9, true);
-      addText(`${entry.detail} ${entry.metric ?? ''}`, 8.5);
+      addWrappedText(`${entry.title} | ${entry.period}`, 9, true, 0, 0.5);
+      const institution = normalizeText(entry.detail.replace(/[·,\s]+$/, ''));
+      const result = entry.metric?.split('·').pop()?.trim();
+      addWrappedText(
+        `${institution}${result ? ` | ${result}` : ''}`,
+        8.5,
+        false,
+        0,
+        1.5
+      );
     }
 
     addSection('Technical Skills');
-    addText(profile.toolkit.join(' | '), 8.5);
+    const skillCategories: Array<{ label: string; skills: string[] }> = [
+      { label: 'Languages', skills: ['Java', 'TypeScript', 'JavaScript', 'Python', 'Dart'] },
+      { label: 'Frameworks', skills: ['Spring Boot', 'Angular', 'Flutter'] },
+      { label: 'Data & Real-time', skills: ['Oracle & SQL', 'WebSockets'] },
+      { label: 'Tools & Practices', skills: ['AOP', 'JUnit', 'Splunk', 'Datical'] }
+    ];
+    const categorizedSkills = new Set(skillCategories.flatMap((category) => category.skills));
+    const remainingSkills = profile.toolkit.filter((skill) => !categorizedSkills.has(skill));
+    if (remainingSkills.length) {
+      skillCategories[skillCategories.length - 1].skills.push(...remainingSkills);
+    }
+
+    for (const category of skillCategories) {
+      const categorySkills = category.skills.filter((skill) => profile.toolkit.includes(skill));
+      if (categorySkills.length) {
+        addLabeledText(category.label, categorySkills.join(', '));
+      }
+    }
+
+    const pageCount = pdf.getNumberOfPages();
+    for (let page = 1; page <= pageCount; page += 1) {
+      pdf.setPage(page);
+      pdf.setFont('helvetica', 'normal');
+      pdf.setFontSize(7.5);
+      pdf.setTextColor(...muted);
+      pdf.text(`${page} / ${pageCount}`, pageWidth - margin, pageHeight - 8, { align: 'right' });
+    }
 
     return pdf.output('blob');
   }
@@ -401,141 +557,10 @@ export class AppComponent {
         throw new Error(`The AI chat server returned HTTP ${response.status}.`);
       }
 
-      if (!response.body) {
-        throw new Error('The AI chat server did not return a readable response stream.');
-      }
-
-      const reader = response.body.getReader();
-      const decoder = new TextDecoder();
-      let pending = '';
-      let plainResponse = '';
-      let hasStructuredEvents = false;
-
-      const appendPlainText = (chunk: string): void => {
-        plainResponse += chunk;
-        const finalAnswerMarker = /Final[_\s]+answer\s*:\s*/i.exec(plainResponse);
-        assistantMessage.content = finalAnswerMarker
-          ? plainResponse.slice(finalAnswerMarker.index + finalAnswerMarker[0].length).trimStart()
-          : '';
-      };
-
-      const processPending = (flush: boolean): void => {
-        while (pending) {
-          const firstContentIndex = pending.search(/\S/);
-          if (firstContentIndex === -1) {
-            if (flush) {
-              pending = '';
-            }
-            return;
-          }
-
-          if (firstContentIndex > 0) {
-            const rest = pending.slice(firstContentIndex);
-            if (rest.startsWith('{')) {
-              pending = rest;
-            } else {
-              const nextEventIndex = rest.indexOf('{');
-              if (nextEventIndex === -1) {
-                appendPlainText(pending);
-                pending = '';
-                return;
-              }
-              appendPlainText(pending.slice(0, firstContentIndex + nextEventIndex));
-              pending = rest.slice(nextEventIndex);
-              continue;
-            }
-          }
-
-          if (!pending.startsWith('{')) {
-            const nextEventIndex = pending.indexOf('{');
-            if (nextEventIndex === -1) {
-              appendPlainText(pending);
-              pending = '';
-              return;
-            }
-            appendPlainText(pending.slice(0, nextEventIndex));
-            pending = pending.slice(nextEventIndex);
-            continue;
-          }
-
-          let objectDepth = 0;
-          let insideString = false;
-          let escaped = false;
-          let eventEnd = -1;
-
-          for (let index = 0; index < pending.length; index += 1) {
-            const character = pending[index];
-            if (insideString) {
-              if (escaped) {
-                escaped = false;
-              } else if (character === '\\') {
-                escaped = true;
-              } else if (character === '"') {
-                insideString = false;
-              }
-            } else if (character === '"') {
-              insideString = true;
-            } else if (character === '{') {
-              objectDepth += 1;
-            } else if (character === '}') {
-              objectDepth -= 1;
-              if (objectDepth === 0) {
-                eventEnd = index;
-                break;
-              }
-            }
-          }
-
-          if (eventEnd === -1) {
-            if (flush) {
-              appendPlainText(pending);
-              pending = '';
-            }
-            return;
-          }
-
-          const eventText = pending.slice(0, eventEnd + 1);
-          pending = pending.slice(eventEnd + 1);
-
-          try {
-            const event: unknown = JSON.parse(eventText);
-            if (
-              typeof event === 'object' &&
-              event !== null &&
-              'type' in event &&
-              typeof event.type === 'string' &&
-              'content' in event &&
-              typeof event.content === 'string'
-            ) {
-              hasStructuredEvents = true;
-              if (event.type === 'final_answer') {
-                assistantMessage.content += event.content;
-              }
-            } else {
-              appendPlainText(eventText);
-            }
-          } catch {
-            appendPlainText(eventText);
-          }
-        }
-      };
-
-      while (true) {
-        const { done, value } = await reader.read();
-        pending += decoder.decode(value, { stream: !done });
-        processPending(done);
-        if (done) {
-          break;
-        }
-      }
-
-      if (!hasStructuredEvents && !/Final[_\s]+answer\s*:\s*/i.test(plainResponse)) {
-        assistantMessage.content = plainResponse.trim();
-      }
-
-      if (!assistantMessage.content.trim()) {
-        throw new Error('The AI chat server returned an empty response.');
-      }
+      assistantMessage.content = await readIntelliChatFinalAnswer(
+        response,
+        (answer) => assistantMessage.content = answer
+      );
 
       this.conversationSummary = [this.conversationSummary, this.lastRelevantConversation]
         .filter(Boolean)

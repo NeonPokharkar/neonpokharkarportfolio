@@ -52,6 +52,7 @@ nav a.active .nav-astronaut { animation: navAstronautDrift 48s linear infinite; 
   nav a.active, nav a.active .nav-astronaut { animation: none; }
 }
 .header-link { border-bottom: 1px solid #1c1b1a; padding-bottom: 5px; }
+.resume-error { background: #fff1ed; color: #9c2f19; font-size: 13px; margin: 0; padding: 10px 24px; text-align: center; }
 
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr); gap: 7vw; isolation: isolate; margin: 0 auto; max-width: 1240px; min-height: 610px; padding: 94px 32px 110px; position: relative; }
 .hero-background { background: #090807; height: 100%; left: 50%; position: absolute; top: 0; transform: translateX(-50%); width: 100vw; z-index: -1; }

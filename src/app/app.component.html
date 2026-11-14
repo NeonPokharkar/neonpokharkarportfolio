@@ -34,8 +34,12 @@
     <a routerLink="/links" routerLinkActive="active" (click)="closeMenu()">Links<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
   </nav>
 
-  <a class="header-link" [href]="resumePath" download>Download resume <span aria-hidden="true">↓</span></a>
+  <a class="header-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
 </header>
+}
+
+@if (resumeError) {
+  <p class="resume-error" role="alert">{{ resumeError }}</p>
 }
 
 @if (clickPointerVisible) {
@@ -58,7 +62,7 @@
       </p>
       <div class="hero-actions">
         <a class="button button-dark" href="#projects">View my work <span aria-hidden="true">↗</span></a>
-        <a class="text-link" [href]="resumePath" download>Download resume <span aria-hidden="true">↓</span></a>
+        <a class="text-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
       </div>
     </div>
 
@@ -89,7 +93,7 @@
     <p class="eyebrow"><span class="eyebrow-line"></span> A little about me</p>
     <p class="statement">I turn complex engineering challenges into <span>scalable, useful,</span> and intuitive product experiences.</p>
     <p class="intro-copy">My work spans backend architecture, REST APIs, databases, real-time collaboration, and Angular interfaces. I am especially interested in AI/ML, product innovation, and solving problems that create measurable impact.</p>
-    <a class="resume-link" [href]="resumePath" download>Download my resume <span aria-hidden="true">↓</span></a>
+    <a class="resume-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download my resume <span aria-hidden="true">↓</span></a>
     <a class="resume-link email-link" [href]="'mailto:' + email">Email me <span aria-hidden="true">↗</span></a>
   </section>
 
@@ -191,7 +195,7 @@
     </div>
     <div class="contact-actions">
       <a class="button button-light" [href]="'mailto:' + email">{{ email }} <span aria-hidden="true">↗</span></a>
-      <a class="button button-outline-light" [href]="resumePath" download>Download resume <span aria-hidden="true">↓</span></a>
+      <a class="button button-outline-light" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
       <div class="contact-meta">
         <a [href]="'tel:' + phone">{{ phone }}</a>
         <a [href]="linkedin" target="_blank" rel="noreferrer">LinkedIn profile ↗</a>
@@ -264,7 +268,7 @@
         aria-label="Message for AI assistant">
       <button type="submit" [disabled]="chatBusy || !chatInput.trim()" aria-label="Send message">↗</button>
     </form>
-    <p class="chat-footnote">Connected locally to Ollama · {{ ollamaModel }}</p>
+    <p class="chat-footnote">Connected to the portfolio AI assistant</p>
   </aside>
 }
 

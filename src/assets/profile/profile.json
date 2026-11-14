@@ -26,6 +26,5 @@
   "email": "theadityapokharkar@gmail.com",
   "phone": "+91 8999490870",
   "linkedin": "https://www.linkedin.com/in/aditya-pokharkar-936030179",
-  "ollamaEndpoint": "http://localhost:11434/api/chat",
-  "ollamaModel": "gemma3:12b"
+  "intelliChatEndpoint": "https://simba.vimba-buri.ts.net/intelli-chat"
 }

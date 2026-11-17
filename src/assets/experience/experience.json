@@ -53,13 +53,38 @@
         {
           "title": "Enterprise-wide workflow application",
           "details": [
-            { "text": "Spearheaded a full-stack workflow application using Java and Angular, taking it from scratch to production in", "metric": "eight months." },
-            { "text": "Developed and maintained", "metric": "50+ backend REST APIs", "suffix": " powering real-time and form-driven functionality across the application." },
-            { "text": "Served as", "metric": "Lead Backend Developer", "suffix": ", owning API design, database integration, performance optimisation, and Spring Boot architecture." },
-            { "text": "Designed the foundational Oracle database schema and a flexible workflow engine that supports runtime-configurable processes without requiring", "metric": "redeployment." },
-            { "text": "Integrated WebSockets for real-time collaboration and built versioning and locking mechanisms for concurrent form submissions, eliminating", "metric": "deadlocks." },
-            { "text": "Created a backend JSON diff utility to track", "metric": "100+ granular field-level changes", "suffix": " across form versions." },
-            { "text": "Delivered a thread-based commenting feature across Angular and backend services as a major", "metric": "full-stack contribution." }
+            {
+              "text": "Led backend delivery of a greenfield workflow platform to production in eight months, building Spring Boot microservices and",
+              "metric": "50+ REST APIs",
+              "suffix": " with validated payload mappings for maintenance-mode Kafka and legacy authentication integrations."
+            },
+            {
+              "text": "Architected a SQL-backed state engine that replaced hardcoded approval transitions, enabling product and risk teams to update multi-step workflows",
+              "metric": "without full production releases."
+            },
+            {
+              "text": "Built an idempotent event and audit engine with immutable SQL-backed state transitions, strengthening",
+              "metric": "data consistency and traceability",
+              "suffix": " across multi-team workflows."
+            },
+            {
+              "text": "Created a reusable reflection-based Java diff engine for nested objects, matching child collections by entity ID and automatically capturing",
+              "metric": "field-level change logs",
+              "suffix": " across domain models."
+            },
+            {
+              "text": "Delivered reusable threaded comments with SQL materialized paths for",
+              "metric": "single-query subtree retrieval",
+              "suffix": ", paired with recursive Angular components for end-to-end collaboration."
+            },
+            {
+              "text": "Replaced brittle form locks with server-side TTL leases and session-aligned UI heartbeats, automatically reclaiming abandoned locks and",
+              "metric": "reducing locking issues by 100%."
+            },
+            {
+              "text": "Standardized auditing, lock validation, and telemetry with custom Spring AOP annotations; centralized Gson serialization so schema and behavior changes are managed through",
+              "metric": "single-point configuration."
+            }
           ]
         }
       ]

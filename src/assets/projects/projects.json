@@ -44,7 +44,12 @@
       "createdWith": "solely",
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
-      "photos": [],
+      "photos": [
+        "assets/projects/UCTTP0.gif",
+        "assets/projects/UCTTP1.gif",
+        "assets/projects/UCTTP2.gif",
+        "assets/projects/UCTTP3.gif"
+      ],
       "placeholder": {
         "src": "assets/projects/timetable-placeholder.svg",
         "alt": "Timetable grid showing a generated schedule"

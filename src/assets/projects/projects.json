@@ -23,14 +23,19 @@
       "createdWith": "solely",
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
-      "photos": [],
+      "photos": [
+        "assets/projects/NBoardMarathiExample.gif",
+        "assets/projects/NBoardHindiExample.gif",
+        "assets/projects/NBoardKannadaExample.gif",
+        "assets/projects/NBoardBanglaExample.gif"
+      ],
       "placeholder": {
         "src": "assets/projects/nboard-placeholder.svg",
         "alt": "Indic keyboard illustration with a highlighted language key"
       },
-      "explanation": "A swipe-based native Java keyboard supporting 3+ Indic languages, including conjunct letter support and a language-agnostic layout system.",
-      "thoughtProcess": "The project focused on separating language behaviour from the keyboard structure so new layouts could be introduced through minimal file changes rather than a rewrite of the input system.",
-      "resultsSummary": "Produced a flexible native keyboard concept with multi-language support and a structure that could be extended without changing the core interaction model."
+      "explanation": "Engineered NBoard as a custom native Android InputMethodService to make Marathi typing faster. A low-latency gesture decoder with spatial key-proximity scoring powers swipe input, alongside an ergonomic consonant-matra grid and an on-device Marathi prediction dictionary. Typing stays offline, with no cloud dependency or keystroke tracking.",
+      "thoughtProcess": "Standard mobile keyboards make Devanagari typing slow because of complex consonant-vowel matras and cramped layouts. NBoard replaces repeated taps with single-stroke gestures, pairing real-time touch-path recognition and spatial key-proximity scoring with a dedicated Marathi layout and word dictionary.",
+      "resultsSummary": "Delivers fast, accurate offline Marathi Devanagari swipe typing with on-device prediction, without cloud dependency or keystroke tracking."
     },
     {
       "title": "Genetic algorithm timetable",
@@ -71,7 +76,11 @@
       "createdWith": "solely",
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
-      "photos": [],
+      "photos": [
+        "assets/projects/ShukaExample.gif",
+        "assets/projects/ShukaExample2.gif",
+        "assets/projects/ShukaExample3.gif"
+      ],
       "placeholder": {
         "src": "assets/projects/shuka-placeholder.svg",
         "alt": "Local AI assistant connecting private documents to a local model"

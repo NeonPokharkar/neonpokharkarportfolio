@@ -132,14 +132,14 @@ h1 em, h2 em { color: #f45b36; font-style: normal; }
 .current-section { border-bottom: 1px solid #d8d3ca; display: grid; gap: 9vw; grid-template-columns: .8fr 1fr; margin: 0 auto; max-width: 1176px; padding: 100px 0; }
 .current-section-intro { align-self: start; }
 .current-section .eyebrow { color: #716f6a; }
-.current-section .status-banner { border-color: #d8d3ca; color: #716f6a; margin: 27px 0 0; }
-.current-section .status-banner strong { color: #1c1b1a; }
+.current-section .status-banner { border-color: #d8d3ca; color: var(--current-status-copy-color, #716f6a); margin: 27px 0 0; }
+.current-section .status-banner strong { color: var(--current-status-label-color, #1c1b1a); }
 .current-section .status-separator { color: #a7a29a; }
 .current-focus-list { align-self: center; display: grid; }
 .current-focus-item { border-bottom: 1px solid #d8d3ca; display: grid; gap: 15px; grid-template-columns: 110px minmax(0, 1fr); margin: 0; padding: 16px 0; }
 .current-focus-item:first-child { padding-top: 0; }
 .current-focus-item:last-child { border-bottom: 0; padding-bottom: 0; }
-.current-focus-item strong { color: #1c1b1a; font-size: 13px; }
+.current-focus-item strong { color: var(--current-focus-label-color, #1c1b1a); font-size: 13px; }
 .current-focus-item span { color: #716f6a; font-size: 14px; line-height: 1.6; }
 
 .skills-section, .projects-section, .experience-section { display: grid; gap: 9vw; grid-template-columns: .8fr 1fr; padding: 125px 0; }
@@ -220,7 +220,7 @@ h2 { font-size: clamp(42px, 5vw, 69px); line-height: .95; margin: 0; }
 .chat-message { align-self: flex-start; background: #e9dfd5; max-width: 88%; padding: 12px 14px; }
 .chat-message-user { align-self: flex-end; background: #d6e4df; }
 .chat-role { color: #f45b36; display: block; font-size: 10px; font-weight: 700; letter-spacing: .1em; margin-bottom: 5px; text-transform: uppercase; }
-.chat-message p { color: #1c1b1a; font-size: 13px; line-height: 1.45; margin: 0; white-space: pre-wrap; }
+.chat-message p { font-size: 13px; line-height: 1.45; margin: 0; white-space: pre-wrap; }
 .chat-typing span { animation: blink 1.2s infinite; }
 .chat-typing span:nth-child(2) { animation-delay: .2s; }
 .chat-typing span:nth-child(3) { animation-delay: .4s; }

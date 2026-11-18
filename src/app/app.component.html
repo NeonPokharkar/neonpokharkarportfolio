@@ -301,13 +301,11 @@
       @for (message of chatMessages; track $index) {
         <div class="chat-message" [class.chat-message-user]="message.role === 'user'">
           <span class="chat-role">{{ message.role === 'user' ? 'You' : 'AI' }}</span>
-          <p>{{ message.content }}</p>
-        </div>
-      }
-      @if (chatBusy) {
-        <div class="chat-message">
-          <span class="chat-role">AI</span>
-          <p class="chat-typing">Thinking<span>.</span><span>.</span><span>.</span></p>
+          @if (message.role === 'assistant' && !message.content.trim()) {
+            <p class="chat-typing">Thinking<span>.</span><span>.</span><span>.</span></p>
+          } @else {
+            <p>{{ message.content }}</p>
+          }
         </div>
       }
     </div>

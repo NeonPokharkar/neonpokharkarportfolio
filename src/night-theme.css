@@ -66,11 +66,19 @@ html[data-theme='night'] .nav-drawer-header button {
 
 html[data-theme='night'] .intro-copy,
 html[data-theme='night'] .current-section .eyebrow,
-html[data-theme='night'] .current-section .status-banner,
 html[data-theme='night'] .current-focus-item span,
 html[data-theme='night'] .project-info p,
 html[data-theme='night'] .experience-item p {
   color: #bdb7ad;
+}
+
+html[data-theme='night'] .current-section .status-banner {
+  --current-status-copy-color: #bdb7ad;
+  --current-status-label-color: #f2efe9;
+}
+
+html[data-theme='night'] .current-focus-item {
+  --current-focus-label-color: #f2efe9;
 }
 
 html[data-theme='night'] .current-section .status-banner,
@@ -81,10 +89,6 @@ html[data-theme='night'] .experience-list,
 html[data-theme='night'] .experience-item,
 html[data-theme='night'] .education-section {
   border-color: #403c36;
-}
-
-html[data-theme='night'] .current-section .status-banner strong {
-  color: #f2efe9;
 }
 
 html[data-theme='night'] .experience-section .experience-company,

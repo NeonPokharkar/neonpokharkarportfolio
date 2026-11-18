@@ -1,4 +1,4 @@
-import { Component, HostListener } from '@angular/core';
+import { Component, ElementRef, HostListener, OnDestroy, QueryList, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Meta } from '@angular/platform-browser';
@@ -148,7 +148,7 @@ interface ContactManifest {
     .invest-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(50px, 8vw, 100px); letter-spacing: -.07em; line-height: .9; margin: 0 0 32px; max-width: 820px; }
     .invest-page h1 em { color: #f45b36; font-style: normal; }
     .invest-intro { color: #716f6a; font-size: 18px; line-height: 1.7; margin: 0; max-width: 620px; }
-    .invest-form { border-top: 1px solid #d8d3ca; display: grid; gap: 20px; margin-top: 65px; padding-top: 28px; }
+    .invest-form { border: 1px solid #d8d3ca; display: grid; gap: 20px; margin-top: 65px; padding: 28px; }
     .invest-form label { color: #1c1b1a; display: grid; font-size: 12px; font-weight: 700; gap: 8px; }
     .invest-form input, .invest-form select, .invest-form textarea { background: #fff; border: 1px solid #b9b3aa; color: #1c1b1a; font: inherit; font-size: 14px; padding: 12px; resize: vertical; }
     .invest-form input:focus, .invest-form select:focus, .invest-form textarea:focus { border-color: #f45b36; outline: 0; }
@@ -256,7 +256,11 @@ export class InvestContactComponent {
               @if (project.photos?.length) {
                 <div class="project-photos">
                   @for (photo of project.photos; track photo) {
-                    <img [src]="photo" [alt]="project.title + ' project example'">
+                    <img #projectPhoto [attr.data-gif-photo]="isGif(photo) ? photo : null"
+                      [src]="projectPhotoSource(photo)" [alt]="project.title + ' project example'"
+                      [class.inactive-gif]="isInactiveProjectGif(photo)"
+                      [class.active-gif]="isActiveProjectGif(photo)"
+                      (mouseenter)="selectProjectGif(photo)" (mouseleave)="resumeProjectGifCycle()">
                   }
                 </div>
               } @else if (project.placeholder) {
@@ -294,9 +298,11 @@ export class InvestContactComponent {
     .project-links { display: flex; flex-wrap: wrap; gap: 18px; justify-content: flex-end; margin-top: 30px; }
     .project-links a, .project-links button { background: transparent; border: 0; color: #f45b36; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .1em; padding: 0; text-decoration: none; text-transform: uppercase; }
     .project-links a:hover, .project-links button:hover { color: #1c1b1a; }
-    .project-photos { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); margin-top: 28px; }
-    .project-photos img { aspect-ratio: 16 / 9; background: #f5f0eb; object-fit: cover; width: 100%; }
-    .project-placeholder { grid-template-columns: minmax(0, 1fr); max-width: 760px; }
+    .project-photos { display: grid; gap: 14px; grid-auto-columns: calc((100% - 28px) / 3); grid-auto-flow: column; margin-top: 28px; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 8px; scroll-snap-type: x proximity; scrollbar-color: #a9a39a transparent; scrollbar-width: thin; }
+    .project-photos img { aspect-ratio: auto; background: #f5f0eb; height: auto; object-fit: contain; scroll-snap-align: start; transition: filter .2s ease, box-shadow .2s ease; width: 100%; }
+    .project-photos img.inactive-gif { filter: brightness(.78) blur(1px); }
+    .project-photos img.active-gif { box-shadow: 0 0 0 2px #f45b36; filter: none; }
+    .project-placeholder { grid-auto-columns: 100%; max-width: 760px; }
     .project-sections { display: grid; gap: 22px; grid-template-columns: repeat(3, 1fr); margin-top: 32px; }
     .project-sections section { border-left: 2px solid #f45b36; padding-left: 18px; }
     .project-sections p { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .12em; margin: 0 0 10px; text-transform: uppercase; }
@@ -306,16 +312,62 @@ export class InvestContactComponent {
       .project-page { margin: 0 20px; padding: 75px 0 90px; }
       .project-entry-header { display: block; }
       .project-links { margin-top: 20px; }
-      .project-photos, .project-sections { grid-template-columns: 1fr; }
+      .project-photos { grid-auto-columns: min(80%, 360px); }
+      .project-placeholder { grid-auto-columns: 100%; }
+      .project-sections { grid-template-columns: 1fr; }
     }
   `]
 })
-export class ProjectListComponent {
+export class ProjectListComponent implements OnDestroy {
   protected projects: ProjectEntry[] = [];
   protected loadError = '';
+  private readonly gifPosters = new Map<string, string>();
+  private readonly gifDurations = new Map<string, number>();
+  private gifPhotos: string[] = [];
+  private activeGif = '';
+  private hoveredGif = '';
+  private gifRotation?: ReturnType<typeof setTimeout>;
+
+  @ViewChildren('projectPhoto', { read: ElementRef })
+  private projectPhotoElements!: QueryList<ElementRef<HTMLImageElement>>;
 
   constructor() {
     void this.loadProjects();
+  }
+
+  ngOnDestroy(): void {
+    this.clearGifRotation();
+  }
+
+  protected projectPhotoSource(photo: string): string {
+    if (!this.isGif(photo) || this.activeGif === photo) {
+      return photo;
+    }
+
+    return this.gifPosters.get(photo) ?? photo;
+  }
+
+  protected isInactiveProjectGif(photo: string): boolean {
+    return this.isGif(photo) && this.activeGif !== photo;
+  }
+
+  protected isActiveProjectGif(photo: string): boolean {
+    return this.isGif(photo) && this.activeGif === photo;
+  }
+
+  protected selectProjectGif(photo: string): void {
+    if (!this.isGif(photo)) {
+      return;
+    }
+
+    this.hoveredGif = photo;
+    this.activeGif = photo;
+    this.clearGifRotation();
+  }
+
+  protected resumeProjectGifCycle(): void {
+    this.hoveredGif = '';
+    this.scheduleNextGif();
   }
 
   protected askAiAboutProject(project: ProjectEntry): void {
@@ -335,10 +387,206 @@ export class ProjectListComponent {
       }
 
       const manifest = await response.json() as ProjectManifest;
+      this.gifPhotos = Array.from(new Set(
+        manifest.projects.flatMap(project => project.photos ?? []).filter(photo => this.isGif(photo))
+      ));
+
+      for (const photo of this.gifPhotos) {
+        const preview = await this.createGifPoster(photo);
+        this.gifPosters.set(photo, preview.poster);
+        this.gifDurations.set(photo, preview.durationMs);
+      }
+
       this.projects = manifest.projects;
-    } catch {
+      if (this.gifPhotos.length && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        this.activeGif = this.gifPhotos[0];
+        this.scheduleNextGif();
+      }
+    } catch (error) {
+      console.error('Projects or animated project previews could not be loaded.', error);
       this.loadError = 'Projects could not be loaded right now.';
     }
+  }
+
+  protected isGif(photo: string): boolean {
+    return /\.gif$/i.test(photo);
+  }
+
+  private scheduleNextGif(): void {
+    this.clearGifRotation();
+    if (!this.gifPhotos.length || this.hoveredGif || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      return;
+    }
+
+    const durationMs = this.gifDurations.get(this.activeGif);
+    if (durationMs === undefined) {
+      throw new Error(`Missing playback duration for animated project image: ${this.activeGif}`);
+    }
+
+    this.gifRotation = setTimeout(() => {
+      this.gifRotation = undefined;
+      const currentIndex = this.gifPhotos.indexOf(this.activeGif);
+      this.activeGif = this.gifPhotos[(currentIndex + 1) % this.gifPhotos.length];
+      this.scrollActiveGifIntoView();
+      this.scheduleNextGif();
+    }, durationMs);
+  }
+
+  private clearGifRotation(): void {
+    if (this.gifRotation !== undefined) {
+      clearTimeout(this.gifRotation);
+      this.gifRotation = undefined;
+    }
+  }
+
+  private scrollActiveGifIntoView(): void {
+    window.setTimeout(() => {
+      const activeImage = this.projectPhotoElements.find(
+        element => element.nativeElement.getAttribute('data-gif-photo') === this.activeGif
+      )?.nativeElement;
+      const gallery = activeImage?.parentElement;
+      if (!activeImage || !gallery) {
+        return;
+      }
+
+      const imageBounds = activeImage.getBoundingClientRect();
+      const galleryBounds = gallery.getBoundingClientRect();
+      const scrollPosition = gallery.scrollLeft + imageBounds.left - galleryBounds.left;
+      gallery.scrollLeft = Math.max(0, Math.min(scrollPosition, gallery.scrollWidth - gallery.clientWidth));
+    });
+  }
+
+  private async createGifPoster(photo: string): Promise<{ poster: string; durationMs: number }> {
+    const response = await fetch(photo);
+    if (!response.ok) {
+      throw new Error(`Could not load animated project image: ${photo}`);
+    }
+
+    const imageBlob = await response.blob();
+    const durationMs = this.readGifDuration(new Uint8Array(await imageBlob.arrayBuffer()));
+    const imageUrl = URL.createObjectURL(imageBlob);
+
+    try {
+      const poster = await new Promise<string>((resolve, reject) => {
+        const image = new Image();
+        image.onload = () => {
+          try {
+            const canvas = document.createElement('canvas');
+            canvas.width = image.naturalWidth;
+            canvas.height = image.naturalHeight;
+            const context = canvas.getContext('2d');
+            if (!context) {
+              reject(new Error(`Could not create a preview for ${photo}.`));
+              return;
+            }
+
+            context.drawImage(image, 0, 0);
+            image.src = '';
+            resolve(canvas.toDataURL('image/png'));
+          } catch (error) {
+            reject(error);
+          }
+        };
+        image.onerror = () => reject(new Error(`Could not load animated project image: ${photo}`));
+        image.src = imageUrl;
+      });
+
+      return { poster, durationMs };
+    } finally {
+      URL.revokeObjectURL(imageUrl);
+    }
+  }
+
+  private readGifDuration(bytes: Uint8Array): number {
+    const signature = String.fromCharCode(...bytes.subarray(0, 6));
+    if ((signature !== 'GIF87a' && signature !== 'GIF89a') || bytes.length < 13) {
+      throw new Error('Invalid GIF header while reading project image duration.');
+    }
+
+    let offset = 13;
+    const screenPacked = bytes[10];
+    if (screenPacked & 0x80) {
+      offset += 3 * 2 ** ((screenPacked & 0x07) + 1);
+    }
+
+    let durationMs = 0;
+    let hasTrailer = false;
+    while (offset < bytes.length) {
+      const blockType = bytes[offset++];
+      if (blockType === 0x3b) {
+        hasTrailer = true;
+        break;
+      }
+
+      if (blockType === 0x21) {
+        if (offset >= bytes.length) {
+          throw new Error('Truncated GIF extension block.');
+        }
+
+        const extensionType = bytes[offset++];
+        if (extensionType === 0xf9) {
+          if (offset >= bytes.length) {
+            throw new Error('Truncated GIF graphics control extension.');
+          }
+
+          const blockSize = bytes[offset++];
+          if (blockSize !== 4 || offset + blockSize > bytes.length) {
+            throw new Error('Invalid GIF graphics control extension.');
+          }
+
+          const delay = bytes[offset + 1] | (bytes[offset + 2] << 8);
+          durationMs += delay * 10;
+          offset += blockSize;
+        }
+
+        offset = this.skipGifSubBlocks(bytes, offset);
+        continue;
+      }
+
+      if (blockType === 0x2c) {
+        if (offset + 9 > bytes.length) {
+          throw new Error('Truncated GIF image descriptor.');
+        }
+
+        const imagePacked = bytes[offset + 8];
+        offset += 9;
+        if (imagePacked & 0x80) {
+          offset += 3 * 2 ** ((imagePacked & 0x07) + 1);
+        }
+
+        if (offset >= bytes.length) {
+          throw new Error('Truncated GIF image data.');
+        }
+
+        offset += 1;
+        offset = this.skipGifSubBlocks(bytes, offset);
+        continue;
+      }
+
+      throw new Error('Unexpected GIF block while reading project image duration.');
+    }
+
+    if (!hasTrailer || durationMs <= 0) {
+      throw new Error('GIF has no valid playback duration.');
+    }
+
+    return durationMs;
+  }
+
+  private skipGifSubBlocks(bytes: Uint8Array, offset: number): number {
+    while (offset < bytes.length) {
+      const blockSize = bytes[offset++];
+      if (blockSize === 0) {
+        return offset;
+      }
+
+      offset += blockSize;
+      if (offset > bytes.length) {
+        break;
+      }
+    }
+
+    throw new Error('Truncated GIF data block.');
   }
 }
 
@@ -404,29 +652,30 @@ interface HobbyManifest {
     </main>
   `,
   styles: [`
-    .hobby-page { margin: 0 auto; max-width: 1176px; min-height: calc(100vh - 150px); padding: 110px 0 130px; }
+    .hobby-page { margin: 0 auto; max-width: 1176px; min-height: calc(100vh - 150px); padding: 110px 28px 130px; }
     .hobby-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(55px, 9vw, 112px); letter-spacing: -.07em; line-height: .9; margin: 0 0 35px; max-width: 850px; }
     .hobby-page h1 em { color: #f45b36; font-style: normal; }
     .hobby-intro { color: #716f6a; font-size: 16px; line-height: 1.7; margin: 0; max-width: 680px; }
     .hobby-filters { display: flex; flex-wrap: wrap; gap: 10px; margin: 55px 0 30px; }
     .hobby-filters button { background: transparent; border: 1px solid #d8d3ca; color: #716f6a; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .1em; padding: 10px 13px; text-transform: uppercase; }
     .hobby-filters button.active, .hobby-filters button:hover { background: #1c1b1a; border-color: #1c1b1a; color: #fff; }
-    .hobby-list { border-top: 1px solid #d8d3ca; }
-    .hobby-entry { border-bottom: 1px solid #d8d3ca; padding: 34px 0 42px; }
+    .hobby-list { display: grid; gap: 16px; }
+    .hobby-entry { border: 1px solid #d8d3ca; min-width: 0; padding: 34px 32px 42px; }
     .hobby-type { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .12em; margin: 0 0 12px; text-transform: uppercase; }
     .hobby-entry h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(30px, 5vw, 58px); letter-spacing: -.06em; line-height: 1; margin: 0; }
     .hobby-photos { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); margin-top: 28px; }
     .hobby-photos img { aspect-ratio: 16 / 9; background: #f5f0eb; object-fit: cover; width: 100%; }
-    .hobby-sections { display: grid; gap: 22px; grid-template-columns: repeat(3, 1fr); margin-top: 32px; }
+    .hobby-sections { display: grid; gap: 22px; grid-template-columns: repeat(3, minmax(0, 1fr)); margin-top: 32px; }
     .hobby-sections section { border-left: 2px solid #f45b36; padding-left: 18px; }
     .hobby-sections p, .hobby-result-links span { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .12em; margin: 0 0 10px; text-transform: uppercase; }
-    .hobby-sections div { color: #1c1b1a; font-size: 15px; line-height: 1.65; }
+    .hobby-sections div { color: #1c1b1a; font-size: 15px; line-height: 1.65; overflow-wrap: anywhere; }
     .hobby-result-links { align-items: baseline; display: flex; flex-wrap: wrap; gap: 18px; margin-top: 30px; }
     .hobby-result-links a { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; }
     .hobby-result-links a:hover { color: #1c1b1a; }
     .hobby-load-error { color: #b3261e; margin-top: 50px; }
     @media (max-width: 800px) {
-      .hobby-page { margin: 0 20px; padding: 75px 0 90px; }
+      .hobby-page { margin: 0; padding: 75px 20px 90px; }
+      .hobby-entry { padding: 28px 20px 32px; }
       .hobby-photos, .hobby-sections { grid-template-columns: 1fr; }
     }
   `]
@@ -533,15 +782,14 @@ interface EssayManifest {
     .essay-list-page { margin: 0 auto; max-width: 1080px; padding: 110px 28px 120px; }
     .essay-list-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(48px, 8vw, 92px); letter-spacing: -.07em; line-height: .95; margin: 0; max-width: 760px; }
     .essay-list-page h1 em { color: #f45b36; font-style: normal; }
-    .essay-list-grid { border-top: 1px solid #d8d3ca; display: grid; grid-template-columns: repeat(2, 1fr); margin-top: 85px; }
-    .essay-list-card { border-bottom: 1px solid #d8d3ca; min-height: 210px; padding: 28px 35px 28px 0; }
-    .essay-list-card:nth-child(odd) { border-right: 1px solid #d8d3ca; padding-right: 40px; }
-    .essay-list-card:nth-child(even) { padding-left: 40px; }
+    .essay-list-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 85px; }
+    .essay-list-card { border: 1px solid #d8d3ca; min-height: 210px; min-width: 0; padding: 28px 32px; }
+    .essay-list-card:nth-child(odd), .essay-list-card:nth-child(even) { border-right: 1px solid #d8d3ca; padding-left: 32px; padding-right: 32px; }
     .essay-list-card > p { color: #716f6a; font-size: 11px; font-weight: 700; letter-spacing: .12em; margin: 0 0 35px; text-transform: uppercase; }
     .essay-list-card h2 { font-family: 'Space Grotesk', sans-serif; font-size: 27px; letter-spacing: -.04em; margin: 0 0 12px; }
     .essay-list-card h2 a { color: inherit; text-decoration: none; }
     .essay-list-card h2 a:hover { color: #f45b36; }
-    .essay-list-card div { color: #716f6a; font-size: 14px; line-height: 1.6; max-width: 400px; }
+    .essay-list-card div { color: #716f6a; font-size: 14px; line-height: 1.6; max-width: 400px; overflow-wrap: anywhere; }
     .essay-list-card small { color: #1c1b1a; display: block; font-size: 12px; margin-bottom: 10px; }
     .essay-load-error { color: #b3261e; margin-top: 50px; }
     @media (max-width: 800px) {
@@ -922,7 +1170,7 @@ export class EssayPageComponent {
     }
   `,
   styles: [`
-    .dummy-page { margin: 0 auto; max-width: 1176px; min-height: calc(100vh - 150px); padding: 110px 0 130px; }
+    .dummy-page { margin: 0 auto; max-width: 1176px; min-height: calc(100vh - 150px); padding: 110px 28px 130px; }
     .eyebrow { align-items: center; color: #716f6a; display: flex; font-size: 11px; font-weight: 700; gap: 12px; letter-spacing: .12em; margin: 0 0 28px; text-transform: uppercase; }
     .eyebrow-line { background: #f45b36; display: inline-block; height: 1px; width: 26px; }
     .dummy-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(55px, 9vw, 112px); letter-spacing: -.07em; line-height: .9; margin: 0 0 35px; max-width: 850px; }
@@ -1033,16 +1281,15 @@ export class EssayPageComponent {
       font-size: 15px;
       font-weight: 700;
     }
-    .dummy-grid { border-top: 1px solid #d8d3ca; display: grid; grid-template-columns: repeat(2, 1fr); margin: 85px 0 45px; }
-    .dummy-card { border-bottom: 1px solid #d8d3ca; min-height: 210px; padding: 28px 35px 28px 0; }
-    .dummy-card:nth-child(odd) { border-right: 1px solid #d8d3ca; padding-right: 40px; }
-    .dummy-card:nth-child(even) { padding-left: 40px; }
+    .dummy-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin: 85px 0 45px; }
+    .dummy-card { border: 1px solid #d8d3ca; min-height: 210px; min-width: 0; padding: 28px 32px; }
+    .dummy-card:nth-child(odd), .dummy-card:nth-child(even) { border-right: 1px solid #d8d3ca; padding-left: 32px; padding-right: 32px; }
     .button { align-items: center; display: inline-flex; font-size: 13px; font-weight: 700; gap: 28px; padding: 16px 20px; }
     .button-dark { background: #1c1b1a; color: #fff; }
     .dummy-card h2 { font-family: 'Space Grotesk', sans-serif; font-size: 27px; letter-spacing: -.04em; margin: 35px 0 12px; }
-    .dummy-card p { color: #716f6a; font-size: 14px; line-height: 1.6; max-width: 400px; }
+    .dummy-card p { color: #716f6a; font-size: 14px; line-height: 1.6; max-width: 400px; overflow-wrap: anywhere; }
     @media (max-width: 800px) {
-      .dummy-page { margin: 0 20px; padding: 75px 0 90px; }
+      .dummy-page { margin: 0; padding: 75px 20px 90px; }
       .education-item { min-width: 0; }
       .grades-table-wrap { max-width: 100%; }
       .profile-photo-wrap { margin: 28px 0 0; }

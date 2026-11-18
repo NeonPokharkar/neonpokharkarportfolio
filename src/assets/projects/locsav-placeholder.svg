@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title desc">
+  <title id="title">LocSav location journal illustration</title>
+  <desc id="desc">A map with a saved location pin and a small place note.</desc>
+  <rect width="800" height="500" fill="#e8e4da"/>
+  <path d="M-20 100 180 38l145 62 180-42 150 70 170-60M-30 260l175-55 145 88 160-85 170 76 190-70M-20 420l180-72 160 60 160-73 150 55 180-60" fill="none" stroke="#fffaf1" stroke-width="32"/>
+  <path d="M110-20 160 110l-20 150 66 142-18 140M360-20l-36 104 44 126-40 152 33 158M600-20l-56 136 48 124-48 141 36 139" fill="none" stroke="#c7d1c9" stroke-width="18"/>
+  <path d="M0 100h800M0 260h800M0 420h800" fill="none" stroke="#bfc9c1" stroke-width="2" opacity=".8"/>
+  <path d="M335 192c0-47 38-85 85-85s85 38 85 85c0 65-85 166-85 166s-85-101-85-166Z" fill="#f45b36"/>
+  <circle cx="420" cy="190" r="28" fill="#fffaf1"/>
+  <rect x="520" y="286" width="216" height="112" rx="14" fill="#fffaf1"/>
+  <circle cx="548" cy="315" r="7" fill="#f45b36"/>
+  <path d="M568 315h123M540 344h168M540 365h126" stroke="#1c1b1a" stroke-linecap="round" stroke-width="8" opacity=".7"/>
+  <path d="M75 48h90M635 448h92" stroke="#f45b36" stroke-linecap="round" stroke-width="8"/>
+</svg>

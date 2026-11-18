@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title desc">
+  <title id="title">Enterprise workflow illustration</title>
+  <desc id="desc">Connected steps represent a configurable review and approval workflow.</desc>
+  <rect width="800" height="500" fill="#e9e4dc"/>
+  <path d="M202 250h164M434 250h164" fill="none" stroke="#1c1b1a" stroke-linecap="round" stroke-width="8" opacity=".55"/>
+  <path d="m348 235 18 15-18 15M580 235l18 15-18 15" fill="none" stroke="#f45b36" stroke-linecap="round" stroke-linejoin="round" stroke-width="8"/>
+  <rect x="74" y="164" width="168" height="172" rx="18" fill="#fffaf1"/>
+  <rect x="316" y="164" width="168" height="172" rx="18" fill="#d6e4df"/>
+  <rect x="558" y="164" width="168" height="172" rx="18" fill="#1c1b1a"/>
+  <circle cx="158" cy="214" r="22" fill="#f3bd48"/>
+  <path d="M132 262h52M132 282h34" stroke="#1c1b1a" stroke-linecap="round" stroke-width="7" opacity=".55"/>
+  <circle cx="400" cy="214" r="22" fill="#f45b36"/>
+  <path d="m389 214 8 8 15-17" fill="none" stroke="#fffaf1" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M368 262h64M368 282h43" stroke="#1c1b1a" stroke-linecap="round" stroke-width="7" opacity=".55"/>
+  <circle cx="642" cy="214" r="22" fill="#64cf8a"/>
+  <path d="m631 214 8 8 15-17" fill="none" stroke="#1c1b1a" stroke-linecap="round" stroke-linejoin="round" stroke-width="5"/>
+  <path d="M610 262h64M610 282h43" stroke="#f7f5f0" stroke-linecap="round" stroke-width="7" opacity=".75"/>
+  <text x="158" y="318" fill="#716f6a" font-family="Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">DRAFT</text>
+  <text x="400" y="318" fill="#716f6a" font-family="Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">REVIEW</text>
+  <text x="642" y="318" fill="#f7f5f0" font-family="Arial, sans-serif" font-size="15" font-weight="700" text-anchor="middle">APPROVED</text>
+</svg>

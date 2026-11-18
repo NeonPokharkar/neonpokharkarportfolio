@@ -8,12 +8,19 @@ interface PortfolioItem {
   title: string;
   description: string;
   tags: string;
+  placeholder: ProjectPlaceholder;
+}
+
+interface ProjectPlaceholder {
+  src: string;
+  alt: string;
 }
 
 interface ProjectManifestEntry {
   title: string;
   explanation: string;
   tags?: string;
+  placeholder: ProjectPlaceholder;
 }
 
 interface ExperienceManifestEntry {
@@ -69,6 +76,8 @@ interface ProfileFocusItem {
 
 interface ProfileFocus {
   eyebrow: string;
+  headline: string;
+  highlight: string;
   items: ProfileFocusItem[];
 }
 
@@ -195,7 +204,8 @@ export class AppComponent {
         number: String(index + 1).padStart(2, '0'),
         title: project.title,
         description: project.explanation,
-        tags: project.tags ?? ''
+        tags: project.tags ?? '',
+        placeholder: project.placeholder
       }));
 
       this.experience = experienceData.experience.map((entry) => ({

@@ -34,7 +34,9 @@
     "message": "Open to select consulting & senior engineering roles"
   },
   "currentFocus": {
-    "eyebrow": "Currently & next",
+    "eyebrow": "Now / availability",
+    "headline": "Current",
+    "highlight": "& next",
     "items": [
       {
         "label": "Currently",

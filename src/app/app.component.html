@@ -56,39 +56,12 @@
     <div class="hero-background" aria-hidden="true"></div>
     <div class="hero-copy">
       <p class="eyebrow"><span class="eyebrow-line"></span> Hello, I'm Aditya</p>
-      @if (availability; as status) {
-        <p class="status-banner" role="status">
-          <span
-            class="status-dot"
-            [class.status-dot-available]="status.state === 'available'"
-            [class.status-dot-limited]="status.state === 'limited'"
-            [class.status-dot-booked]="status.state === 'booked'"
-            aria-hidden="true"></span>
-          <strong>{{ status.label }}:</strong>
-          <span>{{ status.activity }}</span>
-          <span class="status-separator" aria-hidden="true">·</span>
-          <strong>{{ status.message }}</strong>
-        </p>
-      }
       <h1 class="hero-title">Aditya Pokharkar<em>Full Stack &amp; Systems Engineer</em></h1>
       <p class="hero-description">I architect resilient backend platforms and private AI workflows that solve high-stakes operational bottlenecks.</p>
       <div class="hero-actions">
         <a class="button button-dark" [href]="'mailto:' + email + '?subject=Technical%20chat'">Book a Technical Chat <span aria-hidden="true">↗</span></a>
         <a class="text-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
       </div>
-      @if (currentFocus; as focus) {
-        <section class="current-focus" aria-label="Current focus and availability">
-          <p class="current-focus-heading">{{ focus.eyebrow }}</p>
-          <div class="current-focus-list">
-            @for (item of focus.items; track item.label) {
-              <p class="current-focus-item">
-                <strong>{{ item.label }}</strong>
-                <span>{{ item.text }}</span>
-              </p>
-            }
-          </div>
-        </section>
-      }
     </div>
 
     <div class="hero-art black-hole-scene" aria-label="Animated orange and black hole with an orbiting rocket" role="img">
@@ -124,6 +97,7 @@
 
   @if (whatIBring; as content) {
   <section class="what-i-bring" id="services">
+    <div class="card-background" aria-hidden="true"></div>
     <div class="services-heading">
       <p class="eyebrow"><span class="eyebrow-line"></span> {{ content.eyebrow }}</p>
       <h2>{{ content.headline }}<br><em>{{ content.highlight }}</em></h2>
@@ -135,6 +109,37 @@
           <h3>{{ service.title }}</h3>
           <p>{{ service.description }}</p>
         </article>
+      }
+    </div>
+  </section>
+  }
+
+  @if (currentFocus; as focus) {
+  <section class="current-section" id="current" aria-labelledby="current-heading">
+    <div class="current-section-intro">
+      <p class="eyebrow"><span class="eyebrow-line"></span> {{ focus.eyebrow }}</p>
+      <h2 id="current-heading">{{ focus.headline }}<br><em>{{ focus.highlight }}</em></h2>
+      @if (availability; as status) {
+        <p class="status-banner" role="status">
+          <span
+            class="status-dot"
+            [class.status-dot-available]="status.state === 'available'"
+            [class.status-dot-limited]="status.state === 'limited'"
+            [class.status-dot-booked]="status.state === 'booked'"
+            aria-hidden="true"></span>
+          <strong>{{ status.label }}:</strong>
+          <span>{{ status.activity }}</span>
+          <span class="status-separator" aria-hidden="true">·</span>
+          <strong>{{ status.message }}</strong>
+        </p>
+      }
+    </div>
+    <div class="current-focus-list">
+      @for (item of focus.items; track item.label) {
+        <p class="current-focus-item">
+          <strong>{{ item.label }}</strong>
+          <span>{{ item.text }}</span>
+        </p>
       }
     </div>
   </section>
@@ -176,8 +181,8 @@
         <article class="project-card">
           <span class="project-number">{{ project.number }}</span>
           <div class="project-content">
-            <div class="project-visual project-visual-{{ project.number }}">
-              <span>{{ project.number === '01' ? 'NP' : project.number === '02' ? 'DATA' : 'TOGETHER' }}</span>
+            <div class="project-visual">
+              <img [src]="project.placeholder.src" [alt]="project.placeholder.alt" loading="lazy" decoding="async">
             </div>
             <div class="project-info">
               <div>

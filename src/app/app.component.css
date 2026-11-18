@@ -83,12 +83,6 @@ h1 em, h2 em { color: #f45b36; font-style: normal; }
 .button-dark { background: #1c1b1a; color: #fff; min-width: 168px; }
 .button-dark:hover { background: #f45b36; }
 .text-link { border-bottom: 1px solid #1c1b1a; font-size: 13px; font-weight: 700; padding-bottom: 5px; }
-.current-focus { border-top: 1px solid #ffffff33; margin-top: 29px; padding-top: 19px; }
-.current-focus-heading { color: #a7a29a; font-size: 10px; font-weight: 700; letter-spacing: .12em; margin-bottom: 13px; text-transform: uppercase; }
-.current-focus-list { display: grid; gap: 12px; }
-.current-focus-item { display: grid; gap: 12px; grid-template-columns: 102px minmax(0, 1fr); margin: 0; }
-.current-focus-item strong { color: #f7f5f0; font-size: 12px; }
-.current-focus-item span { color: #c6c0b8; font-size: 12px; line-height: 1.55; }
 
 .hero-art { align-self: center; border-radius: 50%; height: min(43vw, 510px); justify-self: end; max-height: 510px; max-width: 510px; min-height: 315px; min-width: 315px; overflow: hidden; position: relative; width: min(43vw, 510px); z-index: 1; }
 .black-hole-scene { background: #090807; isolation: isolate; }
@@ -120,14 +114,29 @@ h1 em, h2 em { color: #f45b36; font-style: normal; }
 .intro-copy { color: #716f6a; font-size: 16px; line-height: 1.6; margin: 30px 0 0 auto; max-width: 390px; }
 .resume-link { border-bottom: 1px solid #f45b36; color: #f45b36; display: inline-block; font-size: 13px; font-weight: 700; margin-top: 28px; padding-bottom: 5px; }
 
-.what-i-bring { border-bottom: 1px solid #d8d3ca; margin: 0 auto; max-width: 1176px; padding: 95px 0 100px; }
+.what-i-bring { border-bottom: 1px solid #5b514b; isolation: isolate; margin: 0 auto; max-width: 1176px; padding: 95px 0 100px; position: relative; }
+.what-i-bring .eyebrow { color: #a7a29a; }
+.what-i-bring h2 { color: #f7f5f0; }
 .services-heading { margin-bottom: 42px; }
 .services-heading h2 { max-width: 700px; }
 .services-grid { display: grid; gap: 16px; grid-template-columns: repeat(3, minmax(0, 1fr)); }
-.service-card { background: #f1eee8; border-top: 2px solid #f45b36; padding: 25px 23px 27px; }
+.service-card { background: #1c1b1a; border-top: 2px solid #f45b36; padding: 25px 23px 27px; }
 .service-number { color: #f45b36; font-size: 10px; font-weight: 700; letter-spacing: .1em; }
-.service-card h3 { color: #1c1b1a; font-size: 20px; letter-spacing: -.035em; line-height: 1.15; margin: 18px 0 14px; }
-.service-card p { color: #716f6a; font-size: 13px; line-height: 1.65; margin: 0; }
+.service-card h3 { color: #f7f5f0; font-size: 20px; letter-spacing: -.035em; line-height: 1.15; margin: 18px 0 14px; }
+.service-card p { color: #c6c0b8; font-size: 13px; line-height: 1.65; margin: 0; }
+
+.current-section { border-bottom: 1px solid #d8d3ca; display: grid; gap: 9vw; grid-template-columns: .8fr 1fr; margin: 0 auto; max-width: 1176px; padding: 100px 0; }
+.current-section-intro { align-self: start; }
+.current-section .eyebrow { color: #716f6a; }
+.current-section .status-banner { border-color: #d8d3ca; color: #716f6a; margin: 27px 0 0; }
+.current-section .status-banner strong { color: #1c1b1a; }
+.current-section .status-separator { color: #a7a29a; }
+.current-focus-list { align-self: center; display: grid; }
+.current-focus-item { border-bottom: 1px solid #d8d3ca; display: grid; gap: 15px; grid-template-columns: 110px minmax(0, 1fr); margin: 0; padding: 16px 0; }
+.current-focus-item:first-child { padding-top: 0; }
+.current-focus-item:last-child { border-bottom: 0; padding-bottom: 0; }
+.current-focus-item strong { color: #1c1b1a; font-size: 13px; }
+.current-focus-item span { color: #716f6a; font-size: 14px; line-height: 1.6; }
 
 .skills-section, .projects-section, .experience-section { display: grid; gap: 9vw; grid-template-columns: .8fr 1fr; padding: 125px 0; }
 .portfolio-card { isolation: isolate; position: relative; }
@@ -152,16 +161,8 @@ h2 { font-size: clamp(42px, 5vw, 69px); line-height: .95; margin: 0; }
 .project-card { border-bottom: 1px solid #d8d3ca; display: grid; gap: 20px; grid-template-columns: 38px 1fr 26px; padding: 31px 0; }
 .project-number, .experience-period { color: #f45b36; font-family: 'Space Grotesk', sans-serif; font-size: 13px; font-weight: 700; }
 .project-content { display: grid; gap: 30px; grid-template-columns: 220px 1fr; }
-.project-visual { align-items: center; display: flex; height: 150px; justify-content: center; overflow: hidden; position: relative; }
-.project-visual::before, .project-visual::after { border-radius: 50%; content: ''; position: absolute; }
-.project-visual::before { background: #f45b36; height: 120px; width: 120px; }
-.project-visual::after { border: 1px solid #1c1b1a; height: 140px; transform: rotate(35deg); width: 200px; }
-.project-visual-02 { background: #d6e4df; }
-.project-visual-02::before { background: #f3bd48; border-radius: 0; height: 90px; transform: rotate(45deg); width: 90px; }
-.project-visual-03 { background: #e9dfd5; }
-.project-visual-03::before { background: #1c1b1a; height: 80px; width: 80px; }
-.project-visual span { color: #fff; font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 700; position: relative; z-index: 1; }
-.project-visual-02 span, .project-visual-03 span { color: #1c1b1a; }
+.project-visual { height: 150px; overflow: hidden; }
+.project-visual img { display: block; height: 100%; object-fit: cover; width: 100%; }
 .project-info { display: flex; flex-direction: column; justify-content: space-between; padding: 7px 0; }
 .project-info h3, .experience-item h3 { font-size: 25px; letter-spacing: -.04em; margin-bottom: 12px; }
 .project-info p, .experience-item p { color: #716f6a; font-size: 14px; line-height: 1.55; margin-bottom: 0; max-width: 410px; }
@@ -244,9 +245,10 @@ footer a { color: #1c1b1a; font-weight: 700; }
   .header-link { display: none; }
   .hero { gap: 55px; grid-template-columns: 1fr; min-height: 0; padding: 75px 20px 85px; }
   .hero-art { justify-self: center; }
-  .intro, .what-i-bring, .skills-section, .projects-section, .experience-section, .education-section { margin-left: 20px; margin-right: 20px; }
+  .intro, .what-i-bring, .current-section, .skills-section, .projects-section, .experience-section, .education-section { margin-left: 20px; margin-right: 20px; }
   .intro { padding: 65px 0 70px; }
   .what-i-bring { padding: 70px 0; }
+  .current-section { gap: 40px; grid-template-columns: 1fr; padding: 75px 0; }
   .services-heading { margin-bottom: 32px; }
   .services-grid { grid-template-columns: 1fr; }
   .hero-title { font-size: clamp(44px, 10vw, 60px); }

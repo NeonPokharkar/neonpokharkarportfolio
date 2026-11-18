@@ -61,6 +61,7 @@ interface ProjectEntry {
   trialLink: string;
   githubLink: string;
   photos?: string[];
+  placeholder?: { src: string; alt: string };
   explanation: string;
   thoughtProcess: string;
   resultsSummary: string;
@@ -258,6 +259,10 @@ export class InvestContactComponent {
                     <img [src]="photo" [alt]="project.title + ' project example'">
                   }
                 </div>
+              } @else if (project.placeholder) {
+                <div class="project-photos project-placeholder">
+                  <img [src]="project.placeholder.src" [alt]="project.placeholder.alt" loading="lazy" decoding="async">
+                </div>
               }
               <div class="project-sections">
                 <section><p>Explanation</p><div>{{ project.explanation }}</div></section>
@@ -291,6 +296,7 @@ export class InvestContactComponent {
     .project-links a:hover, .project-links button:hover { color: #1c1b1a; }
     .project-photos { display: grid; gap: 14px; grid-template-columns: repeat(3, 1fr); margin-top: 28px; }
     .project-photos img { aspect-ratio: 16 / 9; background: #f5f0eb; object-fit: cover; width: 100%; }
+    .project-placeholder { grid-template-columns: minmax(0, 1fr); max-width: 760px; }
     .project-sections { display: grid; gap: 22px; grid-template-columns: repeat(3, 1fr); margin-top: 32px; }
     .project-sections section { border-left: 2px solid #f45b36; padding-left: 18px; }
     .project-sections p { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .12em; margin: 0 0 10px; text-transform: uppercase; }

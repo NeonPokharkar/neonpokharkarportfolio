@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title desc">
+  <title id="title">ArthShastra finance illustration</title>
+  <desc id="desc">Purpose-based budget categories with a runway balance indicator.</desc>
+  <rect width="800" height="500" fill="#dfe8df"/>
+  <rect x="86" y="76" width="628" height="348" rx="22" fill="#f7f5f0"/>
+  <text x="124" y="126" fill="#1c1b1a" font-family="Arial, sans-serif" font-size="20" font-weight="700">MONEY WITH PURPOSE</text>
+  <rect x="124" y="154" width="210" height="220" rx="16" fill="#e9dfd5"/>
+  <rect x="354" y="154" width="144" height="220" rx="16" fill="#d6e4df"/>
+  <rect x="518" y="154" width="154" height="220" rx="16" fill="#f4e3b6"/>
+  <circle cx="229" cy="229" r="48" fill="none" stroke="#f45b36" stroke-width="15"/>
+  <path d="M229 181a48 48 0 0 1 43 27" fill="none" stroke="#1c1b1a" stroke-linecap="round" stroke-width="15"/>
+  <path d="M182 299h94M182 322h66" stroke="#1c1b1a" stroke-linecap="round" stroke-width="7" opacity=".6"/>
+  <circle cx="426" cy="225" r="37" fill="#64cf8a"/>
+  <path d="M403 226h46" stroke="#1c1b1a" stroke-linecap="round" stroke-width="8"/>
+  <path d="M386 299h80M386 322h58" stroke="#1c1b1a" stroke-linecap="round" stroke-width="7" opacity=".6"/>
+  <path d="M553 233h83M553 257h62M553 281h74" stroke="#f45b36" stroke-linecap="round" stroke-width="11"/>
+  <path d="M553 318h83" stroke="#1c1b1a" stroke-linecap="round" stroke-width="7" opacity=".45"/>
+  <circle cx="664" cy="126" r="12" fill="#f45b36"/>
+</svg>

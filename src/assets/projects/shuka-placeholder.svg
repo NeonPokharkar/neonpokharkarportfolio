@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 500" role="img" aria-labelledby="title desc">
+  <title id="title">Agent Shuka local AI illustration</title>
+  <desc id="desc">Private documents connect through vector search to a local assistant.</desc>
+  <rect width="800" height="500" fill="#202725"/>
+  <circle cx="590" cy="248" r="142" fill="#293b35"/>
+  <g fill="#f7f5f0">
+    <path d="M103 125h116l40 40v150H103z"/>
+    <path d="M143 210h95v120H143z" opacity=".82"/>
+  </g>
+  <path d="M219 125v42h40" fill="#d8d3ca"/>
+  <path d="M126 190h89M126 216h66M162 244h60M162 270h42" stroke="#8f9b92" stroke-linecap="round" stroke-width="7"/>
+  <g fill="none" stroke="#f3bd48" stroke-width="4">
+    <path d="M284 202 365 157 423 220 489 155M284 286l87-39 52 65 66-59"/>
+  </g>
+  <g fill="#f45b36">
+    <circle cx="284" cy="202" r="9"/><circle cx="365" cy="157" r="9"/><circle cx="423" cy="220" r="9"/><circle cx="489" cy="155" r="9"/>
+    <circle cx="284" cy="286" r="9"/><circle cx="371" cy="247" r="9"/><circle cx="423" cy="312" r="9"/><circle cx="489" cy="253" r="9"/>
+  </g>
+  <circle cx="611" cy="236" r="64" fill="#f45b36"/>
+  <path d="M581 237h60M611 207v60" stroke="#fffaf1" stroke-linecap="round" stroke-width="9"/>
+  <rect x="548" y="326" width="126" height="42" rx="21" fill="#f7f5f0"/>
+  <circle cx="571" cy="347" r="6" fill="#64cf8a"/>
+  <path d="M588 347h62" stroke="#1c1b1a" stroke-linecap="round" stroke-width="6"/>
+  <path d="M91 388h120M581 420h120" stroke="#f45b36" stroke-linecap="round" stroke-width="7"/>
+</svg>

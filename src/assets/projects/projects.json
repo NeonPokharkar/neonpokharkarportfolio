@@ -8,6 +8,10 @@
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
       "photos": [],
+      "placeholder": {
+        "src": "assets/projects/locsav-placeholder.svg",
+        "alt": "Map illustration with a highlighted saved location"
+      },
       "explanation": "A native Android app that lets users save locations and attach photos and information to each place, integrating Google Maps with a SQLite database.",
       "thoughtProcess": "The app combines a map-based view of places with locally stored details, making it possible to keep a personal record of meaningful locations and the memories or notes associated with them.",
       "resultsSummary": "Built a location-saving Android app using native Java development, Google Maps integration, and SQLite persistence."
@@ -19,9 +23,11 @@
       "createdWith": "solely",
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
-      "photos": [
-        "assets/projects/nboard-placeholder.svg"
-      ],
+      "photos": [],
+      "placeholder": {
+        "src": "assets/projects/nboard-placeholder.svg",
+        "alt": "Indic keyboard illustration with a highlighted language key"
+      },
       "explanation": "A swipe-based native Java keyboard supporting 3+ Indic languages, including conjunct letter support and a language-agnostic layout system.",
       "thoughtProcess": "The project focused on separating language behaviour from the keyboard structure so new layouts could be introduced through minimal file changes rather than a rewrite of the input system.",
       "resultsSummary": "Produced a flexible native keyboard concept with multi-language support and a structure that could be extended without changing the core interaction model."
@@ -34,6 +40,10 @@
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
       "photos": [],
+      "placeholder": {
+        "src": "assets/projects/timetable-placeholder.svg",
+        "alt": "Timetable grid showing a generated schedule"
+      },
       "explanation": "Built a constraint-aware genetic algorithm timetable optimizer in Java, exploring candidate schedules across multiple student groups to produce feasible timetables under competing resource constraints.",
       "thoughtProcess": "The approach modelled timetable generation as a search problem, using constraints and candidate populations to explore schedules instead of relying on a single manually designed arrangement.",
       "resultsSummary": "Automates timetable generation by evaluating competing constraints across student groups, helping planners focus on viable schedule options rather than manually assembling each one."
@@ -46,6 +56,10 @@
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
       "photos": [],
+      "placeholder": {
+        "src": "assets/projects/workflow-placeholder.svg",
+        "alt": "Workflow diagram connecting draft, review, and approval steps"
+      },
       "explanation": "Architected the Java, Spring Boot, and Oracle backend for an enterprise workflow platform, delivering configurable approvals, versioned forms, and real-time collaboration for multi-team operations.",
       "thoughtProcess": "The platform was designed around modular backend services, a flexible workflow engine, and clear ownership boundaries so changing enterprise requirements could be handled without rebuilding the entire system.",
       "resultsSummary": "Shipped a production workflow platform in eight months with 50+ backend APIs, configurable approval flows, concurrency-safe forms, and real-time collaboration."
@@ -58,6 +72,10 @@
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
       "photos": [],
+      "placeholder": {
+        "src": "assets/projects/shuka-placeholder.svg",
+        "alt": "Local AI assistant connecting private documents to a local model"
+      },
       "explanation": "Engineered a private, local-first knowledge assistant with Ollama, LlamaIndex, LangChain, and Chroma vector search. It indexes personal documents and runs LLM inference locally, while Tailscale enables remote access through a Flutter client.",
       "thoughtProcess": "To preserve context across a conversation, the assistant summarizes the discussion before each response and considers that summary alongside the latest question, helping it answer in light of the broader conversation rather than only the newest message.",
       "resultsSummary": "Delivered a document assistant combining local LLM inference, vector retrieval, conversational context, and remote access for private knowledge workflows."
@@ -70,6 +88,10 @@
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
       "photos": [],
+      "placeholder": {
+        "src": "assets/projects/arthshastra-placeholder.svg",
+        "alt": "Personal finance illustration with separate budget categories"
+      },
       "explanation": "A local-first personal finance app that helps users understand hedging and runway management by allocating money tokens to different purposes. It supports recording transactions from UPI activity or adding them later through a delayed manual-entry flow.",
       "thoughtProcess": "The app makes financial planning more approachable by giving money clear purposes and helping users see how day-to-day transactions affect their runway and overall financial health, while keeping their data stored locally.",
       "resultsSummary": "Designed to support healthier money habits through purpose-based budgeting, runway awareness, and flexible transaction tracking without requiring users to record every expense immediately."
@@ -82,6 +104,10 @@
       "trialLink": "https://www.instagram.com/thenruptshirts/",
       "githubLink": "https://github.com/NeonPokharkar",
       "photos": [],
+      "placeholder": {
+        "src": "assets/projects/nrup-shirts-placeholder.svg",
+        "alt": "T-shirt design illustration with fabric swatches"
+      },
       "explanation": "An online and offline designer T-shirt business built around local culture and sentiment. The venture sold 20 shirts: 18 through local sales and 2 online organically.",
       "thoughtProcess": "The experience highlighted how much a bootstrapped startup depends on validating demand, choosing an effective sales approach, and managing limited resources before committing further time and money.",
       "resultsSummary": "The business did not become sustainable, but it provided a practical learning experience in entrepreneurship and the decisions to reconsider when building a bootstrapped startup."

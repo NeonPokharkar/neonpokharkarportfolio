@@ -34,9 +34,9 @@
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
       "photos": [],
-      "explanation": "A constraint-aware genetic algorithm for university timetable scheduling across multiple student groups.",
+      "explanation": "Built a constraint-aware genetic algorithm timetable optimizer in Java, exploring candidate schedules across multiple student groups to produce feasible timetables under competing resource constraints.",
       "thoughtProcess": "The approach modelled timetable generation as a search problem, using constraints and candidate populations to explore schedules instead of relying on a single manually designed arrangement.",
-      "resultsSummary": "Created an optimisation-based timetable generator capable of handling competing constraints and producing more efficient university schedules."
+      "resultsSummary": "Automates timetable generation by evaluating competing constraints across student groups, helping planners focus on viable schedule options rather than manually assembling each one."
     },
     {
       "title": "Enterprise workflow platform",
@@ -46,9 +46,9 @@
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
       "photos": [],
-      "explanation": "A scalable workflow application built with Spring Boot and Angular, including REST APIs, real-time collaboration, versioning, locking, and threaded comments.",
+      "explanation": "Architected the Java, Spring Boot, and Oracle backend for an enterprise workflow platform, delivering configurable approvals, versioned forms, and real-time collaboration for multi-team operations.",
       "thoughtProcess": "The platform was designed around modular backend services, a flexible workflow engine, and clear ownership boundaries so changing enterprise requirements could be handled without rebuilding the entire system.",
-      "resultsSummary": "Delivered a production workflow platform with 50+ backend APIs and collaboration features supporting complex form-driven processes."
+      "resultsSummary": "Shipped a production workflow platform in eight months with 50+ backend APIs, configurable approval flows, concurrency-safe forms, and real-time collaboration."
     },
     {
       "title": "Agent Shuka — Local AI knowledge assistant",
@@ -58,9 +58,9 @@
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
       "photos": [],
-      "explanation": "A locally hosted AI chatbot powered by Ollama, combining LangChain and LlamaIndex with a Chroma vector database. It can ingest information downloaded from datasets and connect to a mobile app through a local server exposed over Tailscale.",
+      "explanation": "Engineered a private, local-first knowledge assistant with Ollama, LlamaIndex, LangChain, and Chroma vector search. It indexes personal documents and runs LLM inference locally, while Tailscale enables remote access through a Flutter client.",
       "thoughtProcess": "To preserve context across a conversation, the assistant summarizes the discussion before each response and considers that summary alongside the latest question, helping it answer in light of the broader conversation rather than only the newest message.",
-      "resultsSummary": "Designed as a private, locally run knowledge assistant with dataset-backed retrieval, long-running conversational context, and mobile access through a Tailscale connection."
+      "resultsSummary": "Delivered a document assistant combining local LLM inference, vector retrieval, conversational context, and remote access for private knowledge workflows."
     },
     {
       "title": "ArthShastra — Local finance management app",

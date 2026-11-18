@@ -53,6 +53,38 @@ interface ResumeManifest {
   linkedin: string;
 }
 
+type AvailabilityState = 'available' | 'limited' | 'booked';
+
+interface ProfileAvailability {
+  state: AvailabilityState;
+  label: string;
+  activity: string;
+  message: string;
+}
+
+interface ProfileFocusItem {
+  label: string;
+  text: string;
+}
+
+interface ProfileFocus {
+  eyebrow: string;
+  items: ProfileFocusItem[];
+}
+
+interface ProfileService {
+  eyebrow: string;
+  title: string;
+  description: string;
+}
+
+interface WhatIBring {
+  eyebrow: string;
+  headline: string;
+  highlight: string;
+  services: ProfileService[];
+}
+
 interface ProfileManifest {
   toolkit: string[];
   interests: string[];
@@ -60,7 +92,11 @@ interface ProfileManifest {
   email: string;
   phone: string;
   linkedin: string;
+  github: string;
   intelliChatEndpoint: string;
+  availability: ProfileAvailability;
+  currentFocus: ProfileFocus;
+  whatIBring: WhatIBring;
 }
 
 interface ChatMessage {
@@ -108,7 +144,11 @@ export class AppComponent {
   protected email = '';
   protected phone = '';
   protected linkedin = '';
+  protected github = '';
   protected intelliChatEndpoint = '';
+  protected availability: ProfileAvailability | undefined;
+  protected currentFocus: ProfileFocus | undefined;
+  protected whatIBring: WhatIBring | undefined;
   private conversationSummary = '';
   private lastRelevantConversation = '';
   protected chatOpen = false;
@@ -186,7 +226,11 @@ export class AppComponent {
       this.email = profile.email;
       this.phone = profile.phone;
       this.linkedin = profile.linkedin;
+      this.github = profile.github;
       this.intelliChatEndpoint = profile.intelliChatEndpoint;
+      this.availability = profile.availability;
+      this.currentFocus = profile.currentFocus;
+      this.whatIBring = profile.whatIBring;
       this.skills = profile.toolkit;
       this.interests = profile.interests;
     } catch {

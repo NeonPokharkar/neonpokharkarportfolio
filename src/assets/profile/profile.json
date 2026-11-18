@@ -26,5 +26,51 @@
   "email": "theadityapokharkar@gmail.com",
   "phone": "+91 8999490870",
   "linkedin": "https://www.linkedin.com/in/aditya-pokharkar-936030179",
+  "github": "https://github.com/NeonPokharkar",
+  "availability": {
+    "state": "available",
+    "label": "Status",
+    "activity": "Building enterprise backend systems",
+    "message": "Open to select consulting & senior engineering roles"
+  },
+  "currentFocus": {
+    "eyebrow": "Currently & next",
+    "items": [
+      {
+        "label": "Currently",
+        "text": "Leading backend architecture and real-time workflow systems at BofA Continuum, while building Agent Shuka, a private, local-first AI workflow, on the side."
+      },
+      {
+        "label": "Looking ahead",
+        "text": "Moving toward staff-level systems engineering and technical product architecture, focusing on high-reliability backends, distributed systems, and practical AI integration."
+      },
+      {
+        "label": "Availability",
+        "text": "Open to short-term technical consulting (backend audits, private AI setups, 0-to-1 MVPs) and high-ownership full-time roles."
+      }
+    ]
+  },
+  "whatIBring": {
+    "eyebrow": "What I bring to the table",
+    "headline": "Systems thinking.",
+    "highlight": "Product momentum.",
+    "services": [
+      {
+        "eyebrow": "01 / SYSTEMS",
+        "title": "Enterprise Backend & Real-Time Systems",
+        "description": "Designing reliable platforms with Java, Spring Boot, WebSockets, and SQL/Oracle. Experienced in workflow engines, state versioning, concurrency-safe locking, and real-time collaboration for complex operations."
+      },
+      {
+        "eyebrow": "02 / PRIVATE AI",
+        "title": "Private & Local-First AI Workflows",
+        "description": "Building self-hosted LLM and retrieval workflows with Ollama, LlamaIndex, and ChromaDB, keeping document processing local for privacy-sensitive search without cloud-hosted LLM APIs."
+      },
+      {
+        "eyebrow": "03 / 0-TO-1",
+        "title": "0-to-1 Product Engineering",
+        "description": "Taking ideas from problem statement to shipped web and mobile products with Angular, Flutter, Java, and Python, spanning workflow tools, local AI, and personal finance."
+      }
+    ]
+  },
   "intelliChatEndpoint": "https://simba.vimba-buri.ts.net/intelli-chat"
 }

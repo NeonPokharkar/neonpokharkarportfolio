@@ -28,7 +28,7 @@
       "firm": "BofA Continuum",
       "role": "Software Engineer I",
       "location": "Mumbai, Maharashtra",
-      "summary": "A non-banking subsidiary of Bank of America, where I lead backend development and contribute across the stack to an internal enterprise workflow platform.",
+      "summary": "Led backend architecture for an enterprise workflow platform using Java, Spring Boot, and Oracle; delivered configurable approvals, versioned forms, and real-time collaboration for multi-team operations.",
       "qualitativeAssessment": [
         "Applied Aspect-Oriented Programming to modularise cross-cutting concerns, reduce duplication, and improve maintainability across the platform.",
         "Owned the detection and remediation of image vulnerabilities to support more secure and stable deployments.",

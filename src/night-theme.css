@@ -1,0 +1,274 @@
+html[data-theme='night'] {
+  background: #11110f;
+  color: #f2efe9;
+  color-scheme: dark;
+}
+
+html[data-theme='night'] body {
+  background: #11110f;
+}
+
+html[data-theme='night'] .site-header {
+  background: #11110f;
+  border-bottom: 1px solid #383530;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .site-header nav a {
+  color: #c6c0b8;
+}
+
+html[data-theme='night'] .site-header nav a:hover,
+html[data-theme='night'] .site-header .header-link {
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .site-header .header-link {
+  border-color: #f2efe9;
+}
+
+html[data-theme='night'] .theme-toggle {
+  border-color: #514c46;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .theme-toggle:hover {
+  border-color: #ff8d32;
+  color: #ff8d32;
+}
+
+html[data-theme='night'] .nav-drawer {
+  background: #171614;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .site-header .menu-toggle {
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .site-header .menu-toggle-icon span {
+  background: #f2efe9;
+}
+
+html[data-theme='night'] .site-header nav.menu-open {
+  background: #171614;
+}
+
+html[data-theme='night'] .site-header nav a {
+  border-color: #403c36;
+}
+
+html[data-theme='night'] .nav-drawer-header,
+html[data-theme='night'] .nav-drawer-header button {
+  border-color: #514c46;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .intro-copy,
+html[data-theme='night'] .current-section .eyebrow,
+html[data-theme='night'] .current-section .status-banner,
+html[data-theme='night'] .current-focus-item span,
+html[data-theme='night'] .project-info p,
+html[data-theme='night'] .experience-item p {
+  color: #bdb7ad;
+}
+
+html[data-theme='night'] .current-section .status-banner,
+html[data-theme='night'] .current-focus-item,
+html[data-theme='night'] .project-list,
+html[data-theme='night'] .project-card,
+html[data-theme='night'] .experience-list,
+html[data-theme='night'] .experience-item,
+html[data-theme='night'] .education-section {
+  border-color: #403c36;
+}
+
+html[data-theme='night'] .current-section .status-banner strong {
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .experience-section .experience-company,
+html[data-theme='night'] .education-section .experience-company {
+  color: #ff8d32;
+}
+
+html[data-theme='night'] .resume-error {
+  background: #3a211b;
+  color: #ffb49f;
+}
+
+html[data-theme='night'] .chat-panel {
+  background: #191816;
+  border-color: #514c46;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .chat-header {
+  background: #24221f;
+}
+
+html[data-theme='night'] .chat-message {
+  background: #302d28;
+}
+
+html[data-theme='night'] .chat-message-user {
+  background: #293732;
+}
+
+html[data-theme='night'] .chat-message p {
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .chat-form {
+  border-color: #514c46;
+}
+
+html[data-theme='night'] .chat-form input {
+  border-color: #625c54;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .chat-form button {
+  background: #f45b36;
+}
+
+html[data-theme='night'] .chat-footnote {
+  color: #aaa399;
+}
+
+html[data-theme='night'] :is(.invest-page, .project-page, .hobby-page, .essay-list-page, .essay-page, .dummy-page) {
+  color: #f2efe9;
+}
+
+html[data-theme='night'] :is(.invest-page, .project-page, .hobby-page, .essay-list-page, .essay-page, .dummy-page) :is(h1, h2, h3, h4) {
+  color: #f2efe9;
+}
+
+html[data-theme='night'] :is(.invest-page, .project-page, .hobby-page, .essay-list-page, .essay-page, .dummy-page) :is(p, li, .eyebrow, .invest-intro, .project-intro, .project-created-with, .hobby-intro, .essay-summary, .essay-meta, .experience-role, .experience-qualitative-disclaimer, .experience-assessment-status, .experience-qualitative li, .recommendation footer span, .education-item p, .dummy-card p, .compact-profile p) {
+  color: #bdb7ad;
+}
+
+html[data-theme='night'] :is(.invest-page, .project-page, .hobby-page, .essay-list-page, .essay-page, .dummy-page) :is(a, button) {
+  color: #ff8d32;
+}
+
+html[data-theme='night'] :is(.project-page, .essay-page, .dummy-page) :is(.project-list, .project-entry, .project-sections section, .story-block, .education-block, .experience-block, .experience-recommendations, .next-block, .dummy-grid, .dummy-card, .experience-firm, .education-item) {
+  border-color: #403c36;
+}
+
+html[data-theme='night'] .invest-form,
+html[data-theme='night'] .project-card,
+html[data-theme='night'] .essay-list-card,
+html[data-theme='night'] .hobby-entry {
+  background-color: #191816;
+  border-color: #403c36;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .invest-page .invest-form label,
+html[data-theme='night'] app-dummy-page .phone-dialog-backdrop .phone-dialog label {
+  color: #e4dfd7;
+}
+
+html[data-theme='night'] .invest-page .invest-form :is(input, textarea, select),
+html[data-theme='night'] app-dummy-page .phone-dialog-backdrop .phone-dialog :is(input, textarea) {
+  background: #11110f;
+  border-color: #625c54;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] :is(.invest-page, app-dummy-page) :is(input, textarea)::placeholder {
+  color: #aaa399;
+}
+
+html[data-theme='night'] .invest-page .invest-form .button-dark {
+  background: #f45b36;
+  color: #fff;
+}
+
+html[data-theme='night'] .hobby-page .hobby-filters button {
+  background: #191816;
+  border-color: #514c46;
+  color: #bdb7ad;
+}
+
+html[data-theme='night'] .hobby-page .hobby-filters button.active,
+html[data-theme='night'] .hobby-page .hobby-filters button:hover {
+  background: #f45b36;
+  border-color: #f45b36;
+  color: #fff;
+}
+
+html[data-theme='night'] .project-page .project-sections div,
+html[data-theme='night'] .hobby-page .hobby-sections div,
+html[data-theme='night'] .essay-list-page .essay-list-card div {
+  color: #e4dfd7;
+}
+
+html[data-theme='night'] .project-page .project-sections p,
+html[data-theme='night'] .hobby-page :is(.hobby-type, .hobby-sections p, .hobby-result-links span) {
+  color: #ff8d32 !important;
+}
+
+html[data-theme='night'] .essay-list-page .essay-list-grid,
+html[data-theme='night'] .essay-list-page .essay-list-card {
+  border-color: #403c36;
+}
+
+html[data-theme='night'] .essay-list-page .essay-list-card small {
+  color: #bdb7ad;
+}
+
+html[data-theme='night'] .experience-qualitative,
+html[data-theme='night'] .education-item:hover {
+  background: #1c1a17;
+  border-color: #514c46;
+}
+
+html[data-theme='night'] .experience-summary,
+html[data-theme='night'] .story-copy,
+html[data-theme='night'] .experience-project li,
+html[data-theme='night'] .experience-metric,
+html[data-theme='night'] .recommendation-comment,
+html[data-theme='night'] .recommendation footer a,
+html[data-theme='night'] .education-metric,
+html[data-theme='night'] .education-achievements li,
+html[data-theme='night'] .next-copy,
+html[data-theme='night'] .essay-body {
+  color: #e4dfd7;
+}
+
+html[data-theme='night'] .essay-page .essay-body {
+  border-color: #403c36;
+  color: #e4dfd7;
+}
+
+html[data-theme='night'] .grades-table {
+  background: #191816;
+  border-color: #403c36;
+  box-shadow: none;
+}
+
+html[data-theme='night'] .grades-table :is(th, td) {
+  border-color: #403c36;
+}
+
+html[data-theme='night'] .grades-table .semesters th {
+  background: #292621;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .profile-overlay,
+html[data-theme='night'] .biography-overlay {
+  background: #171614f2;
+}
+
+html[data-theme='night'] app-dummy-page .phone-dialog-backdrop .phone-dialog {
+  background: #191816;
+  border-color: #514c46;
+  color: #f2efe9;
+}
+
+html[data-theme='night'] app-dummy-page .phone-dialog-backdrop .phone-dialog :is(.phone-dialog-close, .phone-dialog-copy) {
+  color: #bdb7ad;
+}

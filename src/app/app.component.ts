@@ -121,7 +121,19 @@ interface ChatMessage {
   styleUrl: './app.component.css'
 })
 export class AppComponent {
+  protected themeMode: 'day' | 'night' = 'day';
+  private readonly themePreferenceKey = 'aditya-portfolio-theme';
+  private hasManualThemePreference = false;
+  private systemThemeQuery: MediaQueryList | null = null;
+  private automaticThemeTimeout: number | undefined;
+  private readonly handleSystemThemeChange = (): void => {
+    if (!this.hasManualThemePreference) {
+      this.applyAutomaticTheme();
+    }
+  };
+
   constructor(protected readonly router: Router) {
+    this.initializeTheme();
     void this.loadHomeData();
     void this.loadProfile();
   }
@@ -563,6 +575,91 @@ export class AppComponent {
       this.clickPointerVisible = false;
       this.clickPointerTimer = undefined;
     }, 1200);
+  }
+
+  protected toggleTheme(): void {
+    this.themeMode = this.themeMode === 'day' ? 'night' : 'day';
+    this.hasManualThemePreference = true;
+    this.systemThemeQuery?.removeEventListener('change', this.handleSystemThemeChange);
+    if (this.automaticThemeTimeout !== undefined) {
+      window.clearTimeout(this.automaticThemeTimeout);
+      this.automaticThemeTimeout = undefined;
+    }
+    this.applyTheme();
+
+    try {
+      window.localStorage.setItem(this.themePreferenceKey, this.themeMode);
+    } catch (error) {
+      console.warn('Theme preference could not be saved.', error);
+    }
+  }
+
+  private initializeTheme(): void {
+    if (typeof document === 'undefined' || typeof window === 'undefined') {
+      return;
+    }
+
+    let savedPreference: string | null = null;
+    try {
+      savedPreference = window.localStorage.getItem(this.themePreferenceKey);
+    } catch (error) {
+      console.warn('Theme preference could not be loaded.', error);
+    }
+
+    if (savedPreference === 'day' || savedPreference === 'night') {
+      this.hasManualThemePreference = true;
+      this.themeMode = savedPreference;
+      this.applyTheme();
+      return;
+    }
+
+    if (typeof window.matchMedia === 'function') {
+      this.systemThemeQuery = window.matchMedia('(prefers-color-scheme: dark)');
+      this.systemThemeQuery.addEventListener('change', this.handleSystemThemeChange);
+    }
+
+    this.applyAutomaticTheme();
+    this.scheduleAutomaticThemeChange();
+  }
+
+  private applyAutomaticTheme(): void {
+    const prefersNight = this.systemThemeQuery?.matches ?? false;
+    this.themeMode = prefersNight ? 'night' : this.getTimeBasedTheme();
+    this.applyTheme();
+  }
+
+  private getTimeBasedTheme(): 'day' | 'night' {
+    const localHour = new Date().getHours();
+    return localHour >= 6 && localHour < 18 ? 'day' : 'night';
+  }
+
+  private scheduleAutomaticThemeChange(): void {
+    if (this.hasManualThemePreference || typeof window === 'undefined') {
+      return;
+    }
+
+    const now = new Date();
+    const nextChange = new Date(now);
+    if (now.getHours() < 6) {
+      nextChange.setHours(6, 0, 0, 0);
+    } else if (now.getHours() < 18) {
+      nextChange.setHours(18, 0, 0, 0);
+    } else {
+      nextChange.setDate(nextChange.getDate() + 1);
+      nextChange.setHours(6, 0, 0, 0);
+    }
+
+    const delay = Math.max(nextChange.getTime() - now.getTime(), 1);
+    this.automaticThemeTimeout = window.setTimeout(() => {
+      this.applyAutomaticTheme();
+      this.scheduleAutomaticThemeChange();
+    }, delay);
+  }
+
+  private applyTheme(): void {
+    if (typeof document !== 'undefined') {
+      document.documentElement.dataset['theme'] = this.themeMode;
+    }
   }
 
   protected toggleChat(): void {

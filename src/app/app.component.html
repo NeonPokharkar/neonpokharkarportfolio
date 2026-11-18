@@ -34,7 +34,18 @@
     <a routerLink="/links" routerLinkActive="active" (click)="closeMenu()">Links<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
   </nav>
 
-  <a class="header-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
+  <div class="header-actions">
+    <button
+      class="theme-toggle"
+      type="button"
+      (click)="toggleTheme()"
+      [attr.aria-label]="themeMode === 'day' ? 'Day theme active. Switch to night theme' : 'Night theme active. Switch to day theme'"
+      [attr.aria-pressed]="themeMode === 'night'">
+      <span aria-hidden="true">{{ themeMode === 'day' ? '☀' : '☾' }}</span>
+      <span>{{ themeMode === 'day' ? 'Day' : 'Night' }}</span>
+    </button>
+    <a class="header-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
+  </div>
 </header>
 }
 

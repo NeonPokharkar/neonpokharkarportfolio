@@ -235,9 +235,9 @@ h2 { font-size: clamp(42px, 5vw, 69px); line-height: .95; margin: 0; }
 footer { color: #716f6a; display: flex; font-size: 11px; justify-content: space-between; margin: 0 auto; max-width: 1240px; padding: 28px 32px; }
 footer a { color: #1c1b1a; font-weight: 700; }
 
-@media (max-width: 800px) {
+@media (max-width: 1100px) {
   .site-header { padding: 22px 20px; position: relative; z-index: 20; }
-  .menu-toggle { align-items: center; background: transparent; border: 0; color: #1c1b1a; cursor: pointer; display: flex; font-size: 11px; font-weight: 700; gap: 9px; letter-spacing: .08em; padding: 8px 0; text-transform: uppercase; }
+  .menu-toggle { align-items: center; background: transparent; border: 0; color: #1c1b1a; cursor: pointer; display: flex; font-size: 11px; font-weight: 700; gap: 9px; letter-spacing: .08em; margin-left: 16px; padding: 8px 0; text-transform: uppercase; }
   .menu-toggle-icon { display: flex; flex-direction: column; gap: 4px; width: 20px; }
   .menu-toggle-icon span { background: #1c1b1a; display: block; height: 2px; width: 100%; }
   .nav-backdrop { background: #1c1b1a99; border: 0; display: block; inset: 0; position: fixed; z-index: 25; }
@@ -249,6 +249,9 @@ footer a { color: #1c1b1a; font-weight: 700; }
   .nav-drawer-header button { background: transparent; border: 0; color: #1c1b1a; cursor: pointer; font-size: 30px; font-weight: 300; line-height: 1; padding: 0 2px; }
   .header-link { display: none; }
   .header-actions { margin-left: auto; }
+}
+
+@media (max-width: 800px) {
   .hero { gap: 55px; grid-template-columns: 1fr; min-height: 0; padding: 75px 20px 85px; }
   .hero-art { justify-self: center; }
   .intro, .what-i-bring, .current-section, .skills-section, .projects-section, .experience-section, .education-section { margin-left: 20px; margin-right: 20px; }

@@ -297,7 +297,7 @@ export class InvestContactComponent {
     .project-entry h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 4vw, 48px); letter-spacing: -.05em; line-height: 1; margin: 12px 0 0; }
     .project-links { display: flex; flex-wrap: wrap; gap: 18px; justify-content: flex-end; margin-top: 30px; }
     .project-links a, .project-links button { background: transparent; border: 0; color: #f45b36; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .1em; padding: 0; text-decoration: none; text-transform: uppercase; }
-    .project-links a:hover, .project-links button:hover { color: #1c1b1a; }
+    .project-links a:hover, .project-links button:hover { color: inherit; }
     .project-photos { display: grid; gap: 14px; grid-auto-columns: calc((100% - 28px) / 3); grid-auto-flow: column; margin-top: 28px; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 8px; scroll-snap-type: x proximity; scrollbar-color: #a9a39a transparent; scrollbar-width: thin; }
     .project-photos img { aspect-ratio: auto; background: #f5f0eb; height: auto; object-fit: contain; scroll-snap-align: start; transition: filter .2s ease, box-shadow .2s ease; width: 100%; }
     .project-photos img.inactive-gif { filter: brightness(.78) blur(1px); }
@@ -671,7 +671,7 @@ interface HobbyManifest {
     .hobby-sections div { color: #1c1b1a; font-size: 15px; line-height: 1.65; overflow-wrap: anywhere; }
     .hobby-result-links { align-items: baseline; display: flex; flex-wrap: wrap; gap: 18px; margin-top: 30px; }
     .hobby-result-links a { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; }
-    .hobby-result-links a:hover { color: #1c1b1a; }
+    .hobby-result-links a:hover { color: inherit; }
     .hobby-load-error { color: #b3261e; margin-top: 50px; }
     @media (max-width: 800px) {
       .hobby-page { margin: 0; padding: 75px 20px 90px; }
@@ -1251,7 +1251,7 @@ export class EssayPageComponent {
     .next-copy { color: #1c1b1a; font-size: clamp(16px, 1.35vw, 20px); line-height: 1.7; margin: 0 0 0 32px; max-width: 900px; }
     .next-links { display: flex; flex-wrap: wrap; gap: 24px; margin: 24px 0 0 32px; }
     .next-links a { color: #f45b36; font-size: 12px; font-weight: 700; letter-spacing: .1em; text-decoration: none; text-transform: uppercase; }
-    .next-links a:hover { color: #1c1b1a; }
+    .next-links a:hover { color: inherit; }
     .grades-table-wrap { margin-top: 18px; overflow-x: auto; overscroll-behavior: contain; touch-action: pan-x; -webkit-overflow-scrolling: touch; }
     .grades-table {
       background: linear-gradient(180deg, #fffaf7 0%, #fff 100%);

@@ -118,7 +118,13 @@
       "createdWith": "solely",
       "trialLink": "https://www.instagram.com/thenruptshirts/",
       "githubLink": "https://github.com/NeonPokharkar",
-      "photos": [],
+      "photos": [
+        "assets/projects/NrupShirts.jpg",
+        "assets/projects/NrupShirts0.jpg",
+        "assets/projects/NrupShirts1.jpg",
+        "assets/projects/NrupShirts2.jpg",
+        "assets/projects/NrupShirts3.jpg"
+      ],
       "placeholder": {
         "src": "assets/projects/nrup-shirts-placeholder.svg",
         "alt": "T-shirt design illustration with fabric swatches"

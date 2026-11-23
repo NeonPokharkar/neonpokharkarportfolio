@@ -12,3 +12,23 @@
 html { overflow-x: clip; scroll-behavior: smooth; }
 body { margin: 0; min-width: 320px; }
 a { color: inherit; text-decoration: none; }
+
+.assistant-markdown > :first-child { margin-top: 0; }
+.assistant-markdown > :last-child { margin-bottom: 0; }
+.assistant-markdown p, .assistant-markdown ul, .assistant-markdown ol, .assistant-markdown blockquote, .assistant-markdown pre { margin: 0 0 1em; }
+.assistant-markdown ul, .assistant-markdown ol { padding-left: 1.5em; }
+.assistant-markdown li + li { margin-top: 0.4em; }
+.assistant-markdown li > p { margin-bottom: 0.5em; }
+.assistant-markdown h1, .assistant-markdown h2, .assistant-markdown h3, .assistant-markdown h4 { line-height: 1.3; margin: 1.2em 0 0.5em; }
+.assistant-markdown a { color: #ff8d32; text-decoration: underline; overflow-wrap: anywhere; }
+.assistant-markdown code { background: #292521; border-radius: 4px; font-family: monospace; font-size: 0.9em; padding: 0.15em 0.3em; }
+.assistant-markdown pre { background: #1c1b1a; border: 1px solid #383530; border-radius: 8px; overflow-x: auto; padding: 14px; white-space: pre; }
+.assistant-markdown pre code { background: none; padding: 0; }
+.assistant-markdown blockquote { border-left: 3px solid #f45b36; color: #bdb7ad; padding-left: 1em; }
+.assistant-markdown table { border-collapse: collapse; margin-bottom: 1em; }
+.assistant-markdown th, .assistant-markdown td { border: 1px solid #514c46; padding: 0.4em 0.7em; text-align: left; }
+html[data-theme='day'] .assistant-markdown a { color: #a53d20; }
+html[data-theme='day'] .assistant-markdown code, html[data-theme='day'] .assistant-markdown pre { background: #ebe6de; }
+html[data-theme='day'] .assistant-markdown pre, html[data-theme='day'] .assistant-markdown th, html[data-theme='day'] .assistant-markdown td { border-color: #d8d3ca; }
+html[data-theme='day'] .assistant-markdown pre code { background: none; }
+html[data-theme='day'] .assistant-markdown blockquote { color: #716f6a; }

@@ -1,0 +1,20 @@
+{
+  "tagline": "Where should we start?",
+  "suggestions": [
+    {
+      "icon": "✦",
+      "label": "Walk me through your enterprise backend experience, core tech stack, and strongest engineering impact.",
+      "prompt": "Walk me through Neon's enterprise backend experience, core tech stack, and strongest engineering impact."
+    },
+    {
+      "icon": "⚙",
+      "label": "Compare the architecture and trade-offs behind your local AI tools and recent software projects.",
+      "prompt": "Compare the architecture and trade-offs behind Neon's local AI tools and recent software projects."
+    },
+    {
+      "icon": "🧠",
+      "label": "Tell me about your work outside code—from directing Marathi short films to dalbhaatstudio photography.",
+      "prompt": "Tell me about Neon's work outside code—from directing Marathi short films to dalbhaatstudio photography."
+    }
+  ]
+}

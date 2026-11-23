@@ -54,36 +54,34 @@
           "title": "Enterprise-wide workflow application",
           "details": [
             {
-              "text": "Led backend delivery of a greenfield workflow platform to production in eight months, building Spring Boot microservices and",
-              "metric": "50+ REST APIs",
-              "suffix": " with validated payload mappings for maintenance-mode Kafka and legacy authentication integrations."
+              "text": "Architected the streaming validation and batched JDBC persistence pipeline to ingest",
+              "metric": "10,000+ records into SQL in under 500ms",
+              "suffix": "—bypassing row-by-row ORM overhead with a modular design carried through to production by the team."
             },
             {
-              "text": "Architected a SQL-backed state engine that replaced hardcoded approval transitions, enabling product and risk teams to update multi-step workflows",
-              "metric": "without full production releases."
+              "text": "Dynamic DB-Driven State Machine: Replaced static in-memory/BPMN workflow patterns with a table-driven state engine, cutting workflow rule rollout time by",
+              "metric": ">90%",
+              "suffix": " (from multi-week code-and-redeploy cycles to API configuration updates) and saving ~150+ engineering/release hours across multiple policy evolutions."
             },
             {
-              "text": "Built an idempotent event and audit engine with immutable SQL-backed state transitions, strengthening",
-              "metric": "data consistency and traceability",
-              "suffix": " across multi-team workflows."
+              "text": "Automated Lock Lifecycle Management: Engineered deterministic lock acquisition and timeout-release semantics, reducing orphaned session deadlocks and manual administrative unlock interventions by",
+              "metric": "100%",
+              "suffix": " and reclaiming ~150+ specialist & developer hours/year previously lost to multi-day review stalls."
             },
             {
-              "text": "Created a reusable reflection-based Java diff engine for nested objects, matching child collections by entity ID and automatically capturing",
-              "metric": "field-level change logs",
-              "suffix": " across domain models."
+              "text": "Real-Time WebSocket State Sync: Replaced manual refreshes and avoided periodic HTTP polling with event-driven WebSocket state broadcasting, slashing redundant status-check database queries by",
+              "metric": ">95%",
+              "suffix": " and achieving sub-second state convergence across concurrent reviewers."
             },
             {
-              "text": "Delivered reusable threaded comments with SQL materialized paths for",
-              "metric": "single-query subtree retrieval",
-              "suffix": ", paired with recursive Angular components for end-to-end collaboration."
+              "text": "Schema-Agnostic JSON Diffing Audit Engine: Built an AOP-backed JSON delta tracker that automatically records field-level change histories across evolving form schemas—saving",
+              "metric": "~100+ engineering hours",
+              "suffix": " in audit-table migrations, cutting audit storage growth by ~75% vs. full row snapshots, and eliminating external licensing costs."
             },
             {
-              "text": "Replaced brittle form locks with server-side TTL leases and session-aligned UI heartbeats, automatically reclaiming abandoned locks and",
-              "metric": "reducing locking issues by 100%."
-            },
-            {
-              "text": "Standardized auditing, lock validation, and telemetry with custom Spring AOP annotations; centralized Gson serialization so schema and behavior changes are managed through",
-              "metric": "single-point configuration."
+              "text": "Native Recursive Threaded Comments: Shipped an in-context nested comment and resolution system using single-query",
+              "metric": "O(n) tree assembly",
+              "suffix": " and recursive Angular components, avoiding recurring third-party UI SDK costs (100% on-prem data residency) and eliminating fragmented email/chat review loops."
             }
           ]
         }

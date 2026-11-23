@@ -1,4 +1,5 @@
-@if (!isEssayRoute) {
+@if (!isEssayRoute && !isChatRoute) {
+<!-- MARKER: HEADER_SECTION_START - Navigation, logo, menu, theme toggle, resume download -->
 <header class="site-header">
   <button class="logo" type="button" (click)="showClickPointer($event)" aria-label="Aditya Pokharkar">
     <span class="logo-mark">✳</span>
@@ -18,6 +19,7 @@
     <button class="nav-backdrop" type="button" (click)="closeMenu()" aria-label="Close navigation menu"></button>
   }
 
+  <!-- MARKER: MAIN_NAVIGATION - Menu items for all portfolio pages -->
   <nav id="main-navigation" [class.menu-open]="menuOpen" aria-label="Main navigation">
     <div class="nav-drawer-header">
       <span>Explore</span>
@@ -34,6 +36,7 @@
     <a routerLink="/links" routerLinkActive="active" (click)="closeMenu()">Links<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
   </nav>
 
+  <!-- MARKER: HEADER_ACTIONS - Theme toggle and resume download button -->
   <div class="header-actions">
     <button
       class="theme-toggle"
@@ -47,13 +50,38 @@
     <a class="header-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
   </div>
 </header>
+<!-- MARKER: HEADER_SECTION_END -->
 }
 
+@if (isChatRoute) {
+  <div class="chat-page-controls">
+    <button class="logo" type="button" (click)="showClickPointer($event)" aria-label="Aditya Pokharkar">
+      <span class="logo-mark">✳</span>
+      <span class="logo-name" aria-hidden="true">
+        @for (character of logoCharacters; track $index) {
+          <span class="logo-character">{{ character }}</span>
+        }
+      </span>
+    </button>
+    <button
+      class="theme-toggle"
+      type="button"
+      (click)="toggleTheme()"
+      [attr.aria-label]="themeMode === 'day' ? 'Day theme active. Switch to night theme' : 'Night theme active. Switch to day theme'"
+      [attr.aria-pressed]="themeMode === 'night'">
+      <span aria-hidden="true">{{ themeMode === 'day' ? '☀' : '☾' }}</span>
+      <span>{{ themeMode === 'day' ? 'Day' : 'Night' }}</span>
+    </button>
+  </div>
+}
+
+<!-- MARKER: RESUME_ERROR_ALERT - Error message if resume generation fails -->
 @if (resumeError) {
   <p class="resume-error" role="alert">{{ resumeError }}</p>
 }
 
 @if (clickPointerVisible) {
+  <!-- MARKER: CLICK_POINTER_ANIMATION - Animated pointer on click -->
   <span
     class="click-pointer"
     [style.left.px]="clickPointerX"
@@ -62,8 +90,10 @@
 }
 
 @if (isHomeRoute) {
+<!-- MARKER: MAIN_CONTENT_AREA - Homepage sections (hero through footer) -->
 <main>
   <section class="hero">
+    <!-- MARKER: HERO_BACKGROUND_AND_COPY - Homepage headline and CTAs -->
     <div class="hero-background" aria-hidden="true"></div>
     <div class="hero-copy">
       <p class="eyebrow"><span class="eyebrow-line"></span> Hello, I'm Aditya</p>
@@ -75,6 +105,7 @@
       </div>
     </div>
 
+    <!-- MARKER: HERO_ANIMATION - Black hole with orbiting rocket, animated based on scroll -->
     <div class="hero-art black-hole-scene" aria-label="Animated orange and black hole with an orbiting rocket" role="img">
       <div class="space-glow" [style.transform]="'scale(' + (1 + scrollProgress * 0.16) + ')'"></div>
       <div class="accretion-disk accretion-disk-back"></div>
@@ -98,6 +129,7 @@
     </div>
   </section>
 
+  <!-- MARKER: INTRO_SECTION - About me, elevator pitch, resume/email CTA -->
   <section class="intro" id="about">
     <p class="eyebrow"><span class="eyebrow-line"></span> High-ownership engineering</p>
     <p class="statement">I turn complex operational challenges into <span>resilient systems</span> and user-first products.</p>
@@ -107,6 +139,7 @@
   </section>
 
   @if (whatIBring; as content) {
+  <!-- MARKER: SERVICES_SECTION - What I bring (cards with key services/value props) -->
   <section class="what-i-bring" id="services">
     <div class="card-background" aria-hidden="true"></div>
     <div class="services-heading">
@@ -126,6 +159,7 @@
   }
 
   @if (currentFocus; as focus) {
+  <!-- MARKER: CURRENT_FOCUS_SECTION - Availability status and current work priorities -->
   <section class="current-section" id="current" aria-labelledby="current-heading">
     <div class="current-section-intro">
       <p class="eyebrow"><span class="eyebrow-line"></span> {{ focus.eyebrow }}</p>
@@ -157,6 +191,7 @@
   }
 
   <section class="skills-section portfolio-card" id="skills">
+    <!-- MARKER: SKILLS_SECTION - Toolkit (technical skills) and interests -->
     <div class="card-background" aria-hidden="true"></div>
     <div class="section-heading">
       <p class="eyebrow"><span class="eyebrow-line"></span> Toolkit & curiosity</p>
@@ -183,6 +218,7 @@
   </section>
 
   <section class="projects-section" id="projects">
+    <!-- MARKER: PROJECTS_SECTION - Portfolio projects list with links and tags -->
     <div class="section-heading section-heading-wide">
       <p class="eyebrow"><span class="eyebrow-line"></span> Selected work</p>
       <h2>A few things I've<br><em>made along the way.</em></h2>
@@ -210,6 +246,7 @@
   </section>
 
   <section class="experience-section portfolio-card" id="experience">
+    <!-- MARKER: EXPERIENCE_SECTION - Work history with roles, companies, descriptions -->
     <div class="card-background" aria-hidden="true"></div>
     <div class="section-heading">
       <p class="eyebrow"><span class="eyebrow-line"></span> The journey so far</p>
@@ -230,6 +267,7 @@
   </section>
 
   <section class="education-section">
+    <!-- MARKER: EDUCATION_SECTION - Academic background and degrees -->
     <div class="section-heading">
       <p class="eyebrow"><span class="eyebrow-line"></span> Academic foundation</p>
       <h2>Always learning,<br><em>always building.</em></h2>
@@ -248,6 +286,7 @@
   </section>
 
   <section class="contact-section" id="contact">
+    <!-- MARKER: CONTACT_SECTION - Final CTA with email and social links -->
     <div>
       <p class="eyebrow eyebrow-light"><span class="eyebrow-line"></span> Have a bottleneck to solve or a role to fill?</p>
       <h2>Let's find a<br><em>way forward.</em></h2>
@@ -262,10 +301,13 @@
     </div>
   </section>
 </main>
+<!-- MARKER: MAIN_CONTENT_AREA_END -->
 } @else {
+  <!-- MARKER: DYNAMIC_PAGES - Route outlet for essays, projects detail pages, etc -->
   <router-outlet></router-outlet>
 }
 
+<!-- MARKER: CUSTOM_CURSOR_ANIMATION - Animated astronaut following mouse cursor -->
 <div
   class="cursor-astronaut"
   [style.transform]="'translate3d(' + (cursorX + 22) + 'px, ' + (cursorY + 22) + 'px, 0)'"
@@ -282,19 +324,25 @@
   <span class="astronaut-leg astronaut-leg-right"></span>
 </div>
 
+<!-- MARKER: CHAT_LAUNCHER_BUTTON - Button to open/close AI assistant chat panel -->
+@if (!isChatRoute) {
 <button class="chat-launcher" type="button" (click)="toggleChat()" [attr.aria-expanded]="chatOpen" aria-controls="ai-chat">
   <span class="chat-launcher-icon" aria-hidden="true">✦</span>
   <span>{{ chatOpen ? 'Close assistant' : 'Ask my AI about me' }}</span>
 </button>
 
 @if (chatOpen) {
+  <!-- MARKER: CHAT_PANEL - AI assistant sidebar with messages and input form -->
   <aside class="chat-panel" id="ai-chat" aria-label="AI portfolio assistant">
     <div class="chat-header">
       <div>
         <p class="chat-kicker">Aditya's personal AI assistant</p>
         <h2>Ask about Aditya</h2>
       </div>
-      <button class="chat-close" type="button" (click)="toggleChat()" aria-label="Close AI assistant">×</button>
+      <div class="chat-header-actions">
+        <button class="chat-expand" type="button" (click)="expandChat()" aria-label="Expand to full page">⛶</button>
+        <button class="chat-close" type="button" (click)="toggleChat()" aria-label="Close AI assistant">×</button>
+      </div>
     </div>
 
     <div class="chat-messages" aria-live="polite">
@@ -327,12 +375,16 @@
     </form>
     <p class="chat-footnote">Connected to the portfolio AI assistant</p>
   </aside>
+  <!-- MARKER: CHAT_PANEL_END -->
+}
 }
 
+<!-- MARKER: FOOTER_SECTION - Copyright, tagline, back to top (homepage only) -->
 @if (isHomeRoute) {
 <footer>
   <span>© 2025 Aditya Pokharkar</span>
   <span>High-Ownership Product &amp; Systems Engineer</span>
   <a href="#top">Back to top ↑</a>
 </footer>
+<!-- MARKER: FOOTER_SECTION_END -->
 }

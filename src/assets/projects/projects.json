@@ -1,9 +1,9 @@
 {
   "projects": [
     {
-      "title": "LocSav — Location journal",
+      "title": "LocSav — Context-Rich Personal Location Vault",
       "timeline": "May 2020",
-      "tags": "Java · Native Android · Google Maps · SQLite",
+      "tags": "Java · Android SDK · SQLite · Google Maps SDK · Google Drive REST/Backup API · Android App Bundles",
       "createdWith": "solely",
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
@@ -14,12 +14,33 @@
       },
       "explanation": "A native Android app that lets users save locations and attach photos and information to each place, integrating Google Maps with a SQLite database.",
       "thoughtProcess": "The app combines a map-based view of places with locally stored details, making it possible to keep a personal record of meaningful locations and the memories or notes associated with them.",
-      "resultsSummary": "Built a location-saving Android app using native Java development, Google Maps integration, and SQLite persistence."
+      "resultsSummary": "Built a location-saving Android app using native Java development, Google Maps integration, and SQLite persistence.",
+      "architectureDetails": {
+        "approach": "0-to-1 Native Android Build—built and shipped an offline-first native Android application to solve a recurring everyday friction point: organizing and retrieving meaningful personal locations (Mother's house, Uncle's place, local landmarks) by human relationship and context rather than digging through buried WhatsApp chat histories.",
+        "highlights": [
+          {
+            "title": "Native SQLite + Google Maps Pin Persistence",
+            "description": "Engineered a local-first relational schema in native Android SQLite paired with the Google Maps SDK and SharedPreferences—enabling instant offline lookup, custom labeling, and one-tap navigation to saved coordinates."
+          },
+          {
+            "title": "Cloud Portability via Google Drive Backup & Auth",
+            "description": "Implemented user authentication and automated Google Drive backup/restore pipelines so saved personal location vaults persisted cleanly across device resets and reinstalls without maintaining custom backend servers."
+          },
+          {
+            "title": "End-to-End Play Store Release Engineering",
+            "description": "Built the complete application lifecycle—from splash screen and UI state management in pure Java (authored from core AOSP class documentation prior to AI coding tools) to signing release keys and publishing Android App Bundles (AAB) to Google Play."
+          },
+          {
+            "title": "Custom Touch Gesture Interception & Map Camera Interpolation",
+            "description": "Implemented low-level Android MotionEvent gesture listeners and smooth camera movement interpolations directly over the Google Maps view rather than relying solely on default static map controls. Interactive map overlays require clean touch disambiguation so pan, pinch, and pin-drop gestures feel fluid without conflicting with surrounding UI drawers. Working directly with Android's raw touch coordinate lifecycle (ACTION_DOWN, ACTION_MOVE, ACTION_UP) and frame-interpolated animations built the foundational mastery of sub-frame touch responsiveness later transferred directly into NBoard's custom swipe trails and release-committed typing."
+          }
+        ]
+      }
     },
     {
-      "title": "NBoard — Indic keyboard",
+      "title": "NBoard — Offline Indic & Bilingual Keyboard Platform",
       "timeline": "June 2020",
-      "tags": "Java · Native development",
+      "tags": "Java · Android · InputMethodService · Gradle Product Flavors · XML Rule Engine · SQLite",
       "createdWith": "solely",
       "trialLink": "https://github.com/NeonPokharkar/NBoard/releases",
       "githubLink": "https://github.com/NeonPokharkar/NBoard/releases",
@@ -35,12 +56,33 @@
       },
       "explanation": "Engineered NBoard as a custom native Android InputMethodService to make Marathi typing faster. A low-latency gesture decoder with spatial key-proximity scoring powers swipe input, alongside an ergonomic consonant-matra grid and an on-device Marathi prediction dictionary. Typing stays offline, with no cloud dependency or keystroke tracking.",
       "thoughtProcess": "Standard mobile keyboards make Devanagari typing slow because of complex consonant-vowel matras and cramped layouts. NBoard replaces repeated taps with single-stroke gestures, pairing real-time touch-path recognition and spatial key-proximity scoring with a dedicated Marathi layout and word dictionary.",
-      "resultsSummary": "Delivers fast, accurate offline Marathi Devanagari swipe typing with on-device prediction, without cloud dependency or keystroke tracking."
+      "resultsSummary": "Delivers fast, accurate offline Marathi Devanagari swipe typing with on-device prediction, without cloud dependency or keystroke tracking.",
+      "architectureDetails": {
+        "approach": "0-to-1 Product & Systems Build—a modular, offline-first Android keyboard platform for Indic and bilingual typing combining declarative script composition, typo-tolerant prediction, and multi-SKU packaging from a single core codebase.",
+        "highlights": [
+          {
+            "title": "Modular Multi-Language Platform (Gradle Flavors + App Bundles)",
+            "description": "Built a single core IME engine configured via Gradle productFlavors and Android App Bundles—isolating per-language XML layouts, script combination rules, and dictionary datasets into independent downloads without bloating binaries with unused corpora."
+          },
+          {
+            "title": "Declarative XML Character-Combination Engine",
+            "description": "Externalized Indic vowel-modifier (matra) and conjunct composition rules into XML definitions rather than hardcoding state machines in application code, decoupling script expansion from core IME rendering."
+          },
+          {
+            "title": "Competing Fuzzy Suggestion Engine (Static Corpus + SQLite User Dictionary)",
+            "description": "Built an offline typo- and substring-tolerant suggestion pipeline ranking candidates across bundled English/native datasets alongside a persistent SQLite user dictionary that boosts learned personal vocabulary over time."
+          },
+          {
+            "title": "Tactile Touch Pipeline & Guided System Onboarding",
+            "description": "Engineered ACTION_UP (on-release) key commitment for drag-to-preview accuracy, custom swipe animations, long-press Caps Lock toggling, accelerating backspace auto-delete, spacebar IME switching, and an in-app guided setup flow to prevent Android IME activation drop-off."
+          }
+        ]
+      }
     },
     {
-      "title": "Genetic algorithm timetable",
+      "title": "GeneticAlgorithmUCTTP — Zero-Dependency Evolutionary Timetable Solver",
       "timeline": "May 2022",
-      "tags": "Java · Optimization",
+      "tags": "Java · 4D Binary Tensor Encoding · Multi-Constraint Fitness Optimization · Elitist Roulette-Wheel Evolution",
       "createdWith": "solely",
       "trialLink": "https://github.com/NeonPokharkar/GeneticAlgorithmUCTTP",
       "githubLink": "https://github.com/NeonPokharkar/GeneticAlgorithmUCTTP",
@@ -56,7 +98,24 @@
       },
       "explanation": "Built a constraint-aware genetic algorithm timetable optimizer in Java, exploring candidate schedules across multiple student groups to produce feasible timetables under competing resource constraints.",
       "thoughtProcess": "The approach modelled timetable generation as a search problem, using constraints and candidate populations to explore schedules instead of relying on a single manually designed arrangement.",
-      "resultsSummary": "Automates timetable generation by evaluating competing constraints across student groups, helping planners focus on viable schedule options rather than manually assembling each one."
+      "resultsSummary": "Automates timetable generation by evaluating competing constraints across student groups, helping planners focus on viable schedule options rather than manually assembling each one.",
+      "architectureDetails": {
+        "approach": "Mid-Semester Algorithmic Systems Build—engineered a university course timetabling solver from scratch in pure, zero-dependency Java, solving an NP-hard multi-resource scheduling problem across academic sections, classrooms, timeslots, subjects, and shared faculty constraints.",
+        "highlights": [
+          {
+            "title": "4D Binary Tensor Genome (int[sections][rooms][timeslots][subjects])",
+            "description": "Formulated candidate schedules as four-dimensional binary decision tensors paired with a section-to-subject credit-hour requirement matrix (stos) and a symmetric subject-conflict adjacency matrix (sutosu) encoding shared instructors."
+          },
+          {
+            "title": "Six-Constraint Orthogonal Fitness Function (1 / (1 + Σ penalties))",
+            "description": "Implemented six penalty evaluators enforcing single-class-per-section timeslots, classroom capacity bounds, single-subject room occupancy, exact weekly credit-hour fulfillment (25 hrs/week per section), zero teacher double-bookings across co-taught courses, and zero unassigned syllabus subjects—converging to a 100% conflict-free timetable (fitness = 1.0) across a ~2–3 hour evolutionary run."
+          },
+          {
+            "title": "Elitist Selection, Uniform 4D Mask Crossover & Bit-Flip Mutation",
+            "description": "Built fitness-proportionate Roulette Wheel parent selection (getFitnessProbabilities), uniform random 4D binary mask crossover generating complementary offspring pairs, steady-state elitist culling of the bottom 50% of the population, stochastic bit-flip mutation (p = 0.001), and a JVM shutdown hook (addShutdownHook) emitting raw schedule matrices via console output."
+          }
+        ]
+      }
     },
     {
       "title": "Enterprise workflow platform",
@@ -75,9 +134,9 @@
       "resultsSummary": "Shipped a production workflow platform in eight months with 50+ backend APIs, configurable approval flows, concurrency-safe forms, and real-time collaboration."
     },
     {
-      "title": "Agent Shuka — Local AI knowledge assistant",
+      "title": "Agent Shuka — Sovereign AI Assistant & Portfolio RAG Agent",
       "timeline": "May 2026 - September 2026",
-      "tags": "Python · Ollama · LangChain · LlamaIndex · Chroma · Tailscale · Flutter",
+      "tags": "Python · Ollama · LangChain · LlamaIndex · ChromaDB · Docker · Flutter · Tailscale",
       "createdWith": "solely",
       "trialLink": "https://neonpokharkar.com",
       "githubLink": "https://github.com/NeonPokharkar/workingshuka",
@@ -93,12 +152,33 @@
       },
       "explanation": "Engineered a private, local-first knowledge assistant with Ollama, LlamaIndex, LangChain, and Chroma vector search. It indexes personal documents and runs LLM inference locally, while Tailscale enables remote access through a Flutter client.",
       "thoughtProcess": "To preserve context across a conversation, the assistant summarizes the discussion before each response and considers that summary alongside the latest question, helping it answer in light of the broader conversation rather than only the newest message.",
-      "resultsSummary": "Delivered a document assistant combining local LLM inference, vector retrieval, conversational context, and remote access for private knowledge workflows."
+      "resultsSummary": "Delivered a document assistant combining local LLM inference, vector retrieval, conversational context, and remote access for private knowledge workflows.",
+      "architectureDetails": {
+        "approach": "0-to-1 Systems & AI Engineering—a self-hosted, zero-subscription AI assistant running on local GPU infrastructure combining multi-tool orchestration, tiered memory compression, offline knowledge/navigation tools, and transparent reasoning streams.",
+        "highlights": [
+          {
+            "title": "Hybrid LangChain + LlamaIndex Architecture",
+            "description": "Used LangChain as the primary multi-tool agent orchestrator (routing across navigation, knowledge retrieval, and computation) while offloading background conversation summarization and historical chat RAG lookups to LlamaIndex on a smaller task-focused model."
+          },
+          {
+            "title": "Offline Knowledge & Self-Hosted Map Routing (Docker + OSM)",
+            "description": "Indexed open-source general knowledge and Stack Exchange corpora into ChromaDB for offline factuality, and containerized an OpenStreetMap-based routing engine in Docker exposed as an agent tool for turn-by-turn directions."
+          },
+          {
+            "title": "Structured Thought-Tag Streaming UI (Flutter + Tailscale)",
+            "description": "Built a cross-platform Flutter client accessed privately over a Tailscale mesh VPN—parsing custom XML/structured thought tags in real time to display live tool-execution status dialogs (retrieving, calculating, reasoning) with long-press inspection of full model reasoning traces."
+          },
+          {
+            "title": "Pragmatic OS-Boundary Pivot & Portfolio Deployment",
+            "description": "Identified Android's system-signature restriction on background DSP hotword mic capture (CAPTURE_AUDIO_HOTWORD / AlwaysOnHotwordDetector) during helmet/watch voice integration—pivoting cleanly to a scoped, read-only knowledge corpus to power the interactive Ask AI agent on this portfolio."
+          }
+        ]
+      }
     },
     {
-      "title": "ArthShastra — Local finance management app",
+      "title": "ArthShastra — Intent-Driven Local-First Finance & Runway Engine",
       "timeline": "September 2026 - Present",
-      "tags": "Flutter · Android Studio · Personal finance · Local-first",
+      "tags": "Flutter · Isar Embedded NoSQL DB · UPI/QR Capture · Geolocation Merchant Tagging · CSV Portability",
       "createdWith": "solely",
       "trialLink": "https://github.com/NeonPokharkar",
       "githubLink": "https://github.com/NeonPokharkar",
@@ -109,12 +189,33 @@
       },
       "explanation": "A local-first personal finance app that helps users understand hedging and runway management by allocating money tokens to different purposes. It supports recording transactions from UPI activity or adding them later through a delayed manual-entry flow.",
       "thoughtProcess": "The app makes financial planning more approachable by giving money clear purposes and helping users see how day-to-day transactions affect their runway and overall financial health, while keeping their data stored locally.",
-      "resultsSummary": "Designed to support healthier money habits through purpose-based budgeting, runway awareness, and flexible transaction tracking without requiring users to record every expense immediately."
+      "resultsSummary": "Designed to support healthier money habits through purpose-based budgeting, runway awareness, and flexible transaction tracking without requiring users to record every expense immediately.",
+      "architectureDetails": {
+        "approach": "0-to-1 Product & Systems Build—a completely offline-first mobile personal finance and decision-reflection engine moving beyond passive expense lists to model financial runway, purchase intent vs. outcome, merchant-level spend attribution, and proactive budget guardrails.",
+        "highlights": [
+          {
+            "title": "Local-First Reactive Persistence (Flutter + Isar)",
+            "description": "Stored all financial records, recurring obligations, and debt models natively on-device using Isar's embedded indexed NoSQL engine—delivering instant query filtering, zero cloud bank-sync privacy exposure, and reactive dashboard updates without network latency."
+          },
+          {
+            "title": "UPI/QR Quick Capture + Geolocation Merchant Attribution",
+            "description": "Streamlined real-world Indian payment workflows with manual and QR/UPI transaction entry paired with automatic geolocation tagging—attributing category spend (e.g., fuel/daily essentials) down to individual physical vendors and repeat habit patterns."
+          },
+          {
+            "title": "Intent-to-Outcome Ledger & Conversational Input Schema",
+            "description": "Designed a chat-style transaction capture interface storing purchase intent, expected value/outcome, and value-based bucket allocations alongside active spending alerts/blocks—structuring rich behavioral context for downstream local AI coaching and post-purchase reflection."
+          },
+          {
+            "title": "Runway Forecasting & Zero-Lock-In CSV Portability",
+            "description": "Built financial health dashboards calculating cash runway, debt load, and predictive recurring outflows, backed by bidirectional CSV export/import pipelines to guarantee zero data loss across debug installs and device migrations."
+          }
+        ]
+      }
     },
     {
-      "title": "Nrup Shirts — Designer T-shirt venture",
+      "title": "Nrup Shirts — Hyper-Local Culture Apparel & 0-to-1 D2C Experiment",
       "timeline": "May 2023 - January 2024",
-      "tags": "Entrepreneurship · Product design · Online & offline sales · Bootstrapped venture",
+      "tags": "Entrepreneurship · Direct Blank Sourcing · Local Print Networking · Omnichannel Sales · Unit Economics",
       "createdWith": "solely",
       "trialLink": "https://www.instagram.com/thenruptshirts/",
       "githubLink": "https://github.com/NeonPokharkar",
@@ -131,7 +232,24 @@
       },
       "explanation": "An online and offline designer T-shirt business built around local culture and sentiment. The venture sold 20 shirts: 18 through local sales and 2 online organically.",
       "thoughtProcess": "The experience highlighted how much a bootstrapped startup depends on validating demand, choosing an effective sales approach, and managing limited resources before committing further time and money.",
-      "resultsSummary": "The business did not become sustainable, but it provided a practical learning experience in entrepreneurship and the decisions to reconsider when building a bootstrapped startup."
+      "resultsSummary": "The business did not become sustainable, but it provided a practical learning experience in entrepreneurship and the decisions to reconsider when building a bootstrapped startup.",
+      "architectureDetails": {
+        "approach": "0-to-1 Venture & Supply-Chain Execution—built and operated a hyper-local graphic apparel venture from scratch, managing vendor sourcing, IP-protected artwork commissioning, ground-level fair sales, and unit-economics validation alongside a full-time software engineering role.",
+        "highlights": [
+          {
+            "title": "Lean Local Supply Chain & Unit Economics",
+            "description": "Bypassed high-margin Print-on-Demand middlemen by sourcing blanks directly and networking with local city printers—achieving a ₹200–₹300 retail price point with ₹50–₹130 gross margin per unit."
+          },
+          {
+            "title": "Omnichannel Discovery & Ground Execution",
+            "description": "Acquired initial online buyers organically via Instagram reels/posts (fulfilling early shipments via India Post before integrating Delhivery) and drove direct retail volume at local fairs—plus fulfilling a 100-unit custom group order at break-even to test bulk demand."
+          },
+          {
+            "title": "Hard-Won Product & Distribution Insights",
+            "description": "Validated that distribution velocity outweighs catalog size early on, overly low pricing signals low perceived quality in retail apparel, free distributor consignment leads to shrinkage, and delegating founder-led sales too early stalls conversion—leading to a disciplined shutdown to focus on high-leverage software engineering."
+          }
+        ]
+      }
     }
   ]
 }

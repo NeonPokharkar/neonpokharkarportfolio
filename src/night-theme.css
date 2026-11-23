@@ -128,8 +128,17 @@ html[data-theme='night'] .chat-form {
 }
 
 html[data-theme='night'] .chat-form input {
+  background: #24221f;
   border-color: #625c54;
-  color: #f2efe9;
+  color: #f2efe9 !important;
+}
+
+html[data-theme='night'] .chat-form input::placeholder {
+  color: #8b8680;
+}
+
+html[data-theme='night'] .chat-form input:focus {
+  border-color: #ff8d32;
 }
 
 html[data-theme='night'] .chat-form button {
@@ -275,4 +284,22 @@ html[data-theme='night'] app-dummy-page .phone-dialog-backdrop .phone-dialog {
 
 html[data-theme='night'] app-dummy-page .phone-dialog-backdrop .phone-dialog :is(.phone-dialog-close, .phone-dialog-copy) {
   color: #bdb7ad;
+}
+
+html[data-theme='night'] .architecture-dropdown-panel {
+  background: #191816;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, .4);
+}
+
+html[data-theme='night'] .architecture-label {
+  color: #ff8d32;
+}
+
+html[data-theme='night'] .architecture-text,
+html[data-theme='night'] .highlight-item p {
+  color: #e4dfd7;
+}
+
+html[data-theme='night'] .highlight-item h4 {
+  color: #f2efe9;
 }

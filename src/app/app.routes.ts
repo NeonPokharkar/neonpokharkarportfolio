@@ -60,12 +60,17 @@ interface ProjectEntry {
   timeline: string;
   trialLink: string;
   githubLink: string;
+  tags: string;
   photos?: string[];
   placeholder?: { src: string; alt: string };
   explanation: string;
   thoughtProcess: string;
   resultsSummary: string;
   createdWith: 'solely' | 'group' | 'ai';
+  architectureDetails?: {
+    approach: string;
+    highlights: Array<{ title: string; description: string }>;
+  };
 }
 
 interface ProjectManifest {
@@ -274,10 +279,34 @@ export class InvestContactComponent {
                 <section><p>Results summary</p><div>{{ project.resultsSummary }}</div></section>
               </div>
               <div class="project-links">
+                @if (project.architectureDetails) {
+                  <div class="architecture-dropdown-wrapper">
+                    <button class="architecture-dropdown-toggle" type="button" (click)="toggleArchitectureDetails(project.title)" [attr.aria-expanded]="expandedProjects[project.title] || false">
+                      Architecture <span class="architecture-dropdown-icon" aria-hidden="true">▼</span>
+                    </button>
+                  </div>
+                }
                 <a [href]="project.trialLink" target="_blank" rel="noreferrer">Try it ↗</a>
                 <a [href]="project.githubLink" target="_blank" rel="noreferrer">GitHub ↗</a>
                 <button type="button" (click)="askAiAboutProject(project)">Ask AI in detail ↗</button>
               </div>
+              @if (project.architectureDetails && expandedProjects[project.title]) {
+                <div class="architecture-dropdown-panel">
+                  <div class="architecture-approach">
+                    <p class="architecture-label">Approach</p>
+                    <div class="architecture-text">{{ project.architectureDetails.approach }}</div>
+                  </div>
+                  <div class="architecture-highlights">
+                    <p class="architecture-label">Key Highlights</p>
+                    @for (highlight of project.architectureDetails.highlights; track highlight.title) {
+                      <div class="highlight-item">
+                        <h4>{{ highlight.title }}</h4>
+                        <p>{{ highlight.description }}</p>
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
             </article>
           }
         </div>
@@ -295,9 +324,23 @@ export class InvestContactComponent {
     .project-timeline { color: #f45b36; font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
     .project-created-with { color: #716f6a; font-size: 12px; margin: 14px 0 0; }
     .project-entry h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(28px, 4vw, 48px); letter-spacing: -.05em; line-height: 1; margin: 12px 0 0; }
-    .project-links { display: flex; flex-wrap: wrap; gap: 18px; justify-content: flex-end; margin-top: 30px; }
+    .project-links { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; margin-top: 30px; align-items: flex-start; position: relative; overflow: visible; }
     .project-links a, .project-links button { background: transparent; border: 0; color: #f45b36; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .1em; padding: 0; text-decoration: none; text-transform: uppercase; }
     .project-links a:hover, .project-links button:hover { color: inherit; }
+    .architecture-dropdown-wrapper { position: static; margin-right: auto; }
+    .architecture-dropdown-toggle { background: transparent; border: 0; color: #f45b36; cursor: pointer; font: inherit; font-size: 11px; font-weight: 700; letter-spacing: .1em; padding: 0; text-decoration: none; text-transform: uppercase; display: flex; align-items: center; gap: 6px; }
+    .architecture-dropdown-toggle:hover { color: inherit; }
+    .architecture-dropdown-icon { font-size: 8px; transition: transform .2s ease; display: inline-block; }
+    .architecture-dropdown-toggle[aria-expanded="true"] .architecture-dropdown-icon { transform: rotate(180deg); }
+    .architecture-dropdown-panel { margin-top: 20px; background: #fafaf8; padding: 24px 20px; border-radius: 4px; box-shadow: 0 4px 12px rgba(0, 0, 0, .08); }
+    .architecture-approach { margin-bottom: 16px; }
+    .architecture-highlights { margin-top: 14px; }
+    .architecture-label { color: #f45b36; font-size: 10px; font-weight: 700; letter-spacing: .12em; margin: 0 0 10px; text-transform: uppercase; }
+    .architecture-text { color: #1c1b1a; font-size: 13px; line-height: 1.6; }
+    .highlight-item { margin-bottom: 14px; }
+    .highlight-item:last-child { margin-bottom: 0; }
+    .highlight-item h4 { color: #1c1b1a; font-family: 'Space Grotesk', sans-serif; font-size: 12px; font-weight: 600; margin: 0 0 4px; letter-spacing: .03em; }
+    .highlight-item p { color: #1c1b1a; font-size: 12px; line-height: 1.55; margin: 0; }
     .project-photos { display: grid; gap: 14px; grid-auto-columns: calc((100% - 28px) / 3); grid-auto-flow: column; margin-top: 28px; overflow-x: auto; overscroll-behavior-x: contain; padding-bottom: 8px; scroll-snap-type: x proximity; scrollbar-color: #a9a39a transparent; scrollbar-width: thin; }
     .project-photos img { aspect-ratio: auto; background: #f5f0eb; height: auto; object-fit: contain; scroll-snap-align: start; transition: filter .2s ease, box-shadow .2s ease; width: 100%; }
     .project-photos img.inactive-gif { filter: brightness(.78) blur(1px); }
@@ -308,10 +351,15 @@ export class InvestContactComponent {
     .project-sections p { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .12em; margin: 0 0 10px; text-transform: uppercase; }
     .project-sections div { color: #1c1b1a; font-size: 15px; line-height: 1.65; }
     .project-load-error { color: #b3261e; margin-top: 50px; }
+    :host-context(html[data-theme='night']) .architecture-dropdown-panel { background: #191816; box-shadow: 0 4px 12px rgba(0, 0, 0, .4); }
+    :host-context(html[data-theme='night']) .architecture-label { color: #ff8d32; }
+    :host-context(html[data-theme='night']) .architecture-text { color: #e4dfd7; }
+    :host-context(html[data-theme='night']) .highlight-item h4 { color: #f2efe9; }
+    :host-context(html[data-theme='night']) .highlight-item p { color: #e4dfd7; }
     @media (max-width: 800px) {
       .project-page { margin: 0 20px; padding: 75px 0 90px; }
       .project-entry-header { display: block; }
-      .project-links { margin-top: 20px; }
+      .project-links { margin-top: 20px; flex-direction: column; align-items: flex-end; }
       .project-photos { grid-auto-columns: min(80%, 360px); }
       .project-placeholder { grid-auto-columns: 100%; }
       .project-sections { grid-template-columns: 1fr; }
@@ -321,6 +369,7 @@ export class InvestContactComponent {
 export class ProjectListComponent implements OnDestroy {
   protected projects: ProjectEntry[] = [];
   protected loadError = '';
+  protected expandedProjects: { [key: string]: boolean } = {};
   private readonly gifPosters = new Map<string, string>();
   private readonly gifDurations = new Map<string, number>();
   private gifPhotos: string[] = [];
@@ -376,6 +425,10 @@ export class ProjectListComponent implements OnDestroy {
         prompt: `Tell me in detail about the ${project.title} project, including its timeline, explanation, thought process, implementation decisions, and results.`
       }
     }));
+  }
+
+  protected toggleArchitectureDetails(projectTitle: string): void {
+    this.expandedProjects[projectTitle] = !this.expandedProjects[projectTitle];
   }
 
   private async loadProjects(): Promise<void> {
@@ -1632,6 +1685,11 @@ export const routes: Routes = [
     path: '',
     pathMatch: 'full',
     component: HomeRouteComponent
+  },
+  {
+    path: 'chat',
+    pathMatch: 'full',
+    loadComponent: () => import('./chat-page.component').then(module => module.ChatPageComponent)
   },
   {
     path: 'home',

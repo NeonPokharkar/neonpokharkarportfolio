@@ -1,8 +1,10 @@
+// MARKER: COMPONENT_START - Main app component with portfolio, navigation, theme, and AI chat
 import { Component, HostListener } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
 
+// MARKER: INTERFACES_SECTION - Data structure definitions for portfolio content
 interface PortfolioItem {
   number: string;
   title: string;
@@ -121,6 +123,7 @@ interface ChatMessage {
   styleUrl: './app.component.css'
 })
 export class AppComponent {
+  // MARKER: THEME_SYSTEM_START - Theme toggle (day/night) with localStorage persistence
   protected themeMode: 'day' | 'night' = 'day';
   private readonly themePreferenceKey = 'aditya-portfolio-theme';
   private hasManualThemePreference = false;
@@ -131,7 +134,9 @@ export class AppComponent {
       this.applyAutomaticTheme();
     }
   };
+  // MARKER: THEME_SYSTEM_END
 
+  // MARKER: LIFECYCLE_AND_ROUTING - Constructor, route checks (home vs essays vs dynamic)
   constructor(protected readonly router: Router) {
     this.initializeTheme();
     void this.loadHomeData();
@@ -146,6 +151,12 @@ export class AppComponent {
     return this.router.url.split(/[?#]/)[0].startsWith('/essays/');
   }
 
+  protected get isChatRoute(): boolean {
+    return this.router.url.split(/[?#]/)[0] === '/chat';
+  }
+  // MARKER: LIFECYCLE_AND_ROUTING_END
+
+  // MARKER: SCROLL_AND_MOUSE_TRACKING - Cursor position, scroll progress for animations
   protected scrollProgress = 0;
   protected cursorX = 0;
   protected cursorY = 0;
@@ -160,6 +171,9 @@ export class AppComponent {
     const orbitAngle = ((-32 + this.scrollProgress * 300) % 360 + 360) % 360;
     return orbitAngle > 90 && orbitAngle < 270 ? 'right' : 'left';
   }
+  // MARKER: SCROLL_AND_MOUSE_TRACKING_END
+
+  // MARKER: PROFILE_DATA_SECTION - Contact, resume, links, availability
   protected resumePath = '';
   protected resumeDownloadUrl = '';
   protected email = '';
@@ -170,6 +184,9 @@ export class AppComponent {
   protected availability: ProfileAvailability | undefined;
   protected currentFocus: ProfileFocus | undefined;
   protected whatIBring: WhatIBring | undefined;
+  // MARKER: PROFILE_DATA_SECTION_END
+
+  // MARKER: CHAT_SYSTEM_START - AI chat state, messages, input, busy state
   private conversationSummary = '';
   private lastRelevantConversation = '';
   protected chatOpen = false;
@@ -182,7 +199,9 @@ export class AppComponent {
       content: 'Hi! I am Aditya\'s AI assistant. Ask me about his experience, projects, or technical skills.'
     }
   ];
+  // MARKER: CHAT_SYSTEM_END
 
+  // MARKER: PORTFOLIO_ARRAYS_SECTION - Skills, interests, projects, experience, education
   protected skills: string[] = [];
 
   protected interests: string[] = [];
@@ -195,7 +214,9 @@ export class AppComponent {
   protected experience: Array<{ period: string; role: string; company: string; description: string }> = [];
 
   protected education: Array<{ period: string; role: string; company: string }> = [];
+  // MARKER: PORTFOLIO_ARRAYS_SECTION_END
 
+  // MARKER: DATA_LOADING_SECTION_START - Fetch JSON files for projects, experience, education
   private async loadHomeData(): Promise<void> {
     try {
       const [projectsResponse, experienceResponse, educationResponse] = await Promise.all([
@@ -237,6 +258,7 @@ export class AppComponent {
 
   }
 
+  // MARKER: PROFILE_LOADING - Fetch profile.json with contact info, skills, availability
   private async loadProfile(): Promise<void> {
     try {
       const response = await fetch('assets/profile/profile.json');
@@ -259,7 +281,9 @@ export class AppComponent {
       // Keep shared profile values empty when the manifest cannot be loaded.
     }
   }
+  // MARKER: DATA_LOADING_SECTION_END
 
+  // MARKER: PDF_GENERATION_SECTION_START - Resume PDF download functionality
   protected prepareResumeDownload(): void {
     if (!this.resumePreparation) {
       this.resumePreparation = this.createResumeDownload();
@@ -533,7 +557,9 @@ export class AppComponent {
 
     return pdf.output('blob');
   }
+  // MARKER: PDF_GENERATION_SECTION_END
 
+  // MARKER: EVENT_LISTENERS_START - @HostListener for scroll, mouse, keyboard
   @HostListener('window:scroll')
   protected updateScrollProgress(): void {
     const scrollableHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
@@ -550,7 +576,9 @@ export class AppComponent {
   protected closeMenu(): void {
     this.menuOpen = false;
   }
+  // MARKER: EVENT_LISTENERS_END
 
+  // MARKER: NAVIGATION_AND_UI_HANDLERS - Menu toggle, click pointer, logo animation
   protected toggleMenu(): void {
     this.menuOpen = !this.menuOpen;
   }
@@ -594,6 +622,7 @@ export class AppComponent {
     }
   }
 
+  // MARKER: THEME_INITIALIZATION_AND_APPLICATION - Theme detection, localStorage, system preference
   private initializeTheme(): void {
     if (typeof document === 'undefined' || typeof window === 'undefined') {
       return;
@@ -667,6 +696,19 @@ export class AppComponent {
     this.chatError = '';
   }
 
+  protected expandChat(): void {
+    // Save conversation state to sessionStorage so the full-page chat can restore it
+    try {
+      sessionStorage.setItem('aditya_chat_messages', JSON.stringify(this.chatMessages));
+      sessionStorage.setItem('aditya_chat_summary', this.conversationSummary);
+      sessionStorage.setItem('aditya_chat_last_conv', this.lastRelevantConversation);
+    } catch (e) {
+      console.warn('Failed to save chat state to sessionStorage', e);
+    }
+    window.open('/chat', 'AditysAI', 'width=900,height=700,resizable=yes,scrollbars=yes');
+  }
+
+  // MARKER: CHAT_SYSTEM_START - AI chat message handling with Intelli Chat API
   @HostListener('window:open-ai-project', ['$event'])
   protected openProjectAssistant(event: Event): void {
     const prompt = (event as CustomEvent<{ prompt: string }>).detail.prompt;
@@ -729,4 +771,5 @@ export class AppComponent {
       this.chatBusy = false;
     }
   }
+  // MARKER: CHAT_SYSTEM_END
 }

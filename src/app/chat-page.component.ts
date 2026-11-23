@@ -117,7 +117,7 @@ export class ChatPageComponent implements OnInit, OnDestroy {
         this.chatMessages.push(...messages.slice(1)); // Add back saved messages
         this.conversationSummary = savedSummary || '';
         this.lastRelevantConversation = savedLastConv || '';
-        this.isWelcomeState = false; // Show conversation view if messages exist
+        this.isWelcomeState = !messages.slice(1).some(message => message.content.trim().length > 0);
       } catch (e) {
         console.warn('Failed to restore chat messages', e);
       }

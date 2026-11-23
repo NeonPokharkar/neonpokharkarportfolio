@@ -131,7 +131,32 @@
       },
       "explanation": "Architected the Java, Spring Boot, and Oracle backend for an enterprise workflow platform, delivering configurable approvals, versioned forms, and real-time collaboration for multi-team operations.",
       "thoughtProcess": "The platform was designed around modular backend services, a flexible workflow engine, and clear ownership boundaries so changing enterprise requirements could be handled without rebuilding the entire system.",
-      "resultsSummary": "Shipped a production workflow platform in eight months with 50+ backend APIs, configurable approval flows, concurrency-safe forms, and real-time collaboration."
+      "resultsSummary": "Shipped a production workflow platform in eight months with 50+ backend APIs, configurable approval flows, concurrency-safe forms, and real-time collaboration.",
+      "architectureDetails": {
+        "approach": "Core Systems Architecture—architected and scaled six mission-critical backend and frontend subsystems for a high-compliance enterprise workflow platform, eliminating silent concurrency overwrites, database polling bottlenecks, and brittle schema migrations.",
+        "highlights": [
+          {
+            "title": "Unified State Machine & Server-Driven UI (SDUI)",
+            "description": "Designed a declarative state-transition engine that drives Angular permissions, action visibility, and conditional step routing dynamically from backend state definitions, eliminating client-side workflow drift."
+          },
+          {
+            "title": "High-Throughput Streaming CSV Ingestion (<500ms for 10,000+ rows)",
+            "description": "Built a memory-flat, line-by-line CSV parser with parallel worker validation and non-blocking quarantine staging, isolating malformed rows with exact error diagnostics and valid/invalid metrics while committing clean records in YAML-tuned @Transactional batches."
+          },
+          {
+            "title": "Deterministic Self-Healing Lock Lifecycle",
+            "description": "Engineered database-persisted record locks with multi-layer auto-release (strict server TTL, browser unload hooks, and WebSocket disconnect listeners) and admin-only escalation overrides, eliminating orphaned edit deadlocks by 100% while preventing peer lock-stealing."
+          },
+          {
+            "title": "Zero-Leakage Event-Driven WebSocket Sync",
+            "description": "Replaced periodic HTTP polling with commit-triggered STOMP WebSocket version pings ({ ticketId, version }) scoped to ticket topics, cutting redundant status-polling DB load by >95% while keeping proprietary payloads strictly behind authenticated HTTPS endpoints."
+          },
+          {
+            "title": "Schema-Agnostic JSON Diffing & Native Recursive Comments",
+            "description": "Built a Jackson JsonNode structural audit engine with sequence-aware list ordering and one-child-deep hierarchy tracking, eliminating audit-table schema migrations by 100% and cutting audit storage growth by ~75%, alongside a native Angular and Hibernate custom-ID threaded commenting system with 100% on-premise data residency."
+          }
+        ]
+      }
     },
     {
       "title": "Agent Shuka — Sovereign AI Assistant & Portfolio RAG Agent",

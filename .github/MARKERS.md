@@ -56,6 +56,14 @@ Every important section in your code has a **marker comment**:
 
 ## 📍 All Markers by File
 
+### Static generation (`scripts/generate-static.mjs`)
+
+| Marker | Purpose | Edit For |
+|--------|---------|----------|
+| `STATIC_DISCOVERY_START/END` | Build-time sitemap and crawlable project and essay pages | Public routes or static page generation |
+| `STATIC_DISCOVERY_TESTS` | Checks generated sitemap and page content | Static generation tests |
+| `STATIC_DISCOVERY_CI` | Runs static checks before deploying GitHub Pages | Deployment validation |
+
 ### TypeScript Component (`src/app/app.component.ts`)
 
 | Marker | Purpose | Edit For | Line ~ |
@@ -75,6 +83,13 @@ Every important section in your code has a **marker comment**:
 | `NAVIGATION_AND_UI_HANDLERS` | Menu, theme, logo interactions | UI behavior | ~595 |
 | `THEME_INITIALIZATION_AND_APPLICATION` | Theme detection & storage | Theme persistence | ~615 |
 | `CHAT_SYSTEM_END` | Chat API integration | Chat behavior | ~760 |
+
+### Project routes (`src/app/app.routes.ts`)
+
+| Marker | Purpose | Edit For |
+|--------|---------|----------|
+| `PROJECT_MEDIA_LAZY` | Lazy-load project gallery images | Gallery markup |
+| `PROJECT_MEDIA_OBSERVER_START/END` | Prepare animated previews near the viewport | Gallery loading behavior |
 
 ### HTML Template (`src/app/app.component.html`)
 

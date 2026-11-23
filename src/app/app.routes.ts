@@ -1,4 +1,4 @@
-import { Component, ElementRef, HostListener, OnDestroy, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, QueryList, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Meta } from '@angular/platform-browser';
@@ -245,6 +245,9 @@ export class InvestContactComponent {
       <p class="eyebrow"><span class="eyebrow-line"></span> Selected work</p>
       <h1>Projects built <em>along the way.</em></h1>
       <p class="project-intro">A selection of projects spanning native development, optimisation, enterprise workflows, and collaborative software.</p>
+      @if (mediaLoadError) {
+        <p class="project-load-error" role="status">{{ mediaLoadError }}</p>
+      }
       @if (loadError) {
         <p class="project-load-error">{{ loadError }}</p>
       } @else {
@@ -259,10 +262,12 @@ export class InvestContactComponent {
               </div>
               <p class="project-created-with">Created {{ project.createdWith === 'solely' ? 'solely' : project.createdWith === 'group' ? 'in a group' : 'with help from AI' }}</p>
               @if (project.photos?.length) {
-                <div class="project-photos">
+                <!-- MARKER: PROJECT_MEDIA_LAZY - Defer gallery media until it approaches the viewport -->
+                <div #projectGallery class="project-photos">
                   @for (photo of project.photos; track photo) {
                     <img #projectPhoto [attr.data-gif-photo]="isGif(photo) ? photo : null"
-                      [src]="projectPhotoSource(photo)" [alt]="project.title + ' project example'"
+                      [attr.src]="projectPhotoSource(photo, project.placeholder?.src)" [alt]="project.title + ' project example'"
+                      loading="lazy" decoding="async"
                       [class.inactive-gif]="isInactiveProjectGif(photo)"
                       [class.active-gif]="isActiveProjectGif(photo)"
                       (mouseenter)="selectProjectGif(photo)" (mouseleave)="resumeProjectGifCycle()">
@@ -366,12 +371,17 @@ export class InvestContactComponent {
     }
   `]
 })
-export class ProjectListComponent implements OnDestroy {
+export class ProjectListComponent implements AfterViewInit, OnDestroy {
   protected projects: ProjectEntry[] = [];
   protected loadError = '';
+  protected mediaLoadError = '';
   protected expandedProjects: { [key: string]: boolean } = {};
   private readonly gifPosters = new Map<string, string>();
   private readonly gifDurations = new Map<string, number>();
+  private readonly gifUrls = new Map<string, string>();
+  private readonly requestedGifs = new Set<string>();
+  private readonly mediaAbort = new AbortController();
+  private mediaObserver?: IntersectionObserver;
   private gifPhotos: string[] = [];
   private activeGif = '';
   private hoveredGif = '';
@@ -380,20 +390,90 @@ export class ProjectListComponent implements OnDestroy {
   @ViewChildren('projectPhoto', { read: ElementRef })
   private projectPhotoElements!: QueryList<ElementRef<HTMLImageElement>>;
 
+  @ViewChildren('projectGallery', { read: ElementRef })
+  private projectGalleries!: QueryList<ElementRef<HTMLElement>>;
+
   constructor() {
     void this.loadProjects();
   }
 
-  ngOnDestroy(): void {
-    this.clearGifRotation();
+  // MARKER: PROJECT_MEDIA_OBSERVER_START - Prepare GIF previews only for nearby galleries
+  ngAfterViewInit(): void {
+    if (typeof IntersectionObserver !== 'undefined') {
+      this.mediaObserver = new IntersectionObserver((entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            this.mediaObserver?.unobserve(entry.target);
+            this.prepareGallery(entry.target);
+          }
+        }
+      }, { rootMargin: '250px' });
+    }
+
+    this.observeGalleries();
+    this.projectGalleries.changes.subscribe(() => this.observeGalleries());
   }
 
-  protected projectPhotoSource(photo: string): string {
-    if (!this.isGif(photo) || this.activeGif === photo) {
+  ngOnDestroy(): void {
+    this.mediaObserver?.disconnect();
+    this.mediaAbort.abort();
+    this.clearGifRotation();
+    this.gifUrls.forEach(url => URL.revokeObjectURL(url));
+  }
+
+  private observeGalleries(): void {
+    for (const gallery of this.projectGalleries) {
+      if (this.mediaObserver) {
+        this.mediaObserver.observe(gallery.nativeElement);
+      } else {
+        this.prepareGallery(gallery.nativeElement);
+      }
+    }
+  }
+
+  private prepareGallery(gallery: Element): void {
+    gallery.querySelectorAll<HTMLImageElement>('[data-gif-photo]').forEach((image) => {
+      const photo = image.getAttribute('data-gif-photo');
+      if (photo && !this.requestedGifs.has(photo)) {
+        this.requestedGifs.add(photo);
+        void this.prepareGif(photo);
+      }
+    });
+  }
+
+  private async prepareGif(photo: string): Promise<void> {
+    try {
+      const preview = await this.createGifPoster(photo);
+      if (this.mediaAbort.signal.aborted) {
+        URL.revokeObjectURL(preview.url);
+        return;
+      }
+      this.gifPosters.set(photo, preview.poster);
+      this.gifDurations.set(photo, preview.durationMs);
+      this.gifUrls.set(photo, preview.url);
+      if (!this.activeGif && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+        this.activeGif = photo;
+        this.scheduleNextGif();
+      }
+    } catch (error) {
+      if (!this.mediaAbort.signal.aborted) {
+        console.error(`Animated project preview could not be loaded: ${photo}`, error);
+        this.mediaLoadError = 'Some animated project previews could not be loaded.';
+      }
+    }
+  }
+  // MARKER: PROJECT_MEDIA_OBSERVER_END
+
+  protected projectPhotoSource(photo: string, placeholder?: string): string | null {
+    if (!this.isGif(photo)) {
       return photo;
     }
 
-    return this.gifPosters.get(photo) ?? photo;
+    if (this.activeGif === photo) {
+      return this.gifUrls.get(photo) ?? null;
+    }
+
+    return this.gifPosters.get(photo) ?? placeholder ?? null;
   }
 
   protected isInactiveProjectGif(photo: string): boolean {
@@ -405,7 +485,7 @@ export class ProjectListComponent implements OnDestroy {
   }
 
   protected selectProjectGif(photo: string): void {
-    if (!this.isGif(photo)) {
+    if (!this.isGif(photo) || !this.gifDurations.has(photo)) {
       return;
     }
 
@@ -433,7 +513,7 @@ export class ProjectListComponent implements OnDestroy {
 
   private async loadProjects(): Promise<void> {
     try {
-      const response = await fetch('assets/projects/projects.json');
+      const response = await fetch('assets/projects/projects.json', { signal: this.mediaAbort.signal });
       if (!response.ok) {
         this.loadError = 'Projects could not be loaded right now.';
         return;
@@ -444,20 +524,12 @@ export class ProjectListComponent implements OnDestroy {
         manifest.projects.flatMap(project => project.photos ?? []).filter(photo => this.isGif(photo))
       ));
 
-      for (const photo of this.gifPhotos) {
-        const preview = await this.createGifPoster(photo);
-        this.gifPosters.set(photo, preview.poster);
-        this.gifDurations.set(photo, preview.durationMs);
-      }
-
       this.projects = manifest.projects;
-      if (this.gifPhotos.length && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
-        this.activeGif = this.gifPhotos[0];
-        this.scheduleNextGif();
-      }
     } catch (error) {
-      console.error('Projects or animated project previews could not be loaded.', error);
-      this.loadError = 'Projects could not be loaded right now.';
+      if (!this.mediaAbort.signal.aborted) {
+        console.error('Projects could not be loaded.', error);
+        this.loadError = 'Projects could not be loaded right now.';
+      }
     }
   }
 
@@ -467,7 +539,8 @@ export class ProjectListComponent implements OnDestroy {
 
   private scheduleNextGif(): void {
     this.clearGifRotation();
-    if (!this.gifPhotos.length || this.hoveredGif || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+    const readyPhotos = this.gifPhotos.filter(photo => this.gifDurations.has(photo));
+    if (!readyPhotos.length || this.hoveredGif || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       return;
     }
 
@@ -478,8 +551,9 @@ export class ProjectListComponent implements OnDestroy {
 
     this.gifRotation = setTimeout(() => {
       this.gifRotation = undefined;
-      const currentIndex = this.gifPhotos.indexOf(this.activeGif);
-      this.activeGif = this.gifPhotos[(currentIndex + 1) % this.gifPhotos.length];
+      const readyPhotos = this.gifPhotos.filter(photo => this.gifDurations.has(photo));
+      const currentIndex = readyPhotos.indexOf(this.activeGif);
+      this.activeGif = readyPhotos[(currentIndex + 1) % readyPhotos.length];
       this.scrollActiveGifIntoView();
       this.scheduleNextGif();
     }, durationMs);
@@ -509,8 +583,8 @@ export class ProjectListComponent implements OnDestroy {
     });
   }
 
-  private async createGifPoster(photo: string): Promise<{ poster: string; durationMs: number }> {
-    const response = await fetch(photo);
+  private async createGifPoster(photo: string): Promise<{ poster: string; durationMs: number; url: string }> {
+    const response = await fetch(photo, { signal: this.mediaAbort.signal });
     if (!response.ok) {
       throw new Error(`Could not load animated project image: ${photo}`);
     }
@@ -544,9 +618,10 @@ export class ProjectListComponent implements OnDestroy {
         image.src = imageUrl;
       });
 
-      return { poster, durationMs };
-    } finally {
+      return { poster, durationMs, url: imageUrl };
+    } catch (error) {
       URL.revokeObjectURL(imageUrl);
+      throw error;
     }
   }
 

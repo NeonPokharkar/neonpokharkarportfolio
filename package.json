@@ -5,6 +5,8 @@
   "scripts": {
     "start": "ng serve",
     "build": "ng build",
+    "postbuild": "node scripts/generate-static.mjs",
+    "test:static": "node --test scripts/static.test.mjs",
     "watch": "ng build --watch --configuration development"
   },
   "dependencies": {

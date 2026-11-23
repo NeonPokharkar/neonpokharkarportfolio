@@ -35,6 +35,10 @@ jobs:
       - name: Build Angular Application
         run: npm run build -- --configuration=production --base-href=/
 
+      # MARKER: STATIC_DISCOVERY_CI - Validate the generated pages before deployment
+      - name: Test generated discovery files
+        run: npm run test:static
+
       - name: Prepare SPA fallback
         run: |
           cp ./dist/neon-portfolio/browser/index.html ./dist/neon-portfolio/browser/404.html

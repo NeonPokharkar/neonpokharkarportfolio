@@ -21,6 +21,7 @@ test('sitemap links to existing public pages and every essay', async () => {
   assert.match(robots, /Sitemap: https:\/\/neonpokharkar\.com\/sitemap\.xml/);
   const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((match) => match[1]);
   assert.equal(new Set(urls).size, urls.length);
+  assert.ok(!urls.includes('https://neonpokharkar.com/chat/'));
   assert.ok(urls.includes('https://neonpokharkar.com/projects/'));
   assert.ok(urls.includes('https://neonpokharkar.com/essays/'));
   for (const essay of manifest.essays) {

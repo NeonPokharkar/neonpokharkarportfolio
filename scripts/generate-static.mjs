@@ -99,7 +99,7 @@ await Promise.all(essays.map(async (essay) => {
   await writeRoute(`essays/${essay.slug}`, page);
 }));
 
-const urls = [...publicRoutes, ...essays.map((essay) => `essays/${essay.slug}`)];
+const urls = [...publicRoutes.filter((route) => route !== 'chat'), ...essays.map((essay) => `essays/${essay.slug}`)];
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((route) => `  <url><loc>${escapeHtml(`${origin}/${route}${route ? '/' : ''}`)}</loc></url>`).join('\n')}\n</urlset>\n`;
 await writeFile(path.join(output, 'sitemap.xml'), sitemap);
 console.log(`Generated ${essays.length} essay pages, project and essay indexes, and ${urls.length} sitemap URLs.`);

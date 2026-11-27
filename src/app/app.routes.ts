@@ -2693,6 +2693,16 @@ export const routes: Routes = [
     component: InvestContactComponent
   },
   {
+    path: 'privacy-policy',
+    loadComponent: () => import('./legal-page.component').then(module => module.LegalPageComponent),
+    data: { legalDocument: 'privacy' }
+  },
+  {
+    path: 'terms-of-service',
+    loadComponent: () => import('./legal-page.component').then(module => module.LegalPageComponent),
+    data: { legalDocument: 'terms' }
+  },
+  {
     path: 'gallery',
     component: HobbyListComponent
   },

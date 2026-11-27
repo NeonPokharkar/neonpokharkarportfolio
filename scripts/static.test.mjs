@@ -57,6 +57,27 @@ test('shayari route is excluded from discovery but remains available', async () 
   assert.doesNotMatch(homePage, /<meta name="robots" content="noindex/);
 });
 
+test('legal documents are directly available but noindex and excluded from discovery', async () => {
+  const [privacy, terms, sitemap, robots, home, appTemplate] = await Promise.all([
+    built('privacy-policy/index.html'),
+    built('terms-of-service/index.html'),
+    built('sitemap.xml'),
+    built('robots.txt'),
+    built('index.html'),
+    read('src/app/app.component.html')
+  ]);
+  assert.match(privacy, /<meta name="robots" content="noindex, nofollow">/);
+  assert.match(privacy, /<h1>Privacy <em>policy\.<\/em><\/h1>/);
+  assert.match(privacy, /Google sign-in/);
+  assert.match(terms, /<meta name="robots" content="noindex, nofollow">/);
+  assert.match(terms, /<h1>Terms of <em>service\.<\/em><\/h1>/);
+  assert.match(terms, /Acceptable use/);
+  assert.ok(!sitemap.includes('/privacy-policy/') && !sitemap.includes('/terms-of-service/'));
+  assert.doesNotMatch(robots, /^Disallow: \/(privacy-policy|terms-of-service)$/m);
+  assert.doesNotMatch(home, /href="\/(privacy-policy|terms-of-service)/);
+  assert.doesNotMatch(appTemplate, /(?:routerLink|href)="[^"]*(?:privacy-policy|terms-of-service)/);
+});
+
 test('static essays and project index contain manifest content', async () => {
   const [essays, projects, essayIndex, projectIndex] = await Promise.all([
     read('src/assets/essays/essays.json').then(JSON.parse),

@@ -1,0 +1,128 @@
+{
+  "privacy": {
+    "title": "Privacy",
+    "accent": "policy.",
+    "eyebrow": "Privacy / transparency",
+    "description": "How this portfolio website processes information when you browse, sign in, or use its features.",
+    "lastUpdated": "November 27, 2026",
+    "sections": [
+      {
+        "heading": "About this policy",
+        "paragraphs": [
+          "This policy explains how Aditya Pokharkar processes information through this personal portfolio website and its optional features. It applies when you browse the site, sign in with Google, use the portfolio assistant, or use authenticated content features."
+        ]
+      },
+      {
+        "heading": "Information processed",
+        "paragraphs": [
+          "The information involved depends on which features you choose to use:"
+        ],
+        "bullets": [
+          "Google sign-in: Google provides an identity credential and profile details such as your account identifier, name, email address, and profile image. The portfolio API verifies the credential. If you have a verified email match, the API may return a relationship profile for display in your signed-in account menu.",
+          "Abuse prevention: the sign-in flow uses Google reCAPTCHA Enterprise. A reCAPTCHA token and sign-in action are sent to the portfolio API as part of verification. Google may process technical and interaction signals under its own policies.",
+          "Portfolio assistant: when you send a message, the message and relevant conversation context are sent to the portfolio API to generate a response.",
+          "Authenticated content: when signed in, the site may send your session token to the portfolio API to retrieve essays or other protected content, maintain the session, or sign out.",
+          "Browser storage: the site stores your theme preference in local storage. Chat history is stored in session storage to restore a conversation in the chat page. Sign-in session data is held in the running page and shared with your other open tabs; limited session-coordination metadata may be stored locally by the browser.",
+          "Phone reveal request: if you submit a purpose and callback number to reveal the phone contact, those details are saved in local storage on your device. This action does not send those details to the portfolio API.",
+          "Email contact: contact actions may open an email draft in your email application. The site does not receive the draft unless you choose to send it."
+        ]
+      },
+      {
+        "heading": "How information is used",
+        "paragraphs": [
+          "Information is used to provide the feature you requested: verify sign-in, protect the sign-in flow from abuse, maintain or revoke a session, match an eligible profile, retrieve protected content, respond to assistant messages, remember site preferences, and reveal contact details when requested."
+        ]
+      },
+      {
+        "heading": "Service providers and external links",
+        "paragraphs": [
+          "Google provides Google sign-in and reCAPTCHA Enterprise. The portfolio API provides authentication, session, assistant, and protected-content features. These services receive the information needed to perform their functions and may process it under their own privacy terms.",
+          "This website may link to third-party websites. Their privacy practices are governed by their own policies. This website does not sell personal information."
+        ]
+      },
+      {
+        "heading": "Storage and retention",
+        "paragraphs": [
+          "Browser-stored preferences and phone reveal details remain on your device until they are removed by the site or you clear this website's browser storage. Chat history is kept in session storage and may remain for the duration of the browser session. Sign-in sessions expire or can be ended by signing out.",
+          "Information sent to Google or the portfolio API is subject to the applicable service's retention practices. The website does not control retention by external providers."
+        ]
+      },
+      {
+        "heading": "Your choices",
+        "paragraphs": [
+          "You can browse public pages without signing in. You may decline optional features, sign out to end your current session, clear this site's local and session storage through your browser, or contact Aditya to ask a question or request help with information associated with your use of the site."
+        ]
+      },
+      {
+        "heading": "Security",
+        "paragraphs": [
+          "Reasonable technical measures are used to protect the site and its sessions. No website or transmission method can be guaranteed completely secure. Do not share your sign-in session token or use a shared device without signing out."
+        ]
+      },
+      {
+        "heading": "Children and policy changes",
+        "paragraphs": [
+          "This portfolio is intended for a general audience and is not designed to collect information from children. This policy may be updated when the site or its features change. The date above indicates the latest revision."
+        ]
+      }
+    ]
+  },
+  "terms": {
+    "title": "Terms of",
+    "accent": "service.",
+    "eyebrow": "Terms / use",
+    "description": "Terms for accessing and using Aditya Pokharkar's portfolio website and its optional features.",
+    "lastUpdated": "November 27, 2026",
+    "sections": [
+      {
+        "heading": "Agreement and the site",
+        "paragraphs": [
+          "These terms apply when you access or use Aditya Pokharkar's personal portfolio website, including its writing, projects, portfolio assistant, sign-in, and protected-content features. By using the site, you agree to these terms. If you do not agree, do not use the site or its optional features."
+        ]
+      },
+      {
+        "heading": "Using optional features",
+        "paragraphs": [
+          "Some features require Google sign-in or a valid session. You are responsible for keeping access to your account and device secure. Sign out when you finish on a shared device. Access may be limited, suspended, or ended if a session is invalid, expires, or is used in a way that threatens the site or its users."
+        ]
+      },
+      {
+        "heading": "Acceptable use",
+        "paragraphs": [
+          "Use the site lawfully and respectfully. You must not:"
+        ],
+        "bullets": [
+          "Attempt to bypass authentication, access non-public data, or interfere with the site's security or availability.",
+          "Use the site to transmit unlawful, harmful, deceptive, or infringing material.",
+          "Abuse, overload, scrape, or automate requests to protected services in a way that disrupts them or violates applicable law."
+        ]
+      },
+      {
+        "heading": "Content and intellectual property",
+        "paragraphs": [
+          "Unless otherwise noted, the site's writing, design, and original materials are owned by Aditya Pokharkar or used with permission and are protected by applicable intellectual-property laws. You may view and use the site for personal, non-commercial purposes. Do not republish or commercially exploit its materials without permission, except where applicable law allows.",
+          "Names, logos, and materials belonging to third parties remain the property of their respective owners."
+        ]
+      },
+      {
+        "heading": "Assistant responses and external services",
+        "paragraphs": [
+          "Assistant responses are generated to help with general questions. They may be incomplete or inaccurate and are not professional, legal, financial, or other expert advice. Verify important information independently.",
+          "Google sign-in, reCAPTCHA Enterprise, and linked third-party services are governed by their own terms. The site is not responsible for services or content operated by others."
+        ]
+      },
+      {
+        "heading": "Availability and liability",
+        "paragraphs": [
+          "The site and its features are provided on an \"as available\" basis. Features may change, be interrupted, or become unavailable. To the extent permitted by applicable law, Aditya Pokharkar disclaims warranties and will not be liable for indirect or consequential loss arising from use of, or inability to use, the site. Nothing in these terms excludes liability or rights that cannot be excluded under applicable law."
+        ]
+      },
+      {
+        "heading": "Changes and contact",
+        "paragraphs": [
+          "These terms may be updated as the site changes. Continued use after an update means you accept the revised terms. The date above indicates the latest revision."
+        ]
+      }
+    ]
+  }
+}

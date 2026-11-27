@@ -186,10 +186,24 @@ test('applies the saved theme before stylesheets can paint the page', async () =
   });
   assert.equal(document.documentElement.dataset.theme, 'night');
 
-  const stylesheetIndex = builtIndex.indexOf('media="print"');
+  const stylesheetIndex = builtIndex.search(/<link\b[^>]*rel="stylesheet"[^>]*href="styles-[^"]+\.css"/);
   assert.ok(stylesheetIndex > 0);
   assert.ok(builtIndex.slice(0, stylesheetIndex).includes('assets/theme-init.js'));
   assert.match(builtIndex.slice(0, stylesheetIndex), /html\[data-theme='night'\].*color-scheme: dark/s);
+});
+
+test('production stylesheets do not depend on inline event handlers', async () => {
+  for (const page of ['index.html', 'essays/index.html']) {
+    const html = await built(page);
+    const stylesheet = html.match(/<link\b[^>]*rel="stylesheet"[^>]*href="styles-[^"]+\.css"[^>]*>/);
+    assert.ok(stylesheet, `Missing global stylesheet in ${page}`);
+    assert.doesNotMatch(stylesheet[0], /\b(?:onload|onerror)\s*=|\bmedia="print"/i);
+  }
+});
+
+test('verification prompts revalidate cached data', async () => {
+  const routes = await read('src/app/app.routes.ts');
+  assert.match(routes, /fetch\('assets\/verification\/prompts\.json',\s*\{\s*cache:\s*'no-cache'\s*\}\)/);
 });
 
 test('production document restricts script sources and enforces Trusted Types', async () => {

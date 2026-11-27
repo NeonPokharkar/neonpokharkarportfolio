@@ -1079,7 +1079,7 @@ export class VerificationDialogComponent implements OnInit, AfterViewInit, OnDes
   protected async loadPrompt(): Promise<void> {
     this.promptError = '';
     try {
-      const response = await fetch('assets/verification/prompts.json');
+      const response = await fetch('assets/verification/prompts.json', { cache: 'no-cache' });
       if (!response.ok) {
         throw new Error(`Verification prompts returned HTTP ${response.status}.`);
       }

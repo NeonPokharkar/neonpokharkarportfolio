@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'dist', 'neon-portfolio', 'browser');
 const origin = 'https://neonpokharkar.com';
-const publicRoutes = ['', 'me', 'vision-mission', 'experience', 'essays', 'projects', 'gallery', 'invest', 'links', 'chat'];
+const publicRoutes = ['', 'me', 'vision-mission', 'experience', 'essays', 'projects', 'gallery', 'shayari', 'invest', 'links', 'chat'];
 
 const readSource = (file) => readFile(path.join(root, 'src', ...file.split('/')), 'utf8');
 const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => ({
@@ -85,7 +85,8 @@ const projectList = `<h1>Projects built along the way.</h1>${projectManifest.pro
 }).join('')}`;
 
 await Promise.all(publicRoutes.filter(Boolean).map((route) =>
-  writeRoute(route, route === 'projects' ? renderPage(projectList) : route === 'essays' ? renderPage(essayList) : shell)
+  writeRoute(route, route === 'projects' ? renderPage(projectList) : route === 'essays' ? renderPage(essayList) :
+    route === 'shayari' ? shell.replace('</head>', '<meta name="robots" content="noindex, nofollow"></head>') : shell)
 ));
 
 await Promise.all(essays.map(async (essay) => {
@@ -99,7 +100,7 @@ await Promise.all(essays.map(async (essay) => {
   await writeRoute(`essays/${essay.slug}`, page);
 }));
 
-const urls = [...publicRoutes.filter((route) => route !== 'chat'), ...essays.map((essay) => `essays/${essay.slug}`)];
+const urls = [...publicRoutes.filter((route) => route !== 'chat' && route !== 'shayari'), ...essays.map((essay) => `essays/${essay.slug}`)];
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((route) => `  <url><loc>${escapeHtml(`${origin}/${route}${route ? '/' : ''}`)}</loc></url>`).join('\n')}\n</urlset>\n`;
 await writeFile(path.join(output, 'sitemap.xml'), sitemap);
 console.log(`Generated ${essays.length} essay pages, project and essay indexes, and ${urls.length} sitemap URLs.`);

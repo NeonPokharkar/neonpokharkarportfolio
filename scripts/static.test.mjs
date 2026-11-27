@@ -34,6 +34,18 @@ test('sitemap links to existing public pages and every essay', async () => {
   }
 });
 
+test('shayari route is excluded from discovery but remains available', async () => {
+  const [robots, sitemap, shayariPage, homePage] = await Promise.all([
+    built('robots.txt'), built('sitemap.xml'), built('shayari/index.html'), built('index.html')
+  ]);
+  assert.match(robots, /^Disallow: \/shayari$/m);
+  assert.match(robots, /^Disallow: \/assets\/shayari\/$/m);
+  assert.ok(!sitemap.includes('https://neonpokharkar.com/shayari/'));
+  assert.match(shayariPage, /<meta name="robots" content="noindex, nofollow">/);
+  assert.ok(shayariPage.includes('<app-root>'));
+  assert.doesNotMatch(homePage, /<meta name="robots" content="noindex/);
+});
+
 test('static essays and project index contain manifest content', async () => {
   const [essays, projects, essayIndex, projectIndex] = await Promise.all([
     read('src/assets/essays/essays.json').then(JSON.parse),
@@ -53,5 +65,60 @@ test('static essays and project index contain manifest content', async () => {
   for (const project of projects.projects) {
     assert.ok(projectIndex.includes(`<h2>${escapeHtml(project.title)}</h2>`));
     assert.ok(projectIndex.includes(escapeHtml(project.explanation)));
+  }
+});
+
+test('built contextual question manifest contains usable templates', async () => {
+  const [source, output] = await Promise.all([
+    read('src/assets/context-questions.json').then(JSON.parse),
+    built('assets/context-questions.json').then(JSON.parse)
+  ]);
+  assert.deepEqual(output, source);
+  for (const category of ['project', 'experience', 'essay', 'education', 'vision', 'gallery', 'links', 'invest', 'home', 'general']) {
+    const { generic, specific } = output[category];
+    assert.ok(Array.isArray(generic), `Missing generic list: ${category}`);
+    assert.ok(generic.every((question) => typeof question === 'string' && question.trim()));
+    assert.ok(new Set(generic.map((question) => question.trim())).size >= 5);
+    assert.ok(specific && typeof specific === 'object' && !Array.isArray(specific));
+    for (const [key, questions] of Object.entries(specific)) {
+      assert.ok(key.trim());
+      assert.ok(Array.isArray(questions));
+      assert.ok(questions.every((question) => typeof question === 'string' && question.trim()));
+    }
+  }
+  const [projects, essays, experience, education, vision, hobbies, links, profile, home] = await Promise.all([
+    read('src/assets/projects/projects.json').then(JSON.parse),
+    read('src/assets/essays/essays.json').then(JSON.parse),
+    read('src/assets/experience/experience.json').then(JSON.parse),
+    read('src/assets/education/education.json').then(JSON.parse),
+    read('src/assets/vision/vision.json').then(JSON.parse),
+    read('src/assets/hobbies/hobbies.json').then(JSON.parse),
+    read('src/assets/links/links.json').then(JSON.parse),
+    read('src/assets/profile/profile.json').then(JSON.parse),
+    read('src/app/app.component.html')
+  ]);
+  for (const key of Object.keys(output.project.specific)) {
+    assert.ok(projects.projects.some((project) => project.title === key), `Unknown project: ${key}`);
+  }
+  for (const key of Object.keys(output.essay.specific)) {
+    assert.ok(essays.essays.some((essay) => essay.slug === key), `Unknown essay: ${key}`);
+  }
+  for (const key of Object.keys(output.experience.specific)) {
+    assert.ok(experience.experience.some((entry) => entry.firm === key), `Unknown experience: ${key}`);
+  }
+  for (const [category, items] of [
+    ['education', education.education], ['vision', vision.cards],
+    ['gallery', hobbies.hobbies], ['links', links.links]
+  ]) {
+    for (const key of Object.keys(output[category].specific)) {
+      assert.ok(items.some((item) => item.title === key), `Unknown ${category} item: ${key}`);
+    }
+  }
+  for (const key of Object.keys(output.home.specific)) {
+    assert.ok(
+      home.includes(`id="${key}"`) || home.includes(`data-context-key="${key}"`) ||
+      profile.whatIBring.services.some((service) => service.title === key),
+      `Unknown home section or service: ${key}`
+    );
   }
 });

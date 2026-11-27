@@ -1,7 +1,8 @@
 import { Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, Pipe, PipeTransform, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Marked } from 'marked';
+import { Subscription } from 'rxjs';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
 
 const chatMarkdown = new Marked({
@@ -97,41 +98,50 @@ export class ChatPageComponent implements OnInit, OnDestroy {
   private lastRelevantConversation = '';
   private recognition: BrowserSpeechRecognition | null = null;
   private followConversation = true;
+  private promptSubscription?: Subscription;
+  private initialPromptHandled = false;
+  private destroyed = false;
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
 
-  constructor(private route: ActivatedRoute, private zone: NgZone) {}
+  constructor(private route: ActivatedRoute, private router: Router, private zone: NgZone) {}
 
   async ngOnInit(): Promise<void> {
     void this.loadWelcomeContent();
     await this.loadProfile();
-    
-    // Try to restore conversation from sessionStorage
-    const savedMessages = sessionStorage.getItem('aditya_chat_messages');
-    const savedSummary = sessionStorage.getItem('aditya_chat_summary');
-    const savedLastConv = sessionStorage.getItem('aditya_chat_last_conv');
-    
-    if (savedMessages) {
-      try {
+    if (this.destroyed) {
+      return;
+    }
+
+    try {
+      const savedMessages = sessionStorage.getItem('aditya_chat_messages');
+      const savedSummary = sessionStorage.getItem('aditya_chat_summary');
+      const savedLastConv = sessionStorage.getItem('aditya_chat_last_conv');
+      if (savedMessages) {
         const messages = JSON.parse(savedMessages) as ChatMessage[];
         this.chatMessages.splice(1); // Keep the initial message, remove the rest
         this.chatMessages.push(...messages.slice(1)); // Add back saved messages
         this.conversationSummary = savedSummary || '';
         this.lastRelevantConversation = savedLastConv || '';
         this.isWelcomeState = !messages.slice(1).some(message => message.content.trim().length > 0);
-      } catch (e) {
-        console.warn('Failed to restore chat messages', e);
       }
+    } catch (error) {
+      console.warn('Failed to restore chat messages', error);
     }
-    // Check for initial prompt in query parameters
-    this.route.queryParams.subscribe(params => {
-      if (params['prompt']) {
-        this.chatInput = decodeURIComponent(params['prompt']);
+
+    this.promptSubscription = this.route.queryParamMap.subscribe(params => {
+      const prompt = params.get('prompt');
+      if (prompt) {
+        this.chatInput = prompt;
+        if (params.get('autoSend') === '1' && !this.initialPromptHandled) {
+          this.initialPromptHandled = true;
+          void this.submitInitialPrompt();
+        }
       }
     });
 
     // Auto-focus the input field
     setTimeout(() => {
-      const input = document.querySelector('input[name="chatInput"]') as HTMLInputElement;
+      const input = document.querySelector<HTMLTextAreaElement>('textarea[name="chatInput"]');
       input?.focus();
     }, 100);
   }
@@ -154,7 +164,29 @@ export class ChatPageComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
+    this.promptSubscription?.unsubscribe();
     this.cancelDictation();
+  }
+
+  private async submitInitialPrompt(): Promise<void> {
+    try {
+      const cleared = await this.router.navigate([], {
+        relativeTo: this.route,
+        queryParams: { prompt: null, autoSend: null },
+        queryParamsHandling: 'merge',
+        replaceUrl: true
+      });
+      if (!cleared) {
+        throw new Error('Could not clear the initial chat prompt.');
+      }
+      if (!this.destroyed) {
+        await this.sendChatMessage();
+      }
+    } catch (error) {
+      console.error('Could not submit the initial chat prompt.', error);
+      this.chatError = 'Could not submit the question automatically. Please send it manually.';
+    }
   }
 
   protected toggleDictation(): void {
@@ -244,6 +276,28 @@ export class ChatPageComponent implements OnInit, OnDestroy {
     } catch {
       this.chatError = 'Failed to load profile configuration.';
     }
+  }
+
+  protected onChatInputKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing) {
+      return;
+    }
+
+    event.preventDefault();
+    void this.sendChatMessage();
+  }
+
+  protected resizeChatInput(event: Event): void {
+    const textarea = event.target;
+    if (!(textarea instanceof HTMLTextAreaElement)) {
+      return;
+    }
+
+    textarea.style.height = 'auto';
+    const maxHeight = Number.parseFloat(getComputedStyle(textarea).maxHeight);
+    const contentHeight = textarea.scrollHeight;
+    textarea.style.height = `${Math.min(contentHeight, maxHeight)}px`;
+    textarea.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden';
   }
 
   protected async sendChatMessage(): Promise<void> {

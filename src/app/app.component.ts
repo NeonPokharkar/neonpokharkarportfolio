@@ -1,8 +1,9 @@
 // MARKER: COMPONENT_START - Main app component with portfolio, navigation, theme, and AI chat
-import { Component, HostListener } from '@angular/core';
+import { Component, HostListener, OnDestroy } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
+import { VerifiedUserService } from './verified-user.service';
 
 // MARKER: INTERFACES_SECTION - Data structure definitions for portfolio content
 interface PortfolioItem {
@@ -115,6 +116,12 @@ interface ChatMessage {
   content: string;
 }
 
+const contextQuestionCategories = [
+  'project', 'experience', 'essay', 'education', 'vision', 'gallery', 'links', 'invest', 'home', 'general'
+] as const;
+type ContextQuestionCategory = typeof contextQuestionCategories[number];
+type ContextQuestions = Record<ContextQuestionCategory, { generic: string[]; specific: Record<string, string[]> }>;
+
 @Component({
   selector: 'app-root',
   standalone: true,
@@ -122,7 +129,7 @@ interface ChatMessage {
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
-export class AppComponent {
+export class AppComponent implements OnDestroy {
   // MARKER: THEME_SYSTEM_START - Theme toggle (day/night) with localStorage persistence
   protected themeMode: 'day' | 'night' = 'day';
   private readonly themePreferenceKey = 'aditya-portfolio-theme';
@@ -137,10 +144,34 @@ export class AppComponent {
   // MARKER: THEME_SYSTEM_END
 
   // MARKER: LIFECYCLE_AND_ROUTING - Constructor, route checks (home vs essays vs dynamic)
-  constructor(protected readonly router: Router) {
+  constructor(protected readonly router: Router, protected readonly verifiedUser: VerifiedUserService) {
     this.initializeTheme();
+    try {
+      this.contextHoverPaused = sessionStorage.getItem('context-hover-paused') === 'true';
+    } catch (error) {
+      console.warn('Could not restore the contextual hover preference.', error);
+    }
     void this.loadHomeData();
     void this.loadProfile();
+    this.contextQuestions = this.loadContextQuestions();
+    this.routerEvents = this.router.events.subscribe((event) => {
+      if (event instanceof NavigationStart) {
+        this.cancelContextHover();
+        this.closeContextMenu();
+        this.hoveredContext = null;
+        this.dismissedContext = null;
+      }
+    });
+  }
+
+  private readonly routerEvents;
+
+  ngOnDestroy(): void {
+    this.cancelContextHover();
+    if (this.contextStatusTimer !== undefined) {
+      clearTimeout(this.contextStatusTimer);
+    }
+    this.routerEvents.unsubscribe();
   }
 
   protected get isHomeRoute(): boolean {
@@ -154,6 +185,7 @@ export class AppComponent {
   protected get isChatRoute(): boolean {
     return this.router.url.split(/[?#]/)[0] === '/chat';
   }
+  protected failedProfilePicture = '';
   // MARKER: LIFECYCLE_AND_ROUTING_END
 
   // MARKER: SCROLL_AND_MOUSE_TRACKING - Cursor position, scroll progress for animations
@@ -166,6 +198,17 @@ export class AppComponent {
   protected clickPointerY = 0;
   protected menuOpen = false;
   private clickPointerTimer: ReturnType<typeof setTimeout> | undefined;
+  protected contextMenu: { title: string; questions: string[] } | null = null;
+  protected contextStatus = '';
+  private contextHoverTimer: ReturnType<typeof setTimeout> | undefined;
+  private hoveredContext: HTMLElement | null = null;
+  private dismissedContext: HTMLElement | null = null;
+  private contextPreviousFocus: HTMLElement | null = null;
+  private contextStatusTimer: ReturnType<typeof setTimeout> | undefined;
+  private readonly contextQuestions: Promise<ContextQuestions | null>;
+  private contextRequestId = 0;
+  private contextHoverPaused = false;
+  private lastContextRightClick: number | null = null;
 
   protected get dialogueSide(): 'left' | 'right' {
     const orbitAngle = ((-32 + this.scrollProgress * 300) % 360 + 360) % 360;
@@ -211,7 +254,7 @@ export class AppComponent {
 
   protected projects: PortfolioItem[] = [];
 
-  protected experience: Array<{ period: string; role: string; company: string; description: string }> = [];
+  protected experience: Array<{ period: string; role: string; firm: string; company: string; description: string }> = [];
 
   protected education: Array<{ period: string; role: string; company: string }> = [];
   // MARKER: PORTFOLIO_ARRAYS_SECTION_END
@@ -244,6 +287,7 @@ export class AppComponent {
       this.experience = experienceData.experience.map((entry) => ({
         period: entry.period.replace('June', 'Jun'),
         role: entry.role,
+        firm: entry.firm,
         company: `${entry.firm} · ${entry.location}`,
         description: entry.summary
       }));
@@ -562,6 +606,10 @@ export class AppComponent {
   // MARKER: EVENT_LISTENERS_START - @HostListener for scroll, mouse, keyboard
   @HostListener('window:scroll')
   protected updateScrollProgress(): void {
+    this.cancelContextHover();
+    if (!this.contextMenu) {
+      this.hoveredContext = null;
+    }
     const scrollableHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
     this.scrollProgress = Math.min(window.scrollY / scrollableHeight, 1);
   }
@@ -570,11 +618,298 @@ export class AppComponent {
   protected updateCursorPosition(event: MouseEvent): void {
     this.cursorX = event.clientX;
     this.cursorY = event.clientY;
+    if (this.contextMenu) {
+      return;
+    }
+
+    const target = event.target instanceof Element ? event.target : null;
+    const candidate = this.canUseContextMenu() && !event.buttons &&
+      !target?.closest('a, button, input, textarea, select, summary, [contenteditable], nav, form, [role="dialog"]')
+      ? target?.closest('main article, main section, main')
+      : null;
+    const context = candidate instanceof HTMLElement ? candidate.closest<HTMLElement>('article') ?? candidate : null;
+    if (context === this.hoveredContext) {
+      return;
+    }
+
+    this.cancelContextHover();
+    this.hoveredContext = context;
+    if (context !== this.dismissedContext) {
+      this.dismissedContext = null;
+    }
+    if (context && !this.dismissedContext && !this.contextHoverPaused) {
+      this.contextHoverTimer = setTimeout(() => void this.openContextMenu(context), 1500);
+    }
   }
 
   @HostListener('document:keydown.escape')
   protected closeMenu(): void {
+    if (this.contextMenu) {
+      this.closeContextMenu();
+    }
+    this.cancelContextHover();
     this.menuOpen = false;
+  }
+
+  @HostListener('document:keydown', ['$event'])
+  protected handleContextKeydown(event: KeyboardEvent): void {
+    if (this.contextMenu && event.key === 'Tab') {
+      const dialog = document.querySelector<HTMLElement>('.context-dialog');
+      const buttons = dialog?.querySelectorAll<HTMLButtonElement>('button:not([disabled])');
+      if (buttons?.length) {
+        const first = buttons[0];
+        const last = buttons[buttons.length - 1];
+        if (document.activeElement === dialog) {
+          event.preventDefault();
+          (event.shiftKey ? last : first).focus();
+        } else if (event.shiftKey && document.activeElement === first) {
+          event.preventDefault();
+          last.focus();
+        } else if (!event.shiftKey && document.activeElement === last) {
+          event.preventDefault();
+          first.focus();
+        }
+      }
+      return;
+    }
+    const active = document.activeElement;
+    if (event.altKey && !event.ctrlKey && !event.metaKey && event.key.toLowerCase() === 'q' &&
+        !(active instanceof Element && active.closest('input, textarea, select, [contenteditable]')) &&
+        this.hoveredContext && this.canUseContextMenu()) {
+      event.preventDefault();
+      this.lastContextRightClick = null;
+      if (this.contextHoverPaused) {
+        this.setContextHoverPaused(false);
+      }
+      void this.openContextMenu(this.hoveredContext);
+    }
+  }
+
+  @HostListener('document:pointerdown', ['$event'])
+  protected handleContextPointerDown(event: PointerEvent): void {
+    this.cancelContextHover();
+    if (!this.contextMenu && (event.button !== 2 || this.lastContextRightClick === null)) {
+      this.hoveredContext = null;
+    }
+    if (event.button !== 2) {
+      this.lastContextRightClick = null;
+    }
+  }
+
+  @HostListener('document:contextmenu', ['$event'])
+  protected handleContextMenuDismiss(event: MouseEvent): void {
+    const now = performance.now();
+    if (this.contextMenu) {
+      event.preventDefault();
+      this.closeContextMenu();
+      this.lastContextRightClick = event.button === 2 ? now : null;
+    } else if (event.button === 2 && this.lastContextRightClick !== null &&
+        now - this.lastContextRightClick <= 600) {
+      event.preventDefault();
+      this.lastContextRightClick = null;
+      this.cancelContextHover();
+      this.setContextHoverPaused(true);
+      this.showContextStatus('Hover questions paused. Press Alt + Q over content to resume.');
+    } else {
+      this.lastContextRightClick = null;
+    }
+  }
+
+  private setContextHoverPaused(paused: boolean): void {
+    this.contextHoverPaused = paused;
+    try {
+      if (paused) {
+        sessionStorage.setItem('context-hover-paused', 'true');
+      } else {
+        sessionStorage.removeItem('context-hover-paused');
+      }
+    } catch (error) {
+      console.warn('Could not save the contextual hover preference.', error);
+    }
+  }
+
+  private showContextStatus(message: string): void {
+    if (this.contextStatusTimer !== undefined) {
+      clearTimeout(this.contextStatusTimer);
+    }
+    this.contextStatus = message;
+    this.contextStatusTimer = setTimeout(() => {
+      this.contextStatus = '';
+      this.contextStatusTimer = undefined;
+    }, 3000);
+  }
+
+  protected cancelContextHover(): void {
+    this.contextRequestId += 1;
+    if (this.contextHoverTimer !== undefined) {
+      clearTimeout(this.contextHoverTimer);
+      this.contextHoverTimer = undefined;
+    }
+  }
+
+  @HostListener('window:resize')
+  protected checkContextViewport(): void {
+    if (!this.canUseContextMenu()) {
+      this.cancelContextHover();
+      this.closeContextMenu();
+      this.hoveredContext = null;
+    }
+  }
+
+  private canUseContextMenu(): boolean {
+    const active = document.activeElement;
+    const path = this.router.url.split(/[?#]/)[0];
+    return !this.isChatRoute && path !== '/shayari' && !this.chatOpen && !this.menuOpen &&
+      !(active instanceof Element && active.closest('input, textarea, select, [contenteditable]')) &&
+      !document.querySelector('[role="dialog"]') &&
+      window.matchMedia('(min-width: 801px) and (hover: hover) and (pointer: fine)').matches;
+  }
+
+  private async loadContextQuestions(): Promise<ContextQuestions | null> {
+    try {
+      const response = await fetch('assets/context-questions.json');
+      if (!response.ok) {
+        throw new Error(`Question manifest request failed (${response.status}).`);
+      }
+      const data: unknown = await response.json();
+      if (!data || typeof data !== 'object') {
+        throw new Error('Question manifest must be an object.');
+      }
+      const readList = (value: unknown, label: string): string[] => {
+        if (!Array.isArray(value) ||
+            !value.every((entry: unknown): entry is string => typeof entry === 'string' && entry.trim().length > 0)) {
+          throw new Error(`Question list "${label}" must contain only non-empty strings.`);
+        }
+        return [...new Set(value.map((entry) => entry.trim()))];
+      };
+      const questions: ContextQuestions = {
+        project: { generic: [], specific: {} },
+        experience: { generic: [], specific: {} },
+        essay: { generic: [], specific: {} },
+        education: { generic: [], specific: {} },
+        vision: { generic: [], specific: {} },
+        gallery: { generic: [], specific: {} },
+        links: { generic: [], specific: {} },
+        invest: { generic: [], specific: {} },
+        home: { generic: [], specific: {} },
+        general: { generic: [], specific: {} }
+      };
+      for (const category of contextQuestionCategories) {
+        const group: unknown = Reflect.get(data, category);
+        if (!group || typeof group !== 'object' || Array.isArray(group)) {
+          throw new Error(`Question category "${category}" must be an object.`);
+        }
+        const generic = readList(Reflect.get(group, 'generic'), `${category}.generic`);
+        if (generic.length < 5) {
+          throw new Error(`Question category "${category}" must contain at least five distinct generic questions.`);
+        }
+        const specific: unknown = Reflect.get(group, 'specific');
+        if (!specific || typeof specific !== 'object' || Array.isArray(specific)) {
+          throw new Error(`Question category "${category}" must have a specific question map.`);
+        }
+        const entries = Object.entries(specific).map(([key, value]) => {
+          if (!key.trim()) {
+            throw new Error(`Question category "${category}" has an empty content key.`);
+          }
+          return [key, readList(value, `${category}.specific.${key}`)] as const;
+        });
+        questions[category] = { generic, specific: Object.fromEntries(entries) };
+      }
+      return questions;
+    } catch (error) {
+      console.error('Could not load contextual questions.', error);
+      return null;
+    }
+  }
+
+  private async openContextMenu(context: HTMLElement): Promise<void> {
+    this.cancelContextHover();
+    const requestId = this.contextRequestId;
+    if (!context.isConnected || !this.canUseContextMenu() || window.getSelection()?.toString()) {
+      return;
+    }
+    const manifest = await this.contextQuestions;
+    if (requestId !== this.contextRequestId || context !== this.hoveredContext ||
+        !context.isConnected || !this.canUseContextMenu() || window.getSelection()?.toString()) {
+      return;
+    }
+    if (!manifest) {
+      this.contextStatus = 'Contextual questions could not be loaded. Please reload the page to try again.';
+      return;
+    }
+    const article = context.closest('article');
+    const subject = article ?? context;
+    const title = (subject.dataset['contextTitle'] || subject.querySelector<HTMLElement>('h1, h2, h3')?.innerText ||
+      subject.closest('main')?.querySelector<HTMLElement>('h1')?.innerText || '').replace(/\s+/g, ' ').replace(/\s*↗\s*$/, '').trim();
+    if (!title) {
+      return;
+    }
+
+    const topic = title.length > 100 ? `${title.slice(0, 97).trimEnd()}...` : title;
+    const path = this.router.url.split(/[?#]/)[0];
+    const identified = subject.closest<HTMLElement>('[data-context-category]');
+    const explicitCategory = contextQuestionCategories.find((category) => category === identified?.dataset['contextCategory']);
+    let category: ContextQuestionCategory;
+    if (explicitCategory) {
+      category = explicitCategory;
+    } else if (subject.matches('.project-card, .project-entry') || subject.closest('.projects-section')) {
+      category = 'project';
+    } else if (subject.matches('.experience-firm, .experience-item') && !subject.closest('.education-section')) {
+      category = 'experience';
+    } else if (subject.matches('.essay-list-card') || path.startsWith('/essays')) {
+      category = 'essay';
+    } else {
+      category = 'general';
+    }
+    const key = subject.dataset['contextKey'] || identified?.dataset['contextKey'] || subject.id || title;
+    const group = manifest[category];
+    const specific = Object.hasOwn(group.specific, key) ? group.specific[key] : [];
+    const render = (questions: string[]): string[] =>
+      [...new Set(questions.map((question) => question.replaceAll('{topic}', topic)))];
+    const shuffle = (questions: string[]): string[] => {
+      for (let index = questions.length - 1; index > 0; index -= 1) {
+        const selected = Math.floor(Math.random() * (index + 1));
+        [questions[index], questions[selected]] = [questions[selected], questions[index]];
+      }
+      return questions;
+    };
+    const itemQuestions = shuffle(render(specific));
+    const genericQuestions = shuffle(render(group.generic)).filter((question) => !itemQuestions.includes(question));
+    const questions = shuffle([...itemQuestions, ...genericQuestions].slice(0, 5));
+    if (questions.length < 5) {
+      console.error(`Not enough distinct contextual questions for "${key}".`);
+      this.contextStatus = 'Could not load enough distinct questions for this content.';
+      return;
+    }
+    this.contextPreviousFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (this.contextStatusTimer !== undefined) {
+      clearTimeout(this.contextStatusTimer);
+      this.contextStatusTimer = undefined;
+    }
+    this.contextStatus = '';
+    this.contextMenu = { title: topic, questions };
+    setTimeout(() => document.querySelector<HTMLElement>('.context-dialog')?.focus());
+  }
+
+  protected closeContextMenu(): void {
+    if (!this.contextMenu) {
+      return;
+    }
+    this.dismissedContext = this.hoveredContext;
+    this.contextMenu = null;
+    this.contextStatus = '';
+    this.contextPreviousFocus?.focus();
+    this.contextPreviousFocus = null;
+  }
+
+  protected askContextQuestion(question: string): void {
+    const params = new URLSearchParams({ prompt: question, autoSend: '1' });
+    const chatWindow = window.open(`/chat?${params.toString()}`, '_blank', 'width=900,height=700,resizable=yes,scrollbars=yes');
+    if (!chatWindow) {
+      this.contextStatus = 'Could not open the chat window. Allow pop-ups and try again.';
+      return;
+    }
+    this.closeContextMenu();
   }
   // MARKER: EVENT_LISTENERS_END
 
@@ -715,6 +1050,28 @@ export class AppComponent {
     this.chatOpen = true;
     this.chatInput = prompt;
     this.chatError = '';
+  }
+
+  protected onChatInputKeydown(event: KeyboardEvent): void {
+    if (event.key !== 'Enter' || event.shiftKey || event.isComposing) {
+      return;
+    }
+
+    event.preventDefault();
+    void this.sendChatMessage();
+  }
+
+  protected resizeChatInput(event: Event): void {
+    const textarea = event.target;
+    if (!(textarea instanceof HTMLTextAreaElement)) {
+      return;
+    }
+
+    textarea.style.height = 'auto';
+    const maxHeight = Number.parseFloat(getComputedStyle(textarea).maxHeight);
+    const contentHeight = textarea.scrollHeight;
+    textarea.style.height = `${Math.min(contentHeight, maxHeight)}px`;
+    textarea.style.overflowY = contentHeight > maxHeight ? 'auto' : 'hidden';
   }
 
   protected async sendChatMessage(): Promise<void> {

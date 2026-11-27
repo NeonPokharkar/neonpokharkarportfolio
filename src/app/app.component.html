@@ -1,6 +1,6 @@
 @if (!isEssayRoute && !isChatRoute) {
 <!-- MARKER: HEADER_SECTION_START - Navigation, logo, menu, theme toggle, resume download -->
-<header class="site-header">
+<header class="site-header" [class.has-user-profile]="verifiedUser.user()">
   <button class="logo" type="button" (click)="showClickPointer($event)" aria-label="Aditya Pokharkar">
     <span class="logo-mark">✳</span>
     <span class="logo-name" aria-hidden="true">
@@ -31,7 +31,7 @@
     <a routerLink="/experience" routerLinkActive="active" (click)="closeMenu()">Experience<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
     <a routerLink="/essays" routerLinkActive="active" (click)="closeMenu()">Essays<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
     <a routerLink="/projects" routerLinkActive="active" (click)="closeMenu()">Projects<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
-    <a routerLink="/gallery" routerLinkActive="active" (click)="closeMenu()">Gallery<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
+    <a routerLink="/gallery" routerLinkActive="active" (click)="closeMenu()">Hobbies<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
     <a routerLink="/invest" routerLinkActive="active" (click)="closeMenu()">Invest<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
     <a routerLink="/links" routerLinkActive="active" (click)="closeMenu()">Links<span class="nav-astronaut" aria-hidden="true"><span class="nav-astronaut-helmet"></span><span class="nav-astronaut-body"></span><span class="nav-astronaut-arm nav-astronaut-arm-left"></span><span class="nav-astronaut-arm nav-astronaut-arm-right"></span><span class="nav-astronaut-leg nav-astronaut-leg-left"></span><span class="nav-astronaut-leg nav-astronaut-leg-right"></span></span></a>
   </nav>
@@ -48,6 +48,16 @@
       <span>{{ themeMode === 'day' ? 'Day' : 'Night' }}</span>
     </button>
     <a class="header-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
+    @if (verifiedUser.user(); as user) {
+      <div class="user-profile" role="status" [attr.aria-label]="'Signed in as ' + user.name" [title]="user.name">
+        @if (user.picture && user.picture !== failedProfilePicture) {
+          <img class="user-profile-avatar" [src]="user.picture" alt="" referrerpolicy="no-referrer" (error)="failedProfilePicture = user.picture">
+        } @else {
+          <span class="user-profile-avatar user-profile-initial" aria-hidden="true">{{ user.name.charAt(0).toUpperCase() }}</span>
+        }
+        <span class="user-profile-name">{{ user.name }}</span>
+      </div>
+    }
   </div>
 </header>
 <!-- MARKER: HEADER_SECTION_END -->
@@ -79,6 +89,13 @@
 @if (resumeError) {
   <p class="resume-error" role="alert">{{ resumeError }}</p>
 }
+@if (verifiedUser.heartbeatError(); as heartbeatError) {
+  <p class="session-status" role="alert">{{ heartbeatError }}</p>
+} @else {
+  @if (verifiedUser.sessionNotice(); as sessionNotice) {
+    <p class="session-status" role="status">{{ sessionNotice }} <a routerLink="/shayari">Sign in</a></p>
+  }
+}
 
 @if (clickPointerVisible) {
   <!-- MARKER: CLICK_POINTER_ANIMATION - Animated pointer on click -->
@@ -91,8 +108,8 @@
 
 @if (isHomeRoute) {
 <!-- MARKER: MAIN_CONTENT_AREA - Homepage sections (hero through footer) -->
-<main>
-  <section class="hero">
+<main data-context-category="home">
+  <section class="hero" data-context-key="hero" data-context-title="Aditya Pokharkar">
     <!-- MARKER: HERO_BACKGROUND_AND_COPY - Homepage headline and CTAs -->
     <div class="hero-background" aria-hidden="true"></div>
     <div class="hero-copy">
@@ -130,7 +147,7 @@
   </section>
 
   <!-- MARKER: INTRO_SECTION - About me, elevator pitch, resume/email CTA -->
-  <section class="intro" id="about">
+  <section class="intro" id="about" data-context-title="About Aditya">
     <p class="eyebrow"><span class="eyebrow-line"></span> High-ownership engineering</p>
     <p class="statement">I turn complex operational challenges into <span>resilient systems</span> and user-first products.</p>
     <p class="intro-copy">With 3+ years of enterprise engineering experience and an IIT BHU background, I bridge system architecture with practical product outcomes—from high-reliability workflows to local-first AI and mobile products.</p>
@@ -225,7 +242,7 @@
     </div>
     <div class="project-list">
       @for (project of projects; track project.number) {
-        <article class="project-card">
+        <article class="project-card" data-context-category="project" [attr.data-context-key]="project.title">
           <span class="project-number">{{ project.number }}</span>
           <div class="project-content">
             <div class="project-visual">
@@ -254,7 +271,7 @@
     </div>
     <div class="experience-list">
       @for (item of experience; track item.period) {
-        <article class="experience-item">
+        <article class="experience-item" data-context-category="experience" [attr.data-context-key]="item.firm">
           <span class="experience-period">{{ item.period }}</span>
           <div>
             <h3>{{ item.role }}</h3>
@@ -266,7 +283,7 @@
     </div>
   </section>
 
-  <section class="education-section">
+  <section class="education-section" data-context-category="education">
     <!-- MARKER: EDUCATION_SECTION - Academic background and degrees -->
     <div class="section-heading">
       <p class="eyebrow"><span class="eyebrow-line"></span> Academic foundation</p>
@@ -306,6 +323,28 @@
   <!-- MARKER: DYNAMIC_PAGES - Route outlet for essays, projects detail pages, etc -->
   <router-outlet></router-outlet>
 }
+
+@if (contextMenu; as context) {
+  <div class="context-backdrop" (click)="closeContextMenu()">
+    <section class="context-dialog" role="dialog" tabindex="-1" aria-modal="true" aria-labelledby="context-title" aria-describedby="context-instructions context-hint" (click)="$event.stopPropagation()">
+      <div class="context-orbit">
+        <div class="context-center">
+          <span>Explore this</span>
+          <h2 id="context-title">{{ context.title }}</h2>
+          <p id="context-instructions">Choose a question to ask the AI</p>
+        </div>
+        @for (question of context.questions; track $index) {
+          <button class="context-question" [class]="'context-question context-question-' + $index" type="button" (click)="askContextQuestion(question)">{{ question }}</button>
+        }
+      </div>
+      <p class="context-hint" id="context-hint">Esc or right-click to close · Double right-click to pause hover · Alt + Q to reopen</p>
+      @if (contextStatus) {
+        <p class="context-error" role="alert">{{ contextStatus }}</p>
+      }
+    </section>
+  </div>
+}
+<p class="context-status" role="status" aria-live="polite">{{ contextMenu ? '' : contextStatus }}</p>
 
 <!-- MARKER: CUSTOM_CURSOR_ANIMATION - Animated astronaut following mouse cursor -->
 <div
@@ -363,14 +402,15 @@
     }
 
     <form class="chat-form" (ngSubmit)="sendChatMessage()">
-      <input
-        type="text"
+      <textarea
         name="chatInput"
         [(ngModel)]="chatInput"
         placeholder="Ask a question..."
-        autocomplete="off"
+        rows="1"
         [disabled]="chatBusy"
-        aria-label="Message for AI assistant">
+        aria-label="Message for AI assistant"
+        (input)="resizeChatInput($event)"
+        (keydown)="onChatInputKeydown($event)"></textarea>
       <button type="submit" [disabled]="chatBusy || !chatInput.trim()" aria-label="Send message">↗</button>
     </form>
     <p class="chat-footnote">Connected to the portfolio AI assistant</p>

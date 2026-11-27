@@ -157,6 +157,14 @@ html[data-theme='night'] :is(.invest-page, .project-page, .hobby-page, .essay-li
   color: #f2efe9;
 }
 
+html[data-theme='night'] .shayari-page :is(h1, h2, h3) {
+  color: #f2efe9;
+}
+
+html[data-theme='night'] .shayari-page :is(.shayari-intro, .eyebrow) {
+  color: #bdb7ad;
+}
+
 html[data-theme='night'] :is(.invest-page, .project-page, .hobby-page, .essay-list-page, .essay-page, .dummy-page) :is(p, li, .eyebrow, .invest-intro, .project-intro, .project-created-with, .hobby-intro, .essay-summary, .essay-meta, .experience-role, .experience-qualitative-disclaimer, .experience-assessment-status, .experience-qualitative li, .recommendation footer span, .education-item p, .dummy-card p, .compact-profile p) {
   color: #bdb7ad;
 }

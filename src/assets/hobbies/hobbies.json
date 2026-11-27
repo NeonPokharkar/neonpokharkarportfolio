@@ -1,8 +1,148 @@
 {
   "hobbies": [
     {
-      "title": "Cinematography and film-making",
-      "associatedHobby": "Film",
+      "title": "AI and neural networks",
+      "associatedHobby": "Sciences",
+      "act": "Exploring artificial intelligence and neural networks through models, learning algorithms, and practical experiments.",
+      "process": "Study core concepts, work through examples, build small experiments, analyse model behaviour, and refine ideas through testing and observation.",
+      "results": "A practical understanding of how learning systems represent patterns, make predictions, and create both opportunities and limitations.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Boxing, exercising and martial arts",
+      "associatedHobby": "Physical",
+      "act": "Practising boxing, general exercise, and martial arts to build strength, coordination, discipline, and resilience.",
+      "process": "Follow regular training routines, improve technique and conditioning, and balance intensity with recovery and controlled practice.",
+      "results": "A consistent physical practice that develops fitness, awareness, confidence, and mental discipline.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Jungian psychology",
+      "associatedHobby": "Sciences",
+      "act": "Exploring Jungian ideas about the psyche, archetypes, individuation, and human motivation.",
+      "process": "Study Jungian concepts, reflect on symbolic patterns and behaviour, and compare psychological interpretations with lived experience.",
+      "results": "A broader framework for understanding human motives, personal growth, and the relationship between conscious and unconscious patterns.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Watching movies and analysing psychology",
+      "associatedHobby": "Literature",
+      "act": "Watching films and analysing characters, motivations, relationships, conflict, and psychological patterns.",
+      "process": "Observe narrative choices and character behaviour, identify underlying assumptions and emotions, and reflect on how context, bias, and motivation shape decisions.",
+      "results": "A deeper understanding of human psychology, storytelling, social behaviour, and the ways film communicates ideas through character and narrative.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Science",
+      "associatedHobby": "Sciences",
+      "act": "Exploring fundamental scientific ideas to understand patterns, mechanisms, and the principles behind natural and engineered systems.",
+      "process": "Study core concepts, relate theories to real phenomena, and revisit foundational ideas through experiments and practical applications.",
+      "results": "A stronger foundation for reasoning about physical systems and approaching scientific questions through evidence.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Mathematics",
+      "associatedHobby": "Sciences",
+      "act": "Exploring mathematics through patterns, logic, structure, and problem-solving.",
+      "process": "Work through concepts and problems, connect abstract ideas to real applications, and refine reasoning through careful proofs and calculations.",
+      "results": "A stronger foundation for modelling problems, recognising patterns, and applying logical thinking across disciplines.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Cooking and exploration",
+      "associatedHobby": "Art",
+      "act": "Creating food through experimentation with ingredients, flavours, techniques, and presentation.",
+      "process": "Explore recipes and regional traditions, adjust ingredients through tasting, and refine technique, texture, balance, and plating through iteration.",
+      "results": "A growing repertoire of dishes and a practical creative practice that blends observation, experimentation, and care.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Astronomy",
+      "associatedHobby": "Sciences",
+      "act": "Exploring the night sky and learning about celestial objects, orbital mechanics, telescopes, and the wider universe.",
+      "process": "Observe the sky, study astronomical concepts and equipment, identify constellations or objects, and gradually build practical experience in stargazing.",
+      "results": "A growing understanding of space, observation techniques, and the engineering behind tools used to explore the universe.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Trekking and adventures",
+      "associatedHobby": "Physical",
+      "act": "Exploring trails and outdoor environments through trekking and adventurous experiences that test endurance, adaptability, and awareness.",
+      "process": "Plan routes and essential equipment, prepare physically, adapt to changing conditions, and move through new terrain with teamwork and safety in mind.",
+      "results": "Memorable journeys that build resilience, practical decision-making, confidence outdoors, and an appreciation for nature and discovery.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Swimming and chess",
+      "associatedHobby": "Physical",
+      "act": "Building physical endurance through swimming and sharpening strategic thinking through chess.",
+      "process": "Alternate swimming sessions for fitness with chess practice, tactical study, competitive games, and analysis of mistakes.",
+      "results": "A balanced discipline combining physical conditioning, mental focus, patience, and systematic decision-making.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Travel and organizing adventures",
+      "associatedHobby": "Building/Engineering",
+      "act": "Designing adventurous journeys that balance exploration, practical constraints, safety, and meaningful experiences.",
+      "process": "Research destinations and routes, plan logistics and contingencies, account for changing conditions, and coordinate transport and activities.",
+      "results": "Well-prepared trips that turn ambitious ideas into realistic, memorable journeys with space for discovery.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Entrepreneurship",
+      "associatedHobby": "Building/Engineering",
+      "act": "Turning ideas into practical initiatives through entrepreneurship, while planning and coordinating people, resources, and activities.",
+      "process": "Discover real needs, evaluate opportunities, structure responsibilities, establish timelines, and learn through focused experimentation with teams and stakeholders.",
+      "results": "Experience creating, organizing, and validating ideas, bringing order to complex work, and helping teams move from intention to measurable outcomes.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Reading novels and self-help books",
+      "associatedHobby": "Literature",
+      "act": "Reading fiction and self-help books to explore ideas, perspectives, personal growth, and the habits that shape thoughtful living.",
+      "process": "Choose books across literature and personal development, read for understanding, highlight meaningful ideas, and connect recurring themes to everyday decisions.",
+      "results": "A growing reading practice that broadens perspective, strengthens reflection, and turns useful ideas into practical changes in thought and behaviour.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Poetry and shayari",
+      "associatedHobby": "Art",
+      "act": "Writing poetry and shayari to explore emotions, memories, observations, and the quieter moments of everyday life.",
+      "process": "Begin with a feeling or a fleeting observation, shape it through rhythm and imagery, and refine the words until they retain both meaning and brevity.",
+      "results": "A personal collection of reflective verses that capture lived experiences and translate complex emotions into simple, memorable lines.",
+      "photos": [],
+      "resultLinks": [
+        {
+          "label": "Read the shayari",
+          "url": "/shayari"
+        }
+      ]
+    },
+    {
+      "title": "3D printing and robotics",
+      "associatedHobby": "Building/Engineering",
+      "act": "Building physical mechanisms, 3D-printed parts, and small robotic systems to explore how hardware and software work together.",
+      "process": "Prototype ideas with CAD and iterative 3D printing, assemble the mechanical components, and integrate sensors or controllers before testing and refining each design.",
+      "results": "Hands-on experiments that turn practical design problems into working prototypes, with lessons in fabrication, electronics, mechanics, and system debugging.",
+      "photos": [],
+      "resultLinks": []
+    },
+    {
+      "title": "Film making and digital content",
+      "associatedHobby": "Art",
       "act": "Exploring visual storytelling through framing, movement, light, and the emotional rhythm of a scene.",
       "process": "Start with the feeling or idea to communicate, observe the space and available light, then shape shots and edits around the story rather than treating technique as an end in itself.",
       "results": "A growing body of visual experiments and film-making practice developed through the Film and Media Council’s Cine Club.",
@@ -20,7 +160,7 @@
     },
     {
       "title": "Writing and reflective essays",
-      "associatedHobby": "Writing",
+      "associatedHobby": "Literature",
       "act": "Turning observations about products, organisations, engineering, and human behaviour into structured essays.",
       "process": "Begin with a question, separate instinct from observation, test the idea through examples, and revise until the thought becomes clear enough to share.",
       "results": "A collection of thought essays connecting technical practice with product, business, and organisational ideas.",

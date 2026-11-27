@@ -1,8 +1,9 @@
-import { AfterViewInit, Component, ElementRef, HostListener, OnDestroy, QueryList, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, HostListener, OnDestroy, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Meta } from '@angular/platform-browser';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
+import { VerifiedUserService } from './verified-user.service';
 
 interface PageContent {
   eyebrow: string;
@@ -21,6 +22,7 @@ interface PageContent {
   cardsSource?: string;
   profileSource?: string;
   educationSource?: string;
+  contextCategory?: 'vision' | 'links';
   cards: Array<{ title: string; description: string; href?: string; requiresReveal?: boolean }>;
 }
 
@@ -101,7 +103,7 @@ interface ContactManifest {
   standalone: true,
   imports: [FormsModule],
   template: `
-    <main class="invest-page">
+    <main class="invest-page" data-context-category="invest" data-context-key="overview">
       <p class="eyebrow"><span class="eyebrow-line"></span> Open to meaningful conversations</p>
       <h1>Let's talk about <em>what comes next.</em></h1>
       <p class="invest-intro">Share a little context and I’ll help turn the conversation into a clear next step.</p>
@@ -253,7 +255,7 @@ export class InvestContactComponent {
       } @else {
         <div class="project-list">
           @for (project of projects; track project.title) {
-            <article class="project-entry">
+            <article class="project-entry" data-context-category="project" [attr.data-context-key]="project.title">
               <div class="project-entry-header">
                 <div>
                   <span class="project-timeline">{{ project.timeline }}</span>
@@ -736,7 +738,7 @@ interface HobbyManifest {
   selector: 'app-hobby-list',
   standalone: true,
   template: `
-    <main class="hobby-page">
+    <main class="hobby-page" data-context-category="gallery">
       <p class="eyebrow"><span class="eyebrow-line"></span> Personal practice</p>
       <h1>Hobbies and <em>creative work.</em></h1>
       <p class="hobby-intro">A collection of activities, experiments, and outcomes beyond my professional work.</p>
@@ -843,6 +845,557 @@ export class HobbyListComponent {
   }
 }
 
+interface ShayariEntry {
+  text: string;
+  date: string;
+}
+
+interface ShayariCard extends ShayariEntry {
+  columns: number;
+  size: 'short' | 'medium' | 'long';
+  accent: 'orange' | 'ink' | 'sand' | 'rose';
+}
+
+interface RecaptchaEnterprise {
+  ready(callback: () => void): void;
+  execute(siteKey: string, options: { action: string }): Promise<string>;
+}
+
+interface GoogleIdentity {
+  initialize(options: { client_id: string; callback: (response: { credential: string }) => void }): void;
+  renderButton(element: HTMLElement, options: { theme: 'outline'; size: 'large'; text: 'signin_with' }): void;
+}
+
+declare global {
+  interface Window {
+    grecaptcha?: { enterprise?: RecaptchaEnterprise };
+    google?: { accounts?: { id?: GoogleIdentity } };
+  }
+}
+
+const shayariRecaptchaSiteKey = '6LcEODUuAAAAAOltRtSI5hDjxPhK_KM7ELXXz10Q';
+const shayariGoogleClientId = '1027876493531-mbun8jrtieocia9n0ns5le4q34332mus.apps.googleusercontent.com';
+const shayariRecaptchaAction = 'login';
+
+function loadGoogleIdentity(): Promise<GoogleIdentity> {
+  return new Promise((resolve, reject) => {
+    const existing = window.google?.accounts?.id;
+    if (existing) {
+      resolve(existing);
+      return;
+    }
+    const script = document.createElement('script');
+    const timer = window.setTimeout(() => {
+      script.remove();
+      reject(new Error('Google Sign-In did not load in time.'));
+    }, 15000);
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true;
+    script.onload = () => {
+      window.clearTimeout(timer);
+      const identity = window.google?.accounts?.id;
+      if (!identity) {
+        script.remove();
+        reject(new Error('Google Sign-In is unavailable.'));
+        return;
+      }
+      resolve(identity);
+    };
+    script.onerror = () => {
+      window.clearTimeout(timer);
+      script.remove();
+      reject(new Error('Could not load Google Sign-In.'));
+    };
+    document.head.appendChild(script);
+  });
+}
+
+function loadShayariRecaptcha(): Promise<RecaptchaEnterprise> {
+  return new Promise((resolve, reject) => {
+    let script: HTMLScriptElement | undefined;
+    const timer = window.setTimeout(() => {
+      script?.remove();
+      reject(new Error('reCAPTCHA did not load in time.'));
+    }, 15000);
+    const ready = () => {
+      const recaptcha = window.grecaptcha?.enterprise;
+      if (!recaptcha) {
+        window.clearTimeout(timer);
+        script?.remove();
+        reject(new Error('reCAPTCHA is unavailable.'));
+        return;
+      }
+      recaptcha.ready(() => {
+        window.clearTimeout(timer);
+        resolve(recaptcha);
+      });
+    };
+    if (window.grecaptcha?.enterprise) {
+      ready();
+    } else {
+      script = document.createElement('script');
+      script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(shayariRecaptchaSiteKey)}`;
+      script.async = true;
+      script.onload = ready;
+      script.onerror = () => {
+        window.clearTimeout(timer);
+        script?.remove();
+        reject(new Error('Could not load reCAPTCHA.'));
+      };
+      document.head.appendChild(script);
+    }
+  });
+}
+
+function executeShayariRecaptcha(recaptcha: RecaptchaEnterprise): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const timer = window.setTimeout(() => reject(new Error('reCAPTCHA verification timed out.')), 15000);
+    recaptcha.execute(shayariRecaptchaSiteKey, { action: shayariRecaptchaAction }).then(
+      (token) => { window.clearTimeout(timer); resolve(token); },
+      (error: unknown) => { window.clearTimeout(timer); reject(error); }
+    );
+  });
+}
+
+function shayariDateValue(date: string): number {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error(`Invalid shayari date: ${date}`);
+  }
+  const timestamp = Date.parse(`${date}T00:00:00Z`);
+  const parsed = new Date(timestamp);
+  if (!Number.isFinite(timestamp) || parsed.toISOString().slice(0, 10) !== date || date.startsWith('0000-')) {
+    throw new Error(`Invalid shayari date: ${date}`);
+  }
+  return timestamp;
+}
+
+@Component({
+  selector: 'app-shayari',
+  standalone: true,
+  template: `
+    <main class="shayari-page">
+      <p class="eyebrow"><span class="eyebrow-line"></span> Poetry and shayari</p>
+      <h1>Words I <em>keep.</em></h1>
+      <p class="shayari-intro">A growing collection of shayari, arranged as fragments of feeling, memory, and observation.</p>
+      @if (!verifiedUser.ready()) {
+        <p class="shayari-intro" role="status">Checking your session...</p>
+      } @else if (!verifiedUser.user()) {
+        <button class="shayari-verify-button" type="button" (click)="openVerificationDialog()">Verify yourself to read shayari</button>
+      } @else if (loadError) {
+        <p class="shayari-load-error" role="alert">{{ loadError }}</p>
+        <button class="shayari-verify-button" type="button" (click)="loadShayari()">Try again</button>
+      } @else if (loadingShayari) {
+        <p class="shayari-intro" role="status">Loading shayari...</p>
+      } @else if (shayari.length === 0) {
+        <p class="shayari-intro">No shayari found.</p>
+      } @else {
+        <div class="shayari-grid" [class.masonry]="masonry">
+          @for (entry of visibleShayari; track $index) {
+            <article
+              class="shayari-card"
+              [class.wide]="entry.columns === 8"
+              [class.compact]="entry.columns === 4"
+              [class.verse-short]="entry.size === 'short'"
+              [class.verse-long]="entry.size === 'long'"
+              [class.accent-orange]="entry.accent === 'orange'"
+              [class.accent-ink]="entry.accent === 'ink'"
+              [class.accent-sand]="entry.accent === 'sand'"
+              [class.accent-rose]="entry.accent === 'rose'">
+              <div #cardContent class="shayari-content">
+                <p>{{ entry.text }}</p>
+                <time>{{ entry.date }}</time>
+              </div>
+            </article>
+          }
+        </div>
+        @if (shayari.length > 5 && !showAllShayari) {
+          <div class="shayari-more">
+            <button type="button" (click)="showAllShayari = true">See more shayari</button>
+          </div>
+        }
+      }
+    </main>
+    <dialog #verificationDialog class="shayari-dialog" aria-labelledby="shayari-dialog-title" aria-describedby="shayari-dialog-description" (cancel)="onVerificationCancel($event)">
+      <button class="shayari-dialog-close" type="button" (click)="closeVerificationDialog()" [disabled]="verifying" aria-label="Close verification dialog">×</button>
+      <p class="shayari-dialog-eyebrow">Poetry and shayari</p>
+      <h2 id="shayari-dialog-title">Let us know<br><em>who you are.</em></h2>
+      <p id="shayari-dialog-description">Please verify yourself with Google before reading the shayari. Your Google profile will be stored or updated by the site.</p>
+      @if (!signInReady) {
+        <button class="shayari-verify-button" type="button" (click)="prepareGoogleSignIn()" [disabled]="preparingSignIn || verifying">
+          {{ preparingSignIn ? 'Loading Google Sign-In…' : 'Continue with Google' }}
+        </button>
+      }
+      <div #googleSignIn class="shayari-google-signin" [hidden]="verifying"></div>
+      @if (verifying) {
+        <p role="status">Verifying…</p>
+      }
+      @if (verificationError) {
+        <p class="shayari-verification-error" role="alert">{{ verificationError }}</p>
+      }
+      <p class="shayari-dialog-privacy">This site is protected by reCAPTCHA and the Google
+        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and
+        <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply.
+      </p>
+    </dialog>
+  `,
+  styles: [`
+    .shayari-page { margin: 0 auto; max-width: 1176px; min-height: calc(100vh - 150px); padding: 110px 28px 130px; }
+    .shayari-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(55px, 9vw, 112px); letter-spacing: -.07em; line-height: .9; margin: 0 0 35px; max-width: 850px; }
+    .shayari-page h1 em { color: #f45b36; font-style: normal; }
+    .shayari-intro { color: #716f6a; font-size: 16px; line-height: 1.7; margin: 0; max-width: 680px; }
+    .shayari-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; margin-top: 55px; }
+    .shayari-grid.masonry { grid-auto-flow: row; grid-auto-rows: 8px; }
+    .shayari-card { background: rgba(244,91,54,.15); border: 1px solid rgba(244,91,54,.28); border-radius: 12px; color: #fff; grid-column: span 6; min-width: 0; }
+    .shayari-card.compact { grid-column: span 4; }
+    .shayari-card.wide { grid-column: span 8; }
+    .shayari-content { padding: 26px 28px; }
+    .shayari-card p { font-family: 'Space Grotesk', sans-serif; font-size: clamp(19px, 1.6vw, 23px); letter-spacing: -.02em; line-height: 1.5; margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+    .shayari-card.verse-short p { font-size: clamp(21px, 2vw, 27px); line-height: 1.4; }
+    .shayari-card.verse-long p { font-size: clamp(18px, 1.45vw, 20px); line-height: 1.55; }
+    .shayari-card time { border-top: 1px solid rgba(255,255,255,.24); display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; margin-top: 18px; padding-top: 12px; text-transform: uppercase; }
+    .accent-orange { background: rgba(244,91,54,.15); border-color: rgba(244,91,54,.28); }
+    .accent-ink { background: rgba(28,27,26,.18); border-color: rgba(216,211,202,.16); }
+    .accent-sand { background: rgba(217,199,168,.16); border-color: rgba(217,199,168,.25); }
+    .accent-rose { background: rgba(234,217,211,.16); border-color: rgba(234,217,211,.25); }
+    :host-context(html[data-theme='day']) .shayari-card { color: #1c1b1a; }
+    :host-context(html[data-theme='day']) .accent-orange { background: rgba(244,91,54,.28); border-color: rgba(244,91,54,.38); }
+    :host-context(html[data-theme='day']) .accent-ink { background: rgba(28,27,26,.10); border-color: rgba(28,27,26,.18); }
+    :host-context(html[data-theme='day']) .accent-sand { background: rgba(217,199,168,.58); border-color: rgba(217,199,168,.68); }
+    :host-context(html[data-theme='day']) .accent-rose { background: rgba(234,217,211,.72); border-color: rgba(234,217,211,.82); }
+    :host-context(html[data-theme='day']) .shayari-card time { border-top-color: rgba(28,27,26,.18); }
+    .shayari-load-error { color: #b3261e; margin-top: 50px; }
+    .shayari-more { margin-top: 36px; text-align: center; }
+    .shayari-more button, .shayari-verify-button { background: #f45b36; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; padding: 16px 24px; }
+    .shayari-page > .shayari-verify-button { margin-top: 36px; }
+    .shayari-verify-button:disabled { cursor: wait; opacity: .7; }
+    .shayari-more button:focus-visible, .shayari-dialog button:focus-visible, .shayari-verify-button:focus-visible { outline: 2px solid #f45b36; outline-offset: 4px; }
+    .shayari-dialog { background: #f7f5f0; border: 1px solid #d8d3ca; border-radius: 16px; box-shadow: 0 20px 70px #0006; color: #1c1b1a; max-width: 470px; padding: 42px; width: calc(100% - 40px); }
+    .shayari-dialog::backdrop { background: #1c1b1acc; }
+    .shayari-dialog-close { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: 28px; position: absolute; right: 18px; top: 14px; }
+    .shayari-dialog-eyebrow { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .shayari-dialog h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(32px, 6vw, 48px); letter-spacing: -.06em; line-height: .95; margin: 0 0 22px; }
+    .shayari-dialog h2 em { color: #f45b36; font-style: normal; }
+    .shayari-dialog p { line-height: 1.6; }
+    .shayari-dialog-privacy { color: #716f6a; font-size: 12px; margin: 20px 0 0; }
+    .shayari-dialog a { text-decoration: underline; }
+    .shayari-google-signin:not([hidden]) { display: flex; justify-content: center; }
+    .shayari-verification-error { color: #b3261e; font-size: 14px; }
+    :host-context(html[data-theme='night']) .shayari-dialog { background: #1c1b1a; border-color: #514c46; color: #f2efe9; }
+    :host-context(html[data-theme='night']) .shayari-dialog-privacy { color: #bdb7ad; }
+    :host-context(html[data-theme='night']) .shayari-verification-error, :host-context(html[data-theme='night']) .shayari-load-error { color: #ffb49f; }
+    @media (max-width: 800px) {
+      .shayari-page { margin: 0; padding: 75px 20px 90px; }
+      .shayari-card.compact, .shayari-card.wide { grid-column: span 6; }
+      .shayari-content { padding: 22px; }
+      .shayari-dialog { padding: 32px 24px; }
+    }
+    @media (max-width: 600px) {
+      .shayari-card, .shayari-card.compact, .shayari-card.wide { grid-column: span 12; }
+    }
+  `]
+})
+export class ShayariComponent implements AfterViewInit, OnDestroy {
+  @ViewChildren('cardContent', { read: ElementRef })
+  private cardContents!: QueryList<ElementRef<HTMLElement>>;
+  @ViewChild('googleSignIn', { read: ElementRef })
+  private googleSignIn?: ElementRef<HTMLElement>;
+  @ViewChild('verificationDialog', { read: ElementRef })
+  private verificationDialog?: ElementRef<HTMLDialogElement>;
+  protected shayari: ShayariCard[] = [];
+  protected loadError = '';
+  protected loadingShayari = true;
+  protected masonry = typeof ResizeObserver !== 'undefined';
+  protected showAllShayari = false;
+  protected signInReady = false;
+  protected preparingSignIn = false;
+  protected verifying = false;
+  protected verificationError = '';
+  private resizeObserver?: ResizeObserver;
+  private cardChanges?: { unsubscribe(): void };
+  private loadController?: AbortController;
+  private destroyed = false;
+  private viewReady = false;
+  private requestedToken: string | null = null;
+
+  constructor(private readonly meta: Meta, protected readonly verifiedUser: VerifiedUserService) {
+    this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });
+    effect(() => {
+      this.verifiedUser.ready();
+      this.verifiedUser.user();
+      queueMicrotask(() => this.synchronizeSession());
+    });
+  }
+
+  protected get visibleShayari(): ShayariCard[] {
+    return this.showAllShayari ? this.shayari : this.shayari.slice(0, 5);
+  }
+
+  private synchronizeSession(): void {
+    if (this.destroyed || !this.viewReady || !this.verifiedUser.ready()) {
+      return;
+    }
+    const token = this.verifiedUser.getAccessToken();
+    if (token) {
+      this.verificationDialog?.nativeElement.close();
+      if (token !== this.requestedToken) {
+        this.showAllShayari = false;
+        void this.loadShayari();
+      }
+    } else {
+      this.loadController?.abort();
+      this.requestedToken = null;
+      this.shayari = [];
+      this.showAllShayari = false;
+      this.openVerificationDialog();
+    }
+  }
+
+  protected openVerificationDialog(): void {
+    const dialog = this.verificationDialog?.nativeElement;
+    if (!dialog || dialog.open) {
+      return;
+    }
+    dialog.showModal();
+    if (!this.signInReady) {
+      void this.prepareGoogleSignIn();
+    }
+  }
+
+  protected closeVerificationDialog(): void {
+    if (!this.verifying) {
+      this.verificationDialog?.nativeElement.close();
+    }
+  }
+
+  protected onVerificationCancel(event: Event): void {
+    if (this.verifying) {
+      event.preventDefault();
+    }
+  }
+
+  protected async prepareGoogleSignIn(): Promise<void> {
+    if (this.preparingSignIn) {
+      return;
+    }
+    this.preparingSignIn = true;
+    this.verificationError = '';
+    try {
+      const identity = await loadGoogleIdentity();
+      if (this.destroyed || !this.verificationDialog?.nativeElement.open) {
+        return;
+      }
+      if (!this.googleSignIn) {
+        throw new Error('Google Sign-In button is unavailable.');
+      }
+      identity.initialize({
+        client_id: shayariGoogleClientId,
+        callback: (response) => {
+          if (this.verificationDialog?.nativeElement.open) {
+            void this.verifyAndShowShayari(response.credential);
+          }
+        }
+      });
+      identity.renderButton(this.googleSignIn.nativeElement, { theme: 'outline', size: 'large', text: 'signin_with' });
+      this.signInReady = true;
+    } catch (error) {
+      console.error('Could not load Google Sign-In for shayari.', error);
+      this.verificationError = 'Google Sign-In is unavailable right now. Please try again later.';
+    } finally {
+      this.preparingSignIn = false;
+    }
+  }
+
+  private async verifyAndShowShayari(idToken: string): Promise<void> {
+    if (this.verifying) {
+      return;
+    }
+    this.verifying = true;
+    this.verificationError = '';
+    try {
+      if (!idToken) {
+        throw new Error('Google Sign-In returned an empty credential.');
+      }
+      const recaptcha = await loadShayariRecaptcha();
+      const token = await executeShayariRecaptcha(recaptcha);
+      if (!token) {
+        throw new Error('reCAPTCHA returned an empty token.');
+      }
+      const controller = new AbortController();
+      const timer = window.setTimeout(() => controller.abort(), 15000);
+      try {
+        const profileResponse = await fetch('assets/profile/profile.json', { signal: controller.signal });
+        if (!profileResponse.ok) {
+          throw new Error(`Could not load API configuration (HTTP ${profileResponse.status}).`);
+        }
+        const profile: Pick<ProfileManifest, 'intelliChatEndpoint'> = await profileResponse.json();
+        const endpoint = new URL('/auth/google/verify', profile.intelliChatEndpoint);
+        const response = await fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ id_token: idToken, recaptcha_token: token, recaptcha_action: shayariRecaptchaAction }),
+          signal: controller.signal
+        });
+        if (response.status === 401 || response.status === 403) {
+          this.verificationError = 'Verification was not successful. Please try signing in again.';
+          return;
+        }
+        if (!response.ok) {
+          throw new Error(`Verification endpoint returned HTTP ${response.status}.`);
+        }
+        const result: unknown = await response.json();
+        if (!result || typeof result !== 'object' || !('verified' in result) || typeof result.verified !== 'boolean') {
+          throw new Error('Verification endpoint returned an invalid response.');
+        }
+        if (!result.verified) {
+          this.verificationError = 'Verification was not successful. Please try again.';
+          return;
+        }
+        if (!('access_token' in result) || typeof result.access_token !== 'string' || !result.access_token.trim() ||
+            !('token_type' in result) || typeof result.token_type !== 'string' || result.token_type.toLowerCase() !== 'bearer' ||
+            !('expires_in' in result) || typeof result.expires_in !== 'number' ||
+            !Number.isSafeInteger(result.expires_in) || result.expires_in <= 0 ||
+            !Number.isSafeInteger(Date.now() + result.expires_in * 1000)) {
+          throw new Error('Verification endpoint returned an invalid session.');
+        }
+        if (!('user' in result) || !result.user || typeof result.user !== 'object' ||
+            !('name' in result.user) || typeof result.user.name !== 'string' || !result.user.name.trim() ||
+            ('picture' in result.user && result.user.picture !== null && typeof result.user.picture !== 'string')) {
+          throw new Error('Verification endpoint returned an invalid user profile.');
+        }
+        const picture = 'picture' in result.user ? result.user.picture : null;
+        if (this.destroyed || !this.verificationDialog?.nativeElement.open) {
+          return;
+        }
+        this.verifiedUser.setSession(
+          { name: result.user.name, picture: typeof picture === 'string' ? picture || null : null },
+          result.access_token,
+          result.expires_in
+        );
+      } finally {
+        window.clearTimeout(timer);
+      }
+      this.verificationDialog?.nativeElement.close();
+      this.showAllShayari = false;
+      void this.loadShayari();
+    } catch (error) {
+      console.error('Could not verify Google Sign-In for shayari.', error);
+      this.verificationError = 'Verification is unavailable right now. Please try again later.';
+    } finally {
+      this.verifying = false;
+    }
+  }
+
+  ngAfterViewInit(): void {
+    this.viewReady = true;
+    queueMicrotask(() => this.synchronizeSession());
+    if (typeof ResizeObserver === 'undefined') {
+      return;
+    }
+    this.resizeObserver = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        const card = entry.target.parentElement;
+        if (card) {
+          // Account for the card border and the grid's 8px rows and 14px gaps.
+          card.style.gridRowEnd = `span ${Math.ceil((entry.target.getBoundingClientRect().height + 2 + 14) / 22)}`;
+        }
+      }
+    });
+    const observeCards = () => {
+      this.resizeObserver?.disconnect();
+      this.cardContents.forEach((content) => this.resizeObserver?.observe(content.nativeElement));
+    };
+    this.cardChanges = this.cardContents.changes.subscribe(observeCards);
+    observeCards();
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    this.loadController?.abort();
+    this.cardChanges?.unsubscribe();
+    this.resizeObserver?.disconnect();
+    this.meta.removeTag('name="robots"');
+  }
+
+  protected async loadShayari(): Promise<void> {
+    const accessToken = this.verifiedUser.getAccessToken();
+    if (!accessToken) {
+      this.openVerificationDialog();
+      return;
+    }
+    this.requestedToken = accessToken;
+    this.loadController?.abort();
+    const controller = new AbortController();
+    this.loadController = controller;
+    this.loadingShayari = true;
+    this.loadError = '';
+    try {
+      const profileResponse = await fetch('assets/profile/profile.json', { signal: controller.signal });
+      if (!profileResponse.ok) {
+        throw new Error(`Could not load API configuration (HTTP ${profileResponse.status}).`);
+      }
+      const profile: Pick<ProfileManifest, 'intelliChatEndpoint'> = await profileResponse.json();
+      const endpoint = new URL('/shayari', profile.intelliChatEndpoint);
+      endpoint.searchParams.set('start_date', '0001-01-01');
+      endpoint.searchParams.set('end_date', '9999-12-31');
+      const response = await fetch(endpoint, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        signal: controller.signal
+      });
+      if (this.verifiedUser.getAccessToken() !== accessToken) {
+        return;
+      }
+      if (response.status === 401) {
+        this.verifiedUser.clear();
+        this.shayari = [];
+        this.showAllShayari = false;
+        this.openVerificationDialog();
+        this.verificationError = 'Your session has expired or is no longer valid. Please sign in again.';
+        return;
+      }
+      if (response.status === 403) {
+        this.loadError = 'Shayari is temporarily unavailable for this connection. Please try again later.';
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(`Shayari endpoint returned HTTP ${response.status}.`);
+      }
+      const result: unknown = await response.json();
+      if (!result || typeof result !== 'object' || !('shayari' in result) || !Array.isArray(result.shayari)) {
+        throw new Error('Shayari endpoint returned an invalid response.');
+      }
+      const entries: unknown[] = result.shayari;
+      if (this.verifiedUser.getAccessToken() !== accessToken) {
+        return;
+      }
+      const accents: ShayariCard['accent'][] = ['orange', 'sand', 'rose', 'ink'];
+      const dateFormatter = new Intl.DateTimeFormat('en-GB', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' });
+      this.shayari = entries.map((entry, index) => {
+        if (!entry || typeof entry !== 'object' || !('text' in entry) || typeof entry.text !== 'string' ||
+            !('date' in entry) || typeof entry.date !== 'string') {
+          throw new Error('Shayari endpoint returned an invalid entry.');
+        }
+        const date = shayariDateValue(entry.date);
+        const lines = entry.text.split('\n');
+        const length = entry.text.length;
+        const size: ShayariCard['size'] = length > 500 || lines.length > 20 ? 'long' : length < 180 && lines.length <= 7 ? 'short' : 'medium';
+        const columns = size === 'long' ? 8 : size === 'short' ? 4 : 6;
+        return { card: { text: entry.text, date: dateFormatter.format(date), size, columns, accent: accents[index % accents.length] }, date };
+      }).sort((a, b) => b.date - a.date).map(({ card }) => card);
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
+      console.error('Could not load shayari.', error);
+      this.loadError = 'Shayari could not be loaded right now.';
+    } finally {
+      if (this.loadController === controller) {
+        this.loadingShayari = false;
+        this.loadController = undefined;
+      }
+    }
+  }
+}
+
 interface ExperienceEntry {
   period: string;
   firm: string;
@@ -895,7 +1448,7 @@ interface EssayManifest {
       } @else {
         <div class="essay-list-grid">
           @for (essay of essays; track essay.slug) {
-            <article class="essay-list-card">
+            <article class="essay-list-card" data-context-category="essay" [attr.data-context-key]="essay.slug">
               <p>{{ essay.category }}</p>
               <h2><a [href]="'/essays/' + essay.slug" target="_blank" rel="noreferrer">{{ essay.title }} <span aria-hidden="true">↗</span></a></h2>
               <small>By {{ essay.author }}</small>
@@ -955,7 +1508,7 @@ export class EssayListComponent {
   selector: 'app-essay-page',
   standalone: true,
   template: `
-    <main class="essay-page">
+    <main class="essay-page" data-context-category="essay" [attr.data-context-key]="essay?.slug">
       <button class="essay-close" type="button" (click)="closeEssay()">Close essay ×</button>
       @if (loadError) {
         <p class="essay-load-error">{{ loadError }}</p>
@@ -1058,7 +1611,7 @@ export class EssayPageComponent {
   standalone: true,
   imports: [FormsModule],
   template: `
-    <main class="dummy-page">
+    <main class="dummy-page" [attr.data-context-category]="content.contextCategory ?? null">
       <p class="eyebrow"><span class="eyebrow-line"></span> {{ content.eyebrow }}</p>
       <h1>{{ content.title }} <em>{{ content.accent }}</em></h1>
       @if (content.biography) {
@@ -1085,7 +1638,7 @@ export class EssayPageComponent {
           <p class="story-label">Experience</p>
           <div class="experience-list">
             @for (firm of experience; track firm.firm) {
-              <article class="experience-firm">
+              <article class="experience-firm" data-context-category="experience" [attr.data-context-key]="firm.firm">
                 <div class="experience-firm-header">
                   <div>
                     <span class="experience-period">{{ firm.period }}</span>
@@ -1165,7 +1718,7 @@ export class EssayPageComponent {
       }
 
       @if (content.educationSource && education.length) {
-        <section class="education-block">
+        <section class="education-block" data-context-category="education">
           <p class="story-label">Education</p>
           <div class="education-list">
             @for (item of education; track item.period) {
@@ -1824,6 +2377,7 @@ export const routes: Routes = [
         title: 'Personal vision and',
         accent: 'mission.',
         description: 'A space for the principles, ambitions, and long-term direction that guide Aditya’s work.',
+        contextCategory: 'vision',
         cardsSource: 'assets/vision/vision.json',
         cards: []
       }
@@ -1846,6 +2400,10 @@ export const routes: Routes = [
     component: HobbyListComponent
   },
   {
+    path: 'shayari',
+    component: ShayariComponent
+  },
+  {
     path: 'links',
     component: DummyPageComponent,
     data: {
@@ -1854,6 +2412,7 @@ export const routes: Routes = [
         title: 'Useful',
         accent: 'links.',
         description: 'A simple directory for professional profiles, code, writing, and other places to connect with Aditya.',
+        contextCategory: 'links',
         reminder: 'It is better to contact me here, as I am likely to respond faster.',
         reminderLink: { label: 'Visit the Invest page', href: '/invest' },
         linksSource: 'assets/links/links.json',

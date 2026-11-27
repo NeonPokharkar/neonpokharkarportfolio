@@ -20,15 +20,16 @@
                     <path d="M12 5v14M5 12h14"></path>
                   </svg>
                 </button>
-                <input
-                  type="text"
+                <textarea
                   name="chatInput"
                   [(ngModel)]="chatInput"
                   placeholder="Ask a question..."
-                  autocomplete="off"
+                  rows="1"
                   [disabled]="chatBusy"
                   aria-label="Message for AI assistant"
-                  class="chat-input-welcome">
+                  class="chat-input-welcome"
+                  (input)="resizeChatInput($event)"
+                  (keydown)="onChatInputKeydown($event)"></textarea>
                 <button type="button" class="input-icon-button voice-button" (click)="toggleDictation()" [class.voice-listening]="voiceListening" [disabled]="chatBusy || voiceStopping" [attr.aria-pressed]="voiceListening" [attr.aria-label]="voiceListening ? 'Stop voice input' : 'Start voice input'" [title]="voiceListening ? 'Stop voice input' : 'Start voice input'">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="9" y="3" width="6" height="12" rx="3"></rect>
@@ -115,15 +116,16 @@
                     <path d="M12 5v14M5 12h14"></path>
                   </svg>
                 </button>
-                <input
-                  type="text"
+                <textarea
                   name="chatInput"
                   [(ngModel)]="chatInput"
                   placeholder="Ask a question..."
-                  autocomplete="off"
+                  rows="1"
                   [disabled]="chatBusy"
                   aria-label="Message for AI assistant"
-                  class="chat-input-expanded">
+                  class="chat-input-expanded"
+                  (input)="resizeChatInput($event)"
+                  (keydown)="onChatInputKeydown($event)"></textarea>
                 <button type="submit" [disabled]="chatBusy || !chatInput.trim()" aria-label="Send message" title="Send message" class="input-icon-button">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M12 19V5M5 12l7-7 7 7"></path>

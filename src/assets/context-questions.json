@@ -1,0 +1,219 @@
+{
+  "project": {
+    "generic": [
+      "What problem does {topic} solve?",
+      "How was {topic} built?",
+      "What were the key decisions behind {topic}?",
+      "What challenges came up while building {topic}?",
+      "What were the results of {topic}?",
+      "What technologies power {topic}?",
+      "What trade-offs shaped {topic}?",
+      "What would Aditya improve next in {topic}?"
+    ],
+    "specific": {
+      "LocSav — Context-Rich Personal Location Vault": [
+        "How does LocSav organize saved places around personal context?",
+        "Why did LocSav use local SQLite storage alongside Google Maps?",
+        "How does LocSav handle backup and restoration?"
+      ],
+      "NBoard — Offline Indic & Bilingual Keyboard Platform": [
+        "How does NBoard make Marathi swipe typing work offline?",
+        "What design decisions make NBoard's consonant-matra layout easier to use?"
+      ]
+    }
+  },
+  "experience": {
+    "generic": [
+      "Tell me about {topic}.",
+      "What was Aditya's role in {topic}?",
+      "What challenges did Aditya tackle in {topic}?",
+      "What impact did Aditya have in {topic}?",
+      "What skills did Aditya use in {topic}?",
+      "What did Aditya learn from {topic}?",
+      "How did Aditya approach collaboration in {topic}?",
+      "What technical decisions mattered in {topic}?"
+    ],
+    "specific": {
+      "BofA Continuum": [
+        "How did Aditya design configurable approvals at BofA Continuum?",
+        "What role did aspect-oriented programming play in Aditya's work at BofA Continuum?"
+      ]
+    }
+  },
+  "essay": {
+    "generic": [
+      "Summarize {topic}.",
+      "What is the main idea behind {topic}?",
+      "What inspired {topic}?",
+      "What are the key takeaways from {topic}?",
+      "How can the ideas in {topic} be applied?",
+      "What questions does {topic} raise?",
+      "How does {topic} connect to Aditya's work?",
+      "What perspective does {topic} offer?"
+    ],
+    "specific": {
+      "designing-for-clarity": [
+        "How does empathy help make technical products clearer?",
+        "How does designing for value connect to understanding consumers?"
+      ]
+    }
+  },
+  "education": {
+    "generic": [
+      "Tell me about Aditya's education in {topic}.",
+      "What did Aditya study in {topic}?",
+      "What achievements are associated with {topic}?",
+      "How did {topic} contribute to Aditya's learning?",
+      "What skills or interests did Aditya develop during {topic}?",
+      "How does {topic} connect to Aditya's later work?"
+    ],
+    "specific": {
+      "B.Tech, Mechanical Engineering": [
+        "What did Aditya study and achieve at IIT BHU?",
+        "What did Aditya contribute to the Cine Club during college?"
+      ],
+      "Science stream": [
+        "What academic and programming achievements did Aditya have during his science studies?",
+        "How did Aditya perform in engineering entrance exams?"
+      ]
+    }
+  },
+  "vision": {
+    "generic": [
+      "What does {topic} mean to Aditya?",
+      "How does {topic} guide Aditya's work?",
+      "How does {topic} connect technology with human experience?",
+      "What principles underpin {topic}?",
+      "How might {topic} shape future projects?",
+      "How does {topic} relate to creating lasting value?"
+    ],
+    "specific": {
+      "Vision": [
+        "What kind of future does Aditya envision for technology?",
+        "How can technology reduce complexity and expand human capability?"
+      ],
+      "Mission": [
+        "How does Aditya turn an understanding of systems into useful products?",
+        "Why are reliability and cognitive ease important to Aditya's mission?"
+      ]
+    }
+  },
+  "gallery": {
+    "generic": [
+      "Tell me about Aditya's work in {topic}.",
+      "What is Aditya's creative process for {topic}?",
+      "What has Aditya made through {topic}?",
+      "What interests does {topic} reflect?",
+      "How does Aditya approach learning through {topic}?",
+      "How does {topic} connect to Aditya's other interests?"
+    ],
+    "specific": {
+      "Film making and digital content": [
+        "How does Aditya approach visual storytelling and film-making?",
+        "What did Aditya work on with the Cine Club?"
+      ],
+      "Writing and reflective essays": [
+        "How does Aditya turn observations into reflective essays?",
+        "What subjects does Aditya explore in his writing?"
+      ]
+    }
+  },
+  "links": {
+    "generic": [
+      "What can I find through {topic}?",
+      "How does {topic} help me connect with Aditya?",
+      "What part of Aditya's work is relevant to {topic}?",
+      "Which of Aditya's other links might also be useful?",
+      "How else can I learn about Aditya's projects and experience?"
+    ],
+    "specific": {
+      "LinkedIn": ["What professional updates and experience can I find on Aditya's LinkedIn?"],
+      "GitHub": ["What projects and experiments can I explore on Aditya's GitHub?"],
+      "WhatsApp": ["How can I start a conversation with Aditya on WhatsApp?"],
+      "Email": ["How can I contact Aditya by email?"],
+      "Phone": ["What information is requested before Aditya's phone number is revealed?"]
+    }
+  },
+  "invest": {
+    "generic": [
+      "What kinds of opportunities can I discuss with Aditya?",
+      "How can I reach out about working with Aditya?",
+      "What information would help Aditya understand a proposed project?",
+      "How can I suggest a partnership or collaboration?",
+      "What should I share about a contract opportunity?",
+      "How can I invite Aditya to an event or platform?"
+    ],
+    "specific": {
+      "overview": [
+        "What options are available for contacting Aditya about an opportunity?",
+        "How does the Invest page help prepare an email conversation?"
+      ]
+    }
+  },
+  "home": {
+    "generic": [
+      "Tell me more about {topic}.",
+      "How does {topic} relate to Aditya's work?",
+      "What experience does Aditya bring to {topic}?",
+      "What is Aditya's approach to {topic}?",
+      "What would be useful to explore next about {topic}?",
+      "How does {topic} connect to Aditya's interests?"
+    ],
+    "specific": {
+      "hero": [
+        "What kind of systems does Aditya build?",
+        "How does Aditya combine backend engineering with private AI?"
+      ],
+      "about": [
+        "How does Aditya bridge architecture with practical product outcomes?",
+        "What experience does Aditya bring to high-ownership engineering?"
+      ],
+      "services": [
+        "What engineering services and strengths does Aditya offer?",
+        "How does Aditya combine systems thinking with product development?"
+      ],
+      "Enterprise Backend & Real-Time Systems": [
+        "How has Aditya built reliable enterprise and real-time systems?"
+      ],
+      "Private & Local-First AI Workflows": [
+        "How does Aditya build private, local-first AI workflows?"
+      ],
+      "0-to-1 Product Engineering": [
+        "How does Aditya take a product from an idea to delivery?"
+      ],
+      "current": [
+        "What is Aditya currently working on?",
+        "What kinds of opportunities is Aditya open to?"
+      ],
+      "skills": [
+        "How does Aditya choose technologies for a new project?",
+        "How do Aditya's technical skills support his interest in AI?"
+      ],
+      "projects": [
+        "What kinds of projects has Aditya built?",
+        "Which projects show Aditya's approach to local-first software?"
+      ],
+      "experience": [
+        "What has Aditya worked on professionally?",
+        "How has Aditya contributed to enterprise workflow systems?"
+      ],
+      "contact": [
+        "How can I discuss a technical problem with Aditya?",
+        "What kinds of engineering opportunities interest Aditya?"
+      ]
+    }
+  },
+  "general": {
+    "generic": [
+      "Tell me more about {topic}.",
+      "Why is {topic} important to Aditya?",
+      "What is Aditya's approach to {topic}?",
+      "What has Aditya learned from {topic}?",
+      "How does {topic} connect to Aditya's work?",
+      "What experiences shaped Aditya's perspective on {topic}?",
+      "What would Aditya like to explore next in {topic}?",
+      "How does {topic} influence Aditya's decisions?"
+    ],
+    "specific": {}
+  }
+}

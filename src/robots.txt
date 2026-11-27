@@ -1,5 +1,7 @@
 User-agent: *
 Allow: /
+Disallow: /shayari
+Disallow: /assets/shayari/
 
 Sitemap: https://neonpokharkar.com/sitemap.xml
 

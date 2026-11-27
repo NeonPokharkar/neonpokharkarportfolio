@@ -47,7 +47,7 @@
       <span aria-hidden="true">{{ themeMode === 'day' ? '☀' : '☾' }}</span>
       <span>{{ themeMode === 'day' ? 'Day' : 'Night' }}</span>
     </button>
-    <a class="header-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
+    <a class="header-link" [href]="resumeHref" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
     @if (verifiedUser.user(); as user) {
       <div class="user-profile" role="status" [attr.aria-label]="'Signed in as ' + user.name" [title]="user.name">
         @if (user.picture && user.picture !== failedProfilePicture) {
@@ -118,7 +118,7 @@
       <p class="hero-description">I architect resilient backend platforms and private AI workflows that solve high-stakes operational bottlenecks.</p>
       <div class="hero-actions">
         <a class="button button-dark" [href]="'mailto:' + email + '?subject=Technical%20chat'">Book a Technical Chat <span aria-hidden="true">↗</span></a>
-        <a class="text-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
+        <a class="text-link" [href]="resumeHref" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
       </div>
     </div>
 
@@ -151,7 +151,7 @@
     <p class="eyebrow"><span class="eyebrow-line"></span> High-ownership engineering</p>
     <p class="statement">I turn complex operational challenges into <span>resilient systems</span> and user-first products.</p>
     <p class="intro-copy">With 3+ years of enterprise engineering experience and an IIT BHU background, I bridge system architecture with practical product outcomes—from high-reliability workflows to local-first AI and mobile products.</p>
-    <a class="resume-link" [href]="resumeDownloadUrl || resumePath" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download my resume <span aria-hidden="true">↓</span></a>
+    <a class="resume-link" [href]="resumeHref" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download my resume <span aria-hidden="true">↓</span></a>
     <a class="resume-link email-link" [href]="'mailto:' + email">Email me <span aria-hidden="true">↗</span></a>
   </section>
 
@@ -345,6 +345,9 @@
   </div>
 }
 <p class="context-status" role="status" aria-live="polite">{{ contextMenu ? '' : contextStatus }}</p>
+@if (contextHint) {
+  <p class="context-hint" [style.left.px]="contextHint.x + 16" [style.top.px]="contextHint.y + 16">Press Alt+Q or right click twice to open AI command palette</p>
+}
 
 <!-- MARKER: CUSTOM_CURSOR_ANIMATION - Animated astronaut following mouse cursor -->
 <div
@@ -419,12 +422,20 @@
 }
 }
 
-<!-- MARKER: FOOTER_SECTION - Copyright, tagline, back to top (homepage only) -->
-@if (isHomeRoute) {
-<footer>
-  <span>© 2025 Aditya Pokharkar</span>
+<!-- MARKER: FOOTER_SECTION - Copyright, attribution, and route navigation -->
+@if (!isChatRoute) {
+<footer class="site-footer">
+  <span>© {{ copyrightYear }} Aditya Pokharkar</span>
   <span>High-Ownership Product &amp; Systems Engineer</span>
-  <a href="#top">Back to top ↑</a>
+  @if (isHomeRoute) {
+    <a href="#top">Back to top ↑</a>
+  } @else {
+    <a routerLink="/">Home ↑</a>
+  }
+  <span class="recaptcha-disclosure">This site is protected by reCAPTCHA and the Google
+    <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and
+    <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply.
+  </span>
 </footer>
 <!-- MARKER: FOOTER_SECTION_END -->
 }

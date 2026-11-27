@@ -10,8 +10,25 @@ html[data-theme='night'] body {
 
 html[data-theme='night'] .site-header {
   background: #11110f;
-  border-bottom: 1px solid #383530;
   color: #f2efe9;
+}
+
+html[data-theme='night'] .site-header::after {
+  background: #383530;
+  bottom: 0;
+  content: '';
+  height: 1px;
+  left: 32px;
+  pointer-events: none;
+  position: absolute;
+  right: 32px;
+}
+
+@media (max-width: 800px) {
+  html[data-theme='night'] .site-header::after {
+    left: 20px;
+    right: 20px;
+  }
 }
 
 html[data-theme='night'] .site-header nav a {

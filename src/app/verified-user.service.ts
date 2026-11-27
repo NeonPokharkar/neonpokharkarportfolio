@@ -3,6 +3,7 @@ import { Injectable, signal } from '@angular/core';
 export interface VerifiedUser {
   name: string;
   picture: string | null;
+  isAdmin?: boolean;
 }
 
 interface SharedSession {
@@ -22,17 +23,27 @@ interface HeartbeatState {
   retryAfter: number;
 }
 
+export interface ShayariIngestState {
+  sessionId: string;
+  failures: number;
+  blocked: 'attempts' | 'lockout' | 'forbidden' | 'coordination' | null;
+  revision: number;
+}
+
 type SessionMessage =
   | { type: 'request'; tabId: string }
   | { type: 'session'; target?: string; session: SharedSession }
   | { type: 'activity'; sessionId: string; at: number }
   | { type: 'heartbeat'; state: HeartbeatState }
   | { type: 'heartbeat-error'; sessionId: string; retryAfter: number }
+  | { type: 'ingest-state'; state: ShayariIngestState }
+  | { type: 'shayari-otp-request'; sessionId: string; requestId: string }
   | { type: 'clear'; sessionId: string };
 
 const heartbeatInterval = 30 * 60 * 1000;
 const heartbeatRetryDelay = 60 * 1000;
 const heartbeatStorageKey = 'portfolio-auth-heartbeat';
+const ingestStorageKey = 'portfolio-shayari-ingest';
 
 @Injectable({ providedIn: 'root' })
 export class VerifiedUserService {
@@ -44,6 +55,10 @@ export class VerifiedUserService {
   readonly heartbeatError = this.renewalError.asReadonly();
   private readonly notice = signal('');
   readonly sessionNotice = this.notice.asReadonly();
+  private readonly ingestStatus = signal<ShayariIngestState | null>(null);
+  readonly shayariIngestState = this.ingestStatus.asReadonly();
+  private readonly otpRequest = signal<string | null>(null);
+  readonly shayariOtpRequest = this.otpRequest.asReadonly();
 
   private session: SharedSession | null = null;
   private channel?: BroadcastChannel;
@@ -118,11 +133,112 @@ export class VerifiedUserService {
     }
   }
 
+  async recordShayariIngestFailure(accessToken: string): Promise<void> {
+    await this.updateShayariIngestState(accessToken, 'failure');
+  }
+
+  announceShayariOtpRequest(accessToken: string): string | null {
+    if (!this.session || this.getAccessToken() !== accessToken) {
+      return null;
+    }
+    const requestId = crypto.randomUUID();
+    this.otpRequest.set(requestId);
+    this.broadcast({ type: 'shayari-otp-request', sessionId: this.session.id, requestId });
+    return requestId;
+  }
+
+  async blockShayariIngest(accessToken: string, reason: 'lockout' | 'forbidden'): Promise<void> {
+    await this.updateShayariIngestState(accessToken, reason);
+  }
+
+  async resetShayariIngestFailures(accessToken: string): Promise<void> {
+    await this.updateShayariIngestState(accessToken, 'success');
+  }
+
+  private async updateShayariIngestState(accessToken: string, action: 'failure' | 'success' | 'lockout' | 'forbidden'): Promise<void> {
+    const sessionId = this.session?.id;
+    if (!sessionId || this.getAccessToken() !== accessToken) {
+      return;
+    }
+    const update = () => {
+      if (this.session?.id !== sessionId || this.getAccessToken() !== accessToken) {
+        return;
+      }
+      const current = this.channel ? this.readShayariIngestState(sessionId) : this.ingestStatus();
+      const state: ShayariIngestState = current?.sessionId === sessionId
+        ? { ...current }
+        : { sessionId, failures: 0, blocked: null, revision: 0 };
+      if (!state.blocked) {
+        if (action === 'failure') {
+          state.failures = Math.min(3, state.failures + 1);
+          if (state.failures === 3) {
+            state.blocked = 'attempts';
+          }
+        } else if (action === 'success') {
+          state.failures = 0;
+        } else {
+          state.blocked = action;
+        }
+      } else if (action === 'lockout') {
+        state.blocked = 'lockout';
+      }
+      state.revision++;
+      if (this.channel) {
+        localStorage.setItem(ingestStorageKey, JSON.stringify(state));
+      }
+      this.ingestStatus.set(state);
+      this.broadcast({ type: 'ingest-state', state });
+    };
+    try {
+      if (this.channel) {
+        await navigator.locks.request(ingestStorageKey, update);
+      } else {
+        update();
+      }
+    } catch (error) {
+      console.error('Could not coordinate Shayari ingestion.', error);
+      if (this.session?.id === sessionId) {
+        const state: ShayariIngestState = { sessionId, failures: 0, blocked: 'coordination', revision: Number.MAX_SAFE_INTEGER };
+        this.ingestStatus.set(state);
+        this.broadcast({ type: 'ingest-state', state });
+      }
+    }
+  }
+
+  private readShayariIngestState(sessionId: string): ShayariIngestState | null {
+    const stored = localStorage.getItem(ingestStorageKey);
+    if (!stored) {
+      return null;
+    }
+    const value: unknown = JSON.parse(stored);
+    if (!this.isShayariIngestState(value)) {
+      throw new Error('Invalid stored Shayari ingestion state.');
+    }
+    return value.sessionId === sessionId ? value : null;
+  }
+
+  private isShayariIngestState(value: unknown): value is ShayariIngestState {
+    return !!value && typeof value === 'object' &&
+      'sessionId' in value && typeof value.sessionId === 'string' && !!value.sessionId &&
+      'failures' in value && typeof value.failures === 'number' && Number.isInteger(value.failures) &&
+      value.failures >= 0 && value.failures <= 3 &&
+      'blocked' in value && (value.blocked === null || value.blocked === 'attempts' || value.blocked === 'lockout' ||
+        value.blocked === 'forbidden' || value.blocked === 'coordination') &&
+      'revision' in value && typeof value.revision === 'number' && Number.isSafeInteger(value.revision) && value.revision >= 0;
+  }
+
   private applySession(session: SharedSession): void {
     this.cancelTimers();
     this.session = { ...session };
     this.retryAfter = 0;
     this.currentUser.set(session.user);
+    this.otpRequest.set(null);
+    try {
+      this.ingestStatus.set(this.channel ? this.readShayariIngestState(session.id) : null);
+    } catch (error) {
+      console.error('Could not read Shayari ingestion state.', error);
+      this.ingestStatus.set({ sessionId: session.id, failures: 0, blocked: 'coordination', revision: Number.MAX_SAFE_INTEGER });
+    }
     this.notice.set('');
     this.renewalError.set('');
     this.sessionReady.set(true);
@@ -139,6 +255,8 @@ export class VerifiedUserService {
     this.cancelTimers();
     this.session = null;
     this.currentUser.set(null);
+    this.otpRequest.set(null);
+    this.ingestStatus.set(null);
     this.renewalError.set('');
     if (hadSession) {
       this.notice.set('Your session expired or was revoked. Please sign in again.');
@@ -289,7 +407,7 @@ export class VerifiedUserService {
           };
           localStorage.setItem(heartbeatStorageKey, JSON.stringify(failed));
           this.retryAfter = retryAfter;
-          this.renewalError.set('Session renewal is temporarily unavailable. We will retry while you are active.');
+          this.renewalError.set('Session renewal is temporarily unavailable. The site will retry while you are active.');
           this.broadcast({ type: 'heartbeat-error', sessionId: session.id, retryAfter });
           console.error('Could not renew the session.', error);
         } finally {
@@ -382,6 +500,19 @@ export class VerifiedUserService {
       this.clearLocalSession();
       return;
     }
+    if (value.type === 'ingest-state' && 'state' in value && this.isShayariIngestState(value.state) &&
+        value.state.sessionId === this.session?.id) {
+      const current = this.ingestStatus();
+      if (!current || value.state.revision > current.revision) {
+        this.ingestStatus.set(value.state);
+      }
+      return;
+    }
+    if (value.type === 'shayari-otp-request' && 'sessionId' in value && value.sessionId === this.session?.id &&
+        'requestId' in value && typeof value.requestId === 'string' && value.requestId) {
+      this.otpRequest.set(value.requestId);
+      return;
+    }
     const session = this.session;
     if (value.type === 'activity' && session && 'sessionId' in value && value.sessionId === session.id &&
         'at' in value && typeof value.at === 'number' && Number.isFinite(value.at) && value.at <= Date.now()) {
@@ -397,7 +528,7 @@ export class VerifiedUserService {
     if (value.type === 'heartbeat-error' && 'sessionId' in value && value.sessionId === this.session?.id &&
         'retryAfter' in value && typeof value.retryAfter === 'number' && Number.isFinite(value.retryAfter)) {
       this.retryAfter = value.retryAfter;
-      this.renewalError.set('Session renewal is temporarily unavailable. We will retry while you are active.');
+      this.renewalError.set('Session renewal is temporarily unavailable. The site will retry while you are active.');
       this.scheduleHeartbeat();
     }
   }
@@ -405,7 +536,8 @@ export class VerifiedUserService {
   private isSharedSession(value: unknown): value is SharedSession {
     if (!value || typeof value !== 'object' || !('user' in value) || !value.user || typeof value.user !== 'object' ||
         !('name' in value.user) || typeof value.user.name !== 'string' || !value.user.name.trim() ||
-        !('picture' in value.user) || (value.user.picture !== null && typeof value.user.picture !== 'string')) {
+        !('picture' in value.user) || (value.user.picture !== null && typeof value.user.picture !== 'string') ||
+        ('isAdmin' in value.user && typeof value.user.isAdmin !== 'boolean')) {
       return false;
     }
     return 'id' in value && typeof value.id === 'string' && !!value.id &&

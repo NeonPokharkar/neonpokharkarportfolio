@@ -164,6 +164,95 @@ test('shares the session and sends one heartbeat across active tabs', async () =
   assert.equal(browser.requests.length, 2);
 });
 
+test('shares the admin flag across tabs and clears it on sign-out', async () => {
+  const browser = createBrowser();
+  const first = browser.tab();
+  const second = browser.tab();
+  first.service.setSession({ name: 'Admin', picture: null, isAdmin: true }, 'synthetic-token', 7200);
+  await browser.flush();
+  assert.equal(second.service.user().isAdmin, true);
+  first.service.clear();
+  await browser.flush();
+  assert.equal(second.service.user(), null);
+});
+
+test('rejects shared sessions with an invalid admin flag', async () => {
+  const browser = createBrowser();
+  const first = browser.tab();
+  const second = browser.tab();
+  first.service.setSession({ name: 'Example', picture: null, isAdmin: 'true' }, 'synthetic-token', 7200);
+  await browser.flush();
+  assert.equal(second.service.user(), null);
+});
+
+test('counts failed OTP attempts across tabs and disables ingestion for the session', async () => {
+  const browser = createBrowser();
+  const first = browser.tab();
+  const second = browser.tab();
+  first.service.setSession({ name: 'Admin', picture: null, isAdmin: true }, 'synthetic-token', 7200);
+  await browser.flush();
+  await Promise.all([
+    first.service.recordShayariIngestFailure('synthetic-token'),
+    second.service.recordShayariIngestFailure('synthetic-token')
+  ]);
+  await browser.flush();
+  assert.equal(first.service.shayariIngestState().failures, 2);
+  assert.equal(second.service.shayariIngestState().failures, 2);
+  await first.service.recordShayariIngestFailure('synthetic-token');
+  await browser.flush();
+  assert.equal(second.service.shayariIngestState().blocked, 'attempts');
+
+  const third = browser.tab();
+  await browser.flush();
+  assert.equal(third.service.shayariIngestState().blocked, 'attempts');
+  await first.service.resetShayariIngestFailures('synthetic-token');
+  await browser.flush();
+  assert.equal(second.service.shayariIngestState().blocked, 'attempts');
+  first.service.setSession({ name: 'Admin', picture: null, isAdmin: true }, 'new-token', 7200);
+  await browser.flush();
+  assert.equal(first.service.shayariIngestState(), null);
+});
+
+test('resets successive OTP failures after a successful ingest', async () => {
+  const browser = createBrowser();
+  const first = browser.tab();
+  const second = browser.tab();
+  first.service.setSession({ name: 'Admin', picture: null, isAdmin: true }, 'synthetic-token', 7200);
+  await browser.flush();
+  await first.service.recordShayariIngestFailure('synthetic-token');
+  await first.service.resetShayariIngestFailures('synthetic-token');
+  await browser.flush();
+  assert.equal(second.service.shayariIngestState().failures, 0);
+  assert.equal(second.service.shayariIngestState().blocked, null);
+});
+
+test('notifies other tabs when a new OTP is requested for the shared session', async () => {
+  const browser = createBrowser();
+  const first = browser.tab();
+  const second = browser.tab();
+  first.service.setSession({ name: 'Admin', picture: null, isAdmin: true }, 'synthetic-token', 7200);
+  await browser.flush();
+  const requestId = first.service.announceShayariOtpRequest('synthetic-token');
+  await browser.flush();
+  assert.equal(second.service.shayariOtpRequest(), requestId);
+  assert.equal(second.service.announceShayariOtpRequest('old-token'), null);
+});
+
+test('shares server lockout and ignores responses from an old session', async () => {
+  const browser = createBrowser();
+  const first = browser.tab();
+  const second = browser.tab();
+  first.service.setSession({ name: 'Admin', picture: null, isAdmin: true }, 'synthetic-token', 7200);
+  await browser.flush();
+  await first.service.blockShayariIngest('synthetic-token', 'lockout');
+  await browser.flush();
+  assert.equal(second.service.shayariIngestState().blocked, 'lockout');
+  first.service.setSession({ name: 'Admin', picture: null, isAdmin: true }, 'new-token', 7200);
+  await browser.flush();
+  await first.service.recordShayariIngestFailure('synthetic-token');
+  assert.equal(first.service.shayariIngestState(), null);
+});
+
 test('does not renew while idle and resumes after interaction', async () => {
   const browser = createBrowser();
   const tab = browser.tab();

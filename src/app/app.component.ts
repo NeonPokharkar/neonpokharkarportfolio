@@ -101,6 +101,7 @@ interface ProfileManifest {
   toolkit: string[];
   interests: string[];
   resumePath: string;
+  copyrightYear: string;
   email: string;
   phone: string;
   linkedin: string;
@@ -146,11 +147,6 @@ export class AppComponent implements OnDestroy {
   // MARKER: LIFECYCLE_AND_ROUTING - Constructor, route checks (home vs essays vs dynamic)
   constructor(protected readonly router: Router, protected readonly verifiedUser: VerifiedUserService) {
     this.initializeTheme();
-    try {
-      this.contextHoverPaused = sessionStorage.getItem('context-hover-paused') === 'true';
-    } catch (error) {
-      console.warn('Could not restore the contextual hover preference.', error);
-    }
     void this.loadHomeData();
     void this.loadProfile();
     this.contextQuestions = this.loadContextQuestions();
@@ -207,7 +203,8 @@ export class AppComponent implements OnDestroy {
   private contextStatusTimer: ReturnType<typeof setTimeout> | undefined;
   private readonly contextQuestions: Promise<ContextQuestions | null>;
   private contextRequestId = 0;
-  private contextHoverPaused = false;
+  protected contextHint: { x: number; y: number } | null = null;
+  private contextHintTimer: ReturnType<typeof setTimeout> | undefined;
   private lastContextRightClick: number | null = null;
 
   protected get dialogueSide(): 'left' | 'right' {
@@ -218,7 +215,14 @@ export class AppComponent implements OnDestroy {
 
   // MARKER: PROFILE_DATA_SECTION - Contact, resume, links, availability
   protected resumePath = '';
+  protected copyrightYear = '';
   protected resumeDownloadUrl = '';
+  protected get resumeHref(): string {
+    const includePhone = Boolean(this.verifiedUser.user());
+    return this.resumeIncludesPhone === includePhone
+      ? this.resumeDownloadUrl || this.resumePath
+      : this.resumePath;
+  }
   protected email = '';
   protected phone = '';
   protected linkedin = '';
@@ -251,6 +255,7 @@ export class AppComponent implements OnDestroy {
 
   protected resumeError = '';
   private resumePreparation: Promise<void> | undefined;
+  private resumeIncludesPhone: boolean | undefined;
 
   protected projects: PortfolioItem[] = [];
 
@@ -311,6 +316,7 @@ export class AppComponent implements OnDestroy {
       }
       const profile = await response.json() as ProfileManifest;
       this.resumePath = profile.resumePath;
+      this.copyrightYear = profile.copyrightYear;
       this.email = profile.email;
       this.phone = profile.phone;
       this.linkedin = profile.linkedin;
@@ -329,12 +335,14 @@ export class AppComponent implements OnDestroy {
 
   // MARKER: PDF_GENERATION_SECTION_START - Resume PDF download functionality
   protected prepareResumeDownload(): void {
-    if (!this.resumePreparation) {
-      this.resumePreparation = this.createResumeDownload();
+    const includePhone = Boolean(this.verifiedUser.user());
+    if (!this.resumePreparation || this.resumeIncludesPhone !== includePhone) {
+      this.resumeIncludesPhone = includePhone;
+      this.resumePreparation = this.createResumeDownload(includePhone);
     }
   }
 
-  private async createResumeDownload(): Promise<void> {
+  private async createResumeDownload(includePhone: boolean): Promise<void> {
     this.resumeError = '';
 
     try {
@@ -351,7 +359,8 @@ export class AppComponent implements OnDestroy {
       const profile = await profileResponse.json() as ResumeManifest;
       const experience = await experienceResponse.json() as ExperienceManifest;
       const education = await educationResponse.json() as { education: EducationManifestEntry[] };
-      const resumeBlob = await this.generateResumePdf(profile, experience.experience, education.education);
+      const resumeProfile = { ...profile, phone: includePhone ? profile.phone : '' };
+      const resumeBlob = await this.generateResumePdf(resumeProfile, experience.experience, education.education);
       this.resumeDownloadUrl = URL.createObjectURL(resumeBlob);
     } catch (error) {
       console.error('Resume generation failed.', error);
@@ -622,12 +631,7 @@ export class AppComponent implements OnDestroy {
       return;
     }
 
-    const target = event.target instanceof Element ? event.target : null;
-    const candidate = this.canUseContextMenu() && !event.buttons &&
-      !target?.closest('a, button, input, textarea, select, summary, [contenteditable], nav, form, [role="dialog"]')
-      ? target?.closest('main article, main section, main')
-      : null;
-    const context = candidate instanceof HTMLElement ? candidate.closest<HTMLElement>('article') ?? candidate : null;
+    const context = event.buttons ? null : this.findContext(event.target);
     if (context === this.hoveredContext) {
       return;
     }
@@ -637,8 +641,40 @@ export class AppComponent implements OnDestroy {
     if (context !== this.dismissedContext) {
       this.dismissedContext = null;
     }
-    if (context && !this.dismissedContext && !this.contextHoverPaused) {
-      this.contextHoverTimer = setTimeout(() => void this.openContextMenu(context), 1500);
+    // Only occasionally nudge the user toward the palette instead of opening it on hover.
+    if (context && !this.dismissedContext && Math.random() < 0.3) {
+      this.contextHoverTimer = setTimeout(() => {
+        this.contextHoverTimer = undefined;
+        this.showContextHint();
+      }, 1500);
+    }
+  }
+
+  private findContext(target: EventTarget | null): HTMLElement | null {
+    const element = target instanceof Element ? target : null;
+    const candidate = this.canUseContextMenu() &&
+      !element?.closest('a, button, input, textarea, select, summary, [contenteditable], nav, form, [role="dialog"]')
+      ? element?.closest('main article, main section, main')
+      : null;
+    return candidate instanceof HTMLElement ? candidate.closest<HTMLElement>('article') ?? candidate : null;
+  }
+
+  private showContextHint(): void {
+    if (this.contextMenu || !this.hoveredContext) {
+      return;
+    }
+    this.contextHint = { x: this.cursorX, y: this.cursorY };
+    this.contextHintTimer = setTimeout(() => {
+      this.contextHint = null;
+      this.contextHintTimer = undefined;
+    }, 4000);
+  }
+
+  private hideContextHint(): void {
+    this.contextHint = null;
+    if (this.contextHintTimer !== undefined) {
+      clearTimeout(this.contextHintTimer);
+      this.contextHintTimer = undefined;
     }
   }
 
@@ -678,9 +714,6 @@ export class AppComponent implements OnDestroy {
         this.hoveredContext && this.canUseContextMenu()) {
       event.preventDefault();
       this.lastContextRightClick = null;
-      if (this.contextHoverPaused) {
-        this.setContextHoverPaused(false);
-      }
       void this.openContextMenu(this.hoveredContext);
     }
   }
@@ -705,42 +738,22 @@ export class AppComponent implements OnDestroy {
       this.lastContextRightClick = event.button === 2 ? now : null;
     } else if (event.button === 2 && this.lastContextRightClick !== null &&
         now - this.lastContextRightClick <= 600) {
-      event.preventDefault();
       this.lastContextRightClick = null;
-      this.cancelContextHover();
-      this.setContextHoverPaused(true);
-      this.showContextStatus('Hover questions paused. Press Alt + Q over content to resume.');
-    } else {
-      this.lastContextRightClick = null;
-    }
-  }
-
-  private setContextHoverPaused(paused: boolean): void {
-    this.contextHoverPaused = paused;
-    try {
-      if (paused) {
-        sessionStorage.setItem('context-hover-paused', 'true');
-      } else {
-        sessionStorage.removeItem('context-hover-paused');
+      const context = this.findContext(event.target);
+      if (context) {
+        event.preventDefault();
+        this.cancelContextHover();
+        this.hoveredContext = context;
+        void this.openContextMenu(context);
       }
-    } catch (error) {
-      console.warn('Could not save the contextual hover preference.', error);
+    } else {
+      this.lastContextRightClick = event.button === 2 ? now : null;
     }
-  }
-
-  private showContextStatus(message: string): void {
-    if (this.contextStatusTimer !== undefined) {
-      clearTimeout(this.contextStatusTimer);
-    }
-    this.contextStatus = message;
-    this.contextStatusTimer = setTimeout(() => {
-      this.contextStatus = '';
-      this.contextStatusTimer = undefined;
-    }, 3000);
   }
 
   protected cancelContextHover(): void {
     this.contextRequestId += 1;
+    this.hideContextHint();
     if (this.contextHoverTimer !== undefined) {
       clearTimeout(this.contextHoverTimer);
       this.contextHoverTimer = undefined;

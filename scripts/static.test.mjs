@@ -13,6 +13,17 @@ const escapeHtml = (value) => String(value).replace(/[&<>"']/g, (character) => (
   '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
 })[character]);
 
+test('agent discovery files expose only the public profile allowlist', async () => {
+  const [llms, ard, profile] = await Promise.all([
+    built('llms.txt'), built('.well-known/ard.json').then(JSON.parse), built('.well-known/portfolio-profile.json')
+  ]);
+  const sensitive = JSON.parse(await read('src/assets/profile/profile.json')).phone;
+  assert.ok(ard.entries.length > 0 && ard.entries.every((entry) => /^urn:air:[^:]+:[^:]+:[^:]+$/.test(entry.identifier) && entry.url && !entry.data));
+  assert.match(llms, /## Experience/);
+  assert.ok(!llms.includes(sensitive) && !profile.includes(sensitive) && !/recommendation/i.test(profile));
+  assert.match(await built('robots.txt'), /Agentmap: https:\/\/neonpokharkar\.com\/\.well-known\/ard\.json/);
+});
+
 test('sitemap links to existing public pages and every essay', async () => {
   const [sitemap, robots, manifest] = await Promise.all([
     built('sitemap.xml'), built('robots.txt'),
@@ -55,10 +66,9 @@ test('static essays and project index contain manifest content', async () => {
   ]);
   for (const essay of essays.essays) {
     const page = await built(`essays/${essay.slug}/index.html`);
-    const body = await read(`src/assets/essays/${essay.file}`);
     assert.ok(essayIndex.includes(`href="/essays/${essay.slug}"`));
     assert.ok(page.includes(`<h1>${escapeHtml(essay.title)}</h1>`));
-    assert.ok(page.includes(body));
+    assert.ok(page.includes('Sign in with Google to read this essay.'));
     assert.ok(page.includes(`href="https://neonpokharkar.com/essays/${essay.slug}/"`));
     assert.ok(page.includes(`<meta name="description" content="${escapeHtml(essay.summary)}">`));
   }

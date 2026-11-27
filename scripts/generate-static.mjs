@@ -54,7 +54,7 @@ async function writeRoute(route, html) {
 }
 
 const essayPaths = new Set();
-const essays = await Promise.all(essayManifest.essays.map(async (essay) => {
+const essays = essayManifest.essays.map((essay) => {
   const slug = requiredText(essay.slug, 'essay slug');
   if (!/^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(slug) || essayPaths.has(slug)) {
     throw new Error(`Invalid or duplicate essay slug: ${slug}`);
@@ -67,8 +67,8 @@ const essays = await Promise.all(essayManifest.essays.map(async (essay) => {
   for (const field of ['title', 'summary', 'category', 'author', 'publishedAt']) {
     requiredText(essay[field], `${field} for ${slug}`);
   }
-  return { ...essay, body: await readSource(`assets/essays/${file}`) };
-}));
+  return essay;
+});
 
 const essayList = `<h1>Blog and thought essays.</h1>${essays.map((essay) =>
   `<article><p>${escapeHtml(essay.category)}</p><h2><a href="/essays/${essay.slug}">${escapeHtml(essay.title)}</a></h2><p>By ${escapeHtml(essay.author)}</p><p>${escapeHtml(essay.summary)}</p></article>`
@@ -94,7 +94,7 @@ await Promise.all(essays.map(async (essay) => {
   const summary = escapeHtml(essay.summary);
   const canonical = `${origin}/essays/${essay.slug}/`;
   const metadata = `<link rel="canonical" href="${canonical}"><meta name="author" content="${escapeHtml(essay.author)}"><meta property="article:published_time" content="${escapeHtml(essay.publishedAt)}">`;
-  const page = renderPage(`<article><p>${escapeHtml(essay.category)}</p><h1>${title}</h1><p>${summary}</p><p>By ${escapeHtml(essay.author)}</p><time datetime="${escapeHtml(essay.publishedAt)}">${escapeHtml(essay.publishedAt)}</time><div>${essay.body}</div></article>`, metadata)
+  const page = renderPage(`<article><p>${escapeHtml(essay.category)}</p><h1>${title}</h1><p>${summary}</p><p>By ${escapeHtml(essay.author)}</p><time datetime="${escapeHtml(essay.publishedAt)}">${escapeHtml(essay.publishedAt)}</time><p>Sign in with Google to read this essay.</p></article>`, metadata)
     .replace(/<title>[^<]*<\/title>/, `<title>${title} | Aditya Pokharkar</title>`)
     .replace(/<meta name="description" content="[^"]*">/, `<meta name="description" content="${summary}">`);
   await writeRoute(`essays/${essay.slug}`, page);
@@ -103,5 +103,82 @@ await Promise.all(essays.map(async (essay) => {
 const urls = [...publicRoutes.filter((route) => route !== 'chat' && route !== 'shayari'), ...essays.map((essay) => `essays/${essay.slug}`)];
 const sitemap = `<?xml version="1.0" encoding="UTF-8"?>\n<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n${urls.map((route) => `  <url><loc>${escapeHtml(`${origin}/${route}${route ? '/' : ''}`)}</loc></url>`).join('\n')}\n</urlset>\n`;
 await writeFile(path.join(output, 'sitemap.xml'), sitemap);
-console.log(`Generated ${essays.length} essay pages, project and essay indexes, and ${urls.length} sitemap URLs.`);
+// Agent-facing files expose a fixed allowlist of public profile fields only (no phone, WhatsApp, or recommendations).
+const [profile, experienceManifest, educationManifest, visionManifest] = await Promise.all(
+  ['profile/profile', 'experience/experience', 'education/education', 'vision/vision']
+    .map((name) => readSource(`assets/${name}.json`).then(JSON.parse))
+);
+const agentProfile = {
+  name: 'Aditya Pokharkar',
+  website: `${origin}/`,
+  linkedin: requiredText(profile.linkedin, 'profile linkedin'),
+  email: requiredText(profile.email, 'profile email'),
+  skillset: profile.toolkit,
+  whatIBring: profile.whatIBring.services.map(({ title, description }) => ({ title, description })),
+  experience: experienceManifest.experience.map(({ period, firm, role, location, summary }) => ({ period, firm, role, location, summary })),
+  education: educationManifest.education.map(({ period, title, detail, metric }) => ({ period, title, institution: detail.replace(/\s*·\s*$/u, ''), result: metric })),
+  projects: projectManifest.projects.map(({ title, timeline, tags, explanation, resultsSummary }) => ({ title, timeline, technologies: tags, summary: explanation, outcome: resultsSummary })),
+  visionAndMission: visionManifest.cards.map(({ title, description }) => ({ title, description }))
+};
+const bullets = (items) => items.map((item) => `- ${item}`).join('\n');
+const llmsTxt = `# Aditya Pokharkar
+
+> Full Stack & Systems Engineer. Public profile summary for AI agents.
+
+- Portfolio: ${agentProfile.website}
+- LinkedIn: ${agentProfile.linkedin}
+- Email: ${agentProfile.email}
+
+## Skillset
+${agentProfile.skillset.join(', ')}
+
+## What I bring
+${bullets(agentProfile.whatIBring.map((item) => `**${item.title}**: ${item.description}`))}
+
+## Experience
+${bullets(agentProfile.experience.map((item) => `${item.period}, ${item.role} at ${item.firm} (${item.location}): ${item.summary}`))}
+
+## Education
+${bullets(agentProfile.education.map((item) => `${item.period}, ${item.title}, ${item.institution} (${item.result})`))}
+
+## Projects
+${bullets(agentProfile.projects.map((item) => `**${item.title}** (${item.timeline}; ${item.technologies}): ${item.summary}`))}
+
+## Vision and mission
+${bullets(agentProfile.visionAndMission.map((item) => `**${item.title}**: ${item.description}`))}
+
+## Optional
+- [Projects](${origin}/projects/)
+- [Essays](${origin}/essays/)
+- [Structured profile](${origin}/.well-known/portfolio-profile.json)
+`;
+const ardManifest = {
+  specVersion: '0.91',
+  entries: [
+    {
+      identifier: 'urn:air:neonpokharkar.com:portfolio:llms-txt',
+      displayName: 'Aditya Pokharkar - public profile (llms.txt)',
+      description: 'Markdown summary of experience, education, skills, projects, vision and mission.',
+      type: 'text/markdown',
+      url: `${origin}/llms.txt`,
+      representativeQueries: ['Who is Aditya Pokharkar?', 'What is Aditya Pokharkar\'s experience and skillset?', 'How can I contact Aditya Pokharkar?']
+    },
+    {
+      identifier: 'urn:air:neonpokharkar.com:portfolio:profile',
+      displayName: 'Aditya Pokharkar - structured public profile',
+      description: 'JSON profile with experience, education, skillset, projects, vision and mission.',
+      type: 'application/json',
+      url: `${origin}/.well-known/portfolio-profile.json`,
+      representativeQueries: ['Aditya Pokharkar projects and technologies', 'Aditya Pokharkar education background', 'Aditya Pokharkar vision and mission']
+    }
+  ]
+};
+await mkdir(path.join(output, '.well-known'), { recursive: true });
+await Promise.all([
+  writeFile(path.join(output, 'llms.txt'), llmsTxt),
+  writeFile(path.join(output, '.well-known', 'portfolio-profile.json'), `${JSON.stringify(agentProfile, null, 2)}\n`),
+  writeFile(path.join(output, '.well-known', 'ard.json'), `${JSON.stringify(ardManifest, null, 2)}\n`),
+  writeFile(path.join(output, 'ard.json'), `${JSON.stringify(ardManifest, null, 2)}\n`)
+]);
+console.log(`Generated ${essays.length} essay pages, project and essay indexes, ${urls.length} sitemap URLs, llms.txt and ARD manifest.`);
 // MARKER: STATIC_DISCOVERY_END

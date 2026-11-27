@@ -1,9 +1,10 @@
-import { AfterViewInit, Component, effect, ElementRef, HostListener, OnDestroy, QueryList, ViewChild, ViewChildren } from '@angular/core';
+import { AfterViewInit, Component, effect, ElementRef, HostListener, Input, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { ActivatedRoute, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Meta } from '@angular/platform-browser';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
 import { VerifiedUserService } from './verified-user.service';
+import { ShayariEditorComponent } from './shayari-editor.component';
 
 interface PageContent {
   eyebrow: string;
@@ -23,15 +24,15 @@ interface PageContent {
   profileSource?: string;
   educationSource?: string;
   contextCategory?: 'vision' | 'links';
-  cards: Array<{ title: string; description: string; href?: string; requiresReveal?: boolean }>;
+  cards: Array<{ title: string; description: string; href?: string; requiresReveal?: boolean; requiresOAuth?: boolean }>;
 }
 
 interface LinksManifest {
-  links: Array<{ title: string; description: string; href?: string; requiresReveal?: boolean }>;
+  links: Array<{ title: string; description: string; href?: string; requiresReveal?: boolean; requiresOAuth?: boolean }>;
 }
 
 interface CardsManifest {
-  cards: Array<{ title: string; description: string; href?: string; requiresReveal?: boolean }>;
+  cards: Array<{ title: string; description: string; href?: string; requiresReveal?: boolean; requiresOAuth?: boolean }>;
 }
 
 interface ProfileManifest {
@@ -873,9 +874,9 @@ declare global {
   }
 }
 
-const shayariRecaptchaSiteKey = '6LcEODUuAAAAAOltRtSI5hDjxPhK_KM7ELXXz10Q';
-const shayariGoogleClientId = '1027876493531-mbun8jrtieocia9n0ns5le4q34332mus.apps.googleusercontent.com';
-const shayariRecaptchaAction = 'login';
+const recaptchaSiteKey = '6LcEODUuAAAAAOltRtSI5hDjxPhK_KM7ELXXz10Q';
+const googleClientId = '1027876493531-mbun8jrtieocia9n0ns5le4q34332mus.apps.googleusercontent.com';
+const recaptchaAction = 'login';
 
 function loadGoogleIdentity(): Promise<GoogleIdentity> {
   return new Promise((resolve, reject) => {
@@ -910,7 +911,7 @@ function loadGoogleIdentity(): Promise<GoogleIdentity> {
   });
 }
 
-function loadShayariRecaptcha(): Promise<RecaptchaEnterprise> {
+function loadRecaptcha(): Promise<RecaptchaEnterprise> {
   return new Promise((resolve, reject) => {
     let script: HTMLScriptElement | undefined;
     const timer = window.setTimeout(() => {
@@ -934,7 +935,7 @@ function loadShayariRecaptcha(): Promise<RecaptchaEnterprise> {
       ready();
     } else {
       script = document.createElement('script');
-      script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(shayariRecaptchaSiteKey)}`;
+      script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(recaptchaSiteKey)}`;
       script.async = true;
       script.onload = ready;
       script.onerror = () => {
@@ -947,227 +948,183 @@ function loadShayariRecaptcha(): Promise<RecaptchaEnterprise> {
   });
 }
 
-function executeShayariRecaptcha(recaptcha: RecaptchaEnterprise): Promise<string> {
+function executeRecaptcha(recaptcha: RecaptchaEnterprise): Promise<string> {
   return new Promise((resolve, reject) => {
     const timer = window.setTimeout(() => reject(new Error('reCAPTCHA verification timed out.')), 15000);
-    recaptcha.execute(shayariRecaptchaSiteKey, { action: shayariRecaptchaAction }).then(
+    recaptcha.execute(recaptchaSiteKey, { action: recaptchaAction }).then(
       (token) => { window.clearTimeout(timer); resolve(token); },
       (error: unknown) => { window.clearTimeout(timer); reject(error); }
     );
   });
 }
 
-function shayariDateValue(date: string): number {
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
-    throw new Error(`Invalid shayari date: ${date}`);
-  }
-  const timestamp = Date.parse(`${date}T00:00:00Z`);
-  const parsed = new Date(timestamp);
-  if (!Number.isFinite(timestamp) || parsed.toISOString().slice(0, 10) !== date || date.startsWith('0000-')) {
-    throw new Error(`Invalid shayari date: ${date}`);
-  }
-  return timestamp;
+interface VerificationPrompt {
+  eyebrow: string;
+  title: string;
+  accent: string;
+  description: string;
+  trigger: string;
 }
 
 @Component({
-  selector: 'app-shayari',
+  selector: 'app-verification-dialog',
   standalone: true,
   template: `
-    <main class="shayari-page">
-      <p class="eyebrow"><span class="eyebrow-line"></span> Poetry and shayari</p>
-      <h1>Words I <em>keep.</em></h1>
-      <p class="shayari-intro">A growing collection of shayari, arranged as fragments of feeling, memory, and observation.</p>
-      @if (!verifiedUser.ready()) {
-        <p class="shayari-intro" role="status">Checking your session...</p>
-      } @else if (!verifiedUser.user()) {
-        <button class="shayari-verify-button" type="button" (click)="openVerificationDialog()">Verify yourself to read shayari</button>
-      } @else if (loadError) {
-        <p class="shayari-load-error" role="alert">{{ loadError }}</p>
-        <button class="shayari-verify-button" type="button" (click)="loadShayari()">Try again</button>
-      } @else if (loadingShayari) {
-        <p class="shayari-intro" role="status">Loading shayari...</p>
-      } @else if (shayari.length === 0) {
-        <p class="shayari-intro">No shayari found.</p>
+    @if (verifiedUser.ready() && !verifiedUser.user()) {
+      @if (prompt) {
+        <button class="verify-button trigger" type="button" (click)="open()">{{ prompt.trigger }}</button>
+      } @else if (promptError) {
+        <button class="verify-button trigger" type="button" (click)="open()">Try verification again</button>
+      }
+    }
+    <dialog #dialog class="verification-dialog" aria-labelledby="verification-dialog-title" aria-describedby="verification-dialog-description" (cancel)="onCancel($event)">
+      <button class="dialog-close" type="button" (click)="close()" [disabled]="verifying" aria-label="Close verification dialog">×</button>
+      @if (prompt; as copy) {
+        <p class="dialog-eyebrow">{{ copy.eyebrow }}</p>
+        <h2 id="verification-dialog-title">{{ copy.title }}<br><em>{{ copy.accent }}</em></h2>
+        <p id="verification-dialog-description">{{ copy.description }}</p>
+        @if (!signInReady) {
+          <button class="verify-button" type="button" (click)="prepareGoogleSignIn()" [disabled]="preparingSignIn || verifying">
+            {{ preparingSignIn ? 'Loading Google Sign-In…' : 'Continue with Google' }}
+          </button>
+        }
       } @else {
-        <div class="shayari-grid" [class.masonry]="masonry">
-          @for (entry of visibleShayari; track $index) {
-            <article
-              class="shayari-card"
-              [class.wide]="entry.columns === 8"
-              [class.compact]="entry.columns === 4"
-              [class.verse-short]="entry.size === 'short'"
-              [class.verse-long]="entry.size === 'long'"
-              [class.accent-orange]="entry.accent === 'orange'"
-              [class.accent-ink]="entry.accent === 'ink'"
-              [class.accent-sand]="entry.accent === 'sand'"
-              [class.accent-rose]="entry.accent === 'rose'">
-              <div #cardContent class="shayari-content">
-                <p>{{ entry.text }}</p>
-                <time>{{ entry.date }}</time>
-              </div>
-            </article>
-          }
-        </div>
-        @if (shayari.length > 5 && !showAllShayari) {
-          <div class="shayari-more">
-            <button type="button" (click)="showAllShayari = true">See more shayari</button>
-          </div>
+        <h2 id="verification-dialog-title">Verification</h2>
+        <p id="verification-dialog-description" [attr.role]="promptError ? 'alert' : 'status'">{{ promptError || 'Loading verification...' }}</p>
+        @if (promptError) {
+          <button class="verify-button" type="button" (click)="loadPrompt()">Try again</button>
         }
       }
-    </main>
-    <dialog #verificationDialog class="shayari-dialog" aria-labelledby="shayari-dialog-title" aria-describedby="shayari-dialog-description" (cancel)="onVerificationCancel($event)">
-      <button class="shayari-dialog-close" type="button" (click)="closeVerificationDialog()" [disabled]="verifying" aria-label="Close verification dialog">×</button>
-      <p class="shayari-dialog-eyebrow">Poetry and shayari</p>
-      <h2 id="shayari-dialog-title">Let us know<br><em>who you are.</em></h2>
-      <p id="shayari-dialog-description">Please verify yourself with Google before reading the shayari. Your Google profile will be stored or updated by the site.</p>
-      @if (!signInReady) {
-        <button class="shayari-verify-button" type="button" (click)="prepareGoogleSignIn()" [disabled]="preparingSignIn || verifying">
-          {{ preparingSignIn ? 'Loading Google Sign-In…' : 'Continue with Google' }}
-        </button>
-      }
-      <div #googleSignIn class="shayari-google-signin" [hidden]="verifying"></div>
+      <div #googleSignIn class="google-signin" [hidden]="verifying"></div>
       @if (verifying) {
         <p role="status">Verifying…</p>
       }
       @if (verificationError) {
-        <p class="shayari-verification-error" role="alert">{{ verificationError }}</p>
+        <p class="verification-error" role="alert">{{ verificationError }}</p>
       }
-      <p class="shayari-dialog-privacy">This site is protected by reCAPTCHA and the Google
-        <a href="https://policies.google.com/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</a> and
-        <a href="https://policies.google.com/terms" target="_blank" rel="noopener noreferrer">Terms of Service</a> apply.
-      </p>
     </dialog>
   `,
   styles: [`
-    .shayari-page { margin: 0 auto; max-width: 1176px; min-height: calc(100vh - 150px); padding: 110px 28px 130px; }
-    .shayari-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(55px, 9vw, 112px); letter-spacing: -.07em; line-height: .9; margin: 0 0 35px; max-width: 850px; }
-    .shayari-page h1 em { color: #f45b36; font-style: normal; }
-    .shayari-intro { color: #716f6a; font-size: 16px; line-height: 1.7; margin: 0; max-width: 680px; }
-    .shayari-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; margin-top: 55px; }
-    .shayari-grid.masonry { grid-auto-flow: row; grid-auto-rows: 8px; }
-    .shayari-card { background: rgba(244,91,54,.15); border: 1px solid rgba(244,91,54,.28); border-radius: 12px; color: #fff; grid-column: span 6; min-width: 0; }
-    .shayari-card.compact { grid-column: span 4; }
-    .shayari-card.wide { grid-column: span 8; }
-    .shayari-content { padding: 26px 28px; }
-    .shayari-card p { font-family: 'Space Grotesk', sans-serif; font-size: clamp(19px, 1.6vw, 23px); letter-spacing: -.02em; line-height: 1.5; margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
-    .shayari-card.verse-short p { font-size: clamp(21px, 2vw, 27px); line-height: 1.4; }
-    .shayari-card.verse-long p { font-size: clamp(18px, 1.45vw, 20px); line-height: 1.55; }
-    .shayari-card time { border-top: 1px solid rgba(255,255,255,.24); display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; margin-top: 18px; padding-top: 12px; text-transform: uppercase; }
-    .accent-orange { background: rgba(244,91,54,.15); border-color: rgba(244,91,54,.28); }
-    .accent-ink { background: rgba(28,27,26,.18); border-color: rgba(216,211,202,.16); }
-    .accent-sand { background: rgba(217,199,168,.16); border-color: rgba(217,199,168,.25); }
-    .accent-rose { background: rgba(234,217,211,.16); border-color: rgba(234,217,211,.25); }
-    :host-context(html[data-theme='day']) .shayari-card { color: #1c1b1a; }
-    :host-context(html[data-theme='day']) .accent-orange { background: rgba(244,91,54,.28); border-color: rgba(244,91,54,.38); }
-    :host-context(html[data-theme='day']) .accent-ink { background: rgba(28,27,26,.10); border-color: rgba(28,27,26,.18); }
-    :host-context(html[data-theme='day']) .accent-sand { background: rgba(217,199,168,.58); border-color: rgba(217,199,168,.68); }
-    :host-context(html[data-theme='day']) .accent-rose { background: rgba(234,217,211,.72); border-color: rgba(234,217,211,.82); }
-    :host-context(html[data-theme='day']) .shayari-card time { border-top-color: rgba(28,27,26,.18); }
-    .shayari-load-error { color: #b3261e; margin-top: 50px; }
-    .shayari-more { margin-top: 36px; text-align: center; }
-    .shayari-more button, .shayari-verify-button { background: #f45b36; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; padding: 16px 24px; }
-    .shayari-page > .shayari-verify-button { margin-top: 36px; }
-    .shayari-verify-button:disabled { cursor: wait; opacity: .7; }
-    .shayari-more button:focus-visible, .shayari-dialog button:focus-visible, .shayari-verify-button:focus-visible { outline: 2px solid #f45b36; outline-offset: 4px; }
-    .shayari-dialog { background: #f7f5f0; border: 1px solid #d8d3ca; border-radius: 16px; box-shadow: 0 20px 70px #0006; color: #1c1b1a; max-width: 470px; padding: 42px; width: calc(100% - 40px); }
-    .shayari-dialog::backdrop { background: #1c1b1acc; }
-    .shayari-dialog-close { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: 28px; position: absolute; right: 18px; top: 14px; }
-    .shayari-dialog-eyebrow { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
-    .shayari-dialog h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(32px, 6vw, 48px); letter-spacing: -.06em; line-height: .95; margin: 0 0 22px; }
-    .shayari-dialog h2 em { color: #f45b36; font-style: normal; }
-    .shayari-dialog p { line-height: 1.6; }
-    .shayari-dialog-privacy { color: #716f6a; font-size: 12px; margin: 20px 0 0; }
-    .shayari-dialog a { text-decoration: underline; }
-    .shayari-google-signin:not([hidden]) { display: flex; justify-content: center; }
-    .shayari-verification-error { color: #b3261e; font-size: 14px; }
-    :host-context(html[data-theme='night']) .shayari-dialog { background: #1c1b1a; border-color: #514c46; color: #f2efe9; }
-    :host-context(html[data-theme='night']) .shayari-dialog-privacy { color: #bdb7ad; }
-    :host-context(html[data-theme='night']) .shayari-verification-error, :host-context(html[data-theme='night']) .shayari-load-error { color: #ffb49f; }
-    @media (max-width: 800px) {
-      .shayari-page { margin: 0; padding: 75px 20px 90px; }
-      .shayari-card.compact, .shayari-card.wide { grid-column: span 6; }
-      .shayari-content { padding: 22px; }
-      .shayari-dialog { padding: 32px 24px; }
-    }
-    @media (max-width: 600px) {
-      .shayari-card, .shayari-card.compact, .shayari-card.wide { grid-column: span 12; }
-    }
+    .verify-button { background: #f45b36; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; padding: 16px 24px; }
+    .trigger { margin-top: 36px; }
+    .verify-button:disabled { cursor: wait; opacity: .7; }
+    button:focus-visible { outline: 2px solid #f45b36; outline-offset: 4px; }
+    .verification-dialog { background: #f7f5f0; border: 1px solid #d8d3ca; border-radius: 16px; box-shadow: 0 20px 70px #0006; color: #1c1b1a; max-width: 470px; padding: 42px; width: calc(100% - 40px); }
+    .verification-dialog::backdrop { background: #1c1b1acc; }
+    .dialog-close { background: transparent; border: 0; color: inherit; cursor: pointer; font-size: 28px; position: absolute; right: 18px; top: 14px; }
+    .dialog-eyebrow { color: #f45b36; font-size: 11px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+    .verification-dialog h2 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(32px, 6vw, 48px); letter-spacing: -.06em; line-height: .95; margin: 0 0 22px; }
+    .verification-dialog h2 em { color: #f45b36; font-style: normal; }
+    .verification-dialog p { line-height: 1.6; }
+    .verification-dialog a { text-decoration: underline; }
+    .google-signin:not([hidden]) { display: flex; justify-content: center; }
+    .verification-error { color: #b3261e; font-size: 14px; }
+    :host-context(html[data-theme='night']) .verification-dialog { background: #1c1b1a; border-color: #514c46; color: #f2efe9; }
+    :host-context(html[data-theme='night']) .verification-error { color: #ffb49f; }
+    @media (max-width: 800px) { .verification-dialog { padding: 32px 24px; } }
   `]
 })
-export class ShayariComponent implements AfterViewInit, OnDestroy {
-  @ViewChildren('cardContent', { read: ElementRef })
-  private cardContents!: QueryList<ElementRef<HTMLElement>>;
-  @ViewChild('googleSignIn', { read: ElementRef })
-  private googleSignIn?: ElementRef<HTMLElement>;
-  @ViewChild('verificationDialog', { read: ElementRef })
-  private verificationDialog?: ElementRef<HTMLDialogElement>;
-  protected shayari: ShayariCard[] = [];
-  protected loadError = '';
-  protected loadingShayari = true;
-  protected masonry = typeof ResizeObserver !== 'undefined';
-  protected showAllShayari = false;
+export class VerificationDialogComponent implements OnInit, AfterViewInit, OnDestroy {
+  @Input({ required: true }) context!: string;
+  @ViewChild('googleSignIn', { read: ElementRef }) private googleSignIn?: ElementRef<HTMLElement>;
+  @ViewChild('dialog', { read: ElementRef }) private dialog?: ElementRef<HTMLDialogElement>;
+  protected prompt: VerificationPrompt | null = null;
+  protected promptError = '';
   protected signInReady = false;
   protected preparingSignIn = false;
   protected verifying = false;
   protected verificationError = '';
-  private resizeObserver?: ResizeObserver;
-  private cardChanges?: { unsubscribe(): void };
-  private loadController?: AbortController;
   private destroyed = false;
   private viewReady = false;
-  private requestedToken: string | null = null;
 
-  constructor(private readonly meta: Meta, protected readonly verifiedUser: VerifiedUserService) {
-    this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });
+  constructor(protected readonly verifiedUser: VerifiedUserService) {
     effect(() => {
-      this.verifiedUser.ready();
-      this.verifiedUser.user();
-      queueMicrotask(() => this.synchronizeSession());
+      const ready = this.verifiedUser.ready();
+      const user = this.verifiedUser.user();
+      queueMicrotask(() => {
+        if (this.destroyed || !this.viewReady || !ready) {
+          return;
+        }
+        if (user) {
+          this.dialog?.nativeElement.close();
+        } else {
+          this.open();
+        }
+      });
     });
   }
 
-  protected get visibleShayari(): ShayariCard[] {
-    return this.showAllShayari ? this.shayari : this.shayari.slice(0, 5);
+  ngOnInit(): void {
+    void this.loadPrompt();
   }
 
-  private synchronizeSession(): void {
-    if (this.destroyed || !this.viewReady || !this.verifiedUser.ready()) {
-      return;
+  ngAfterViewInit(): void {
+    this.viewReady = true;
+    if (this.verifiedUser.ready() && !this.verifiedUser.user()) {
+      this.open();
     }
-    const token = this.verifiedUser.getAccessToken();
-    if (token) {
-      this.verificationDialog?.nativeElement.close();
-      if (token !== this.requestedToken) {
-        this.showAllShayari = false;
-        void this.loadShayari();
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+  }
+
+  protected async loadPrompt(): Promise<void> {
+    this.promptError = '';
+    try {
+      const response = await fetch('assets/verification/prompts.json');
+      if (!response.ok) {
+        throw new Error(`Verification prompts returned HTTP ${response.status}.`);
       }
-    } else {
-      this.loadController?.abort();
-      this.requestedToken = null;
-      this.shayari = [];
-      this.showAllShayari = false;
-      this.openVerificationDialog();
+      const data: unknown = await response.json();
+      if (!data || typeof data !== 'object' || !(this.context in data)) {
+        throw new Error(`Missing verification prompt: ${this.context}.`);
+      }
+      const prompt: unknown = Object.entries(data).find(([key]) => key === this.context)?.[1];
+      if (!prompt || typeof prompt !== 'object' ||
+          !('eyebrow' in prompt) || typeof prompt.eyebrow !== 'string' || !prompt.eyebrow.trim() ||
+          !('title' in prompt) || typeof prompt.title !== 'string' || !prompt.title.trim() ||
+          !('accent' in prompt) || typeof prompt.accent !== 'string' || !prompt.accent.trim() ||
+          !('description' in prompt) || typeof prompt.description !== 'string' || !prompt.description.trim() ||
+          !('trigger' in prompt) || typeof prompt.trigger !== 'string' || !prompt.trigger.trim()) {
+        throw new Error(`Invalid verification prompt: ${this.context}.`);
+      }
+      if (this.destroyed) {
+        return;
+      }
+      this.prompt = { eyebrow: prompt.eyebrow, title: prompt.title, accent: prompt.accent, description: prompt.description, trigger: prompt.trigger };
+      if (this.dialog?.nativeElement.open && !this.signInReady) {
+        void this.prepareGoogleSignIn();
+      }
+    } catch (error) {
+      console.error('Could not load verification prompt.', error);
+      this.promptError = 'Verification could not be loaded. Please try again.';
     }
   }
 
-  protected openVerificationDialog(): void {
-    const dialog = this.verificationDialog?.nativeElement;
-    if (!dialog || dialog.open) {
+  open(message = ''): void {
+    const dialog = this.dialog?.nativeElement;
+    if (!dialog || this.verifiedUser.user()) {
       return;
     }
-    dialog.showModal();
-    if (!this.signInReady) {
+    if (!dialog.open) {
+      dialog.showModal();
+    }
+    if (this.prompt && !this.signInReady) {
       void this.prepareGoogleSignIn();
     }
-  }
-
-  protected closeVerificationDialog(): void {
-    if (!this.verifying) {
-      this.verificationDialog?.nativeElement.close();
+    if (message) {
+      this.verificationError = message;
     }
   }
 
-  protected onVerificationCancel(event: Event): void {
+  protected close(): void {
+    if (!this.verifying) {
+      this.dialog?.nativeElement.close();
+    }
+  }
+
+  protected onCancel(event: Event): void {
     if (this.verifying) {
       event.preventDefault();
     }
@@ -1181,31 +1138,31 @@ export class ShayariComponent implements AfterViewInit, OnDestroy {
     this.verificationError = '';
     try {
       const identity = await loadGoogleIdentity();
-      if (this.destroyed || !this.verificationDialog?.nativeElement.open) {
+      if (this.destroyed || !this.dialog?.nativeElement.open) {
         return;
       }
       if (!this.googleSignIn) {
         throw new Error('Google Sign-In button is unavailable.');
       }
       identity.initialize({
-        client_id: shayariGoogleClientId,
+        client_id: googleClientId,
         callback: (response) => {
-          if (this.verificationDialog?.nativeElement.open) {
-            void this.verifyAndShowShayari(response.credential);
+          if (this.dialog?.nativeElement.open) {
+            void this.verify(response.credential);
           }
         }
       });
       identity.renderButton(this.googleSignIn.nativeElement, { theme: 'outline', size: 'large', text: 'signin_with' });
       this.signInReady = true;
     } catch (error) {
-      console.error('Could not load Google Sign-In for shayari.', error);
+      console.error('Could not load Google Sign-In.', error);
       this.verificationError = 'Google Sign-In is unavailable right now. Please try again later.';
     } finally {
       this.preparingSignIn = false;
     }
   }
 
-  private async verifyAndShowShayari(idToken: string): Promise<void> {
+  private async verify(idToken: string): Promise<void> {
     if (this.verifying) {
       return;
     }
@@ -1215,8 +1172,8 @@ export class ShayariComponent implements AfterViewInit, OnDestroy {
       if (!idToken) {
         throw new Error('Google Sign-In returned an empty credential.');
       }
-      const recaptcha = await loadShayariRecaptcha();
-      const token = await executeShayariRecaptcha(recaptcha);
+      const recaptcha = await loadRecaptcha();
+      const token = await executeRecaptcha(recaptcha);
       if (!token) {
         throw new Error('reCAPTCHA returned an empty token.');
       }
@@ -1232,7 +1189,7 @@ export class ShayariComponent implements AfterViewInit, OnDestroy {
         const response = await fetch(endpoint, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ id_token: idToken, recaptcha_token: token, recaptcha_action: shayariRecaptchaAction }),
+          body: JSON.stringify({ id_token: idToken, recaptcha_token: token, recaptcha_action: recaptchaAction }),
           signal: controller.signal
         });
         if (response.status === 401 || response.status === 403) {
@@ -1262,26 +1219,213 @@ export class ShayariComponent implements AfterViewInit, OnDestroy {
             ('picture' in result.user && result.user.picture !== null && typeof result.user.picture !== 'string')) {
           throw new Error('Verification endpoint returned an invalid user profile.');
         }
+        if ('is_admin' in result && typeof result.is_admin !== 'boolean') {
+          throw new Error('Verification endpoint returned an invalid admin flag.');
+        }
         const picture = 'picture' in result.user ? result.user.picture : null;
-        if (this.destroyed || !this.verificationDialog?.nativeElement.open) {
+        if (this.destroyed || !this.dialog?.nativeElement.open) {
           return;
         }
         this.verifiedUser.setSession(
-          { name: result.user.name, picture: typeof picture === 'string' ? picture || null : null },
+          { name: result.user.name, picture: typeof picture === 'string' ? picture || null : null,
+            isAdmin: 'is_admin' in result && result.is_admin === true },
           result.access_token,
           result.expires_in
         );
       } finally {
         window.clearTimeout(timer);
       }
-      this.verificationDialog?.nativeElement.close();
-      this.showAllShayari = false;
-      void this.loadShayari();
     } catch (error) {
-      console.error('Could not verify Google Sign-In for shayari.', error);
+      console.error('Could not verify Google Sign-In.', error);
       this.verificationError = 'Verification is unavailable right now. Please try again later.';
     } finally {
       this.verifying = false;
+    }
+  }
+}
+
+function shayariDateValue(date: string): number {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date)) {
+    throw new Error(`Invalid shayari date: ${date}`);
+  }
+  const timestamp = Date.parse(`${date}T00:00:00Z`);
+  const parsed = new Date(timestamp);
+  if (!Number.isFinite(timestamp) || parsed.toISOString().slice(0, 10) !== date || date.startsWith('0000-')) {
+    throw new Error(`Invalid shayari date: ${date}`);
+  }
+  return timestamp;
+}
+
+@Component({
+  selector: 'app-shayari',
+  standalone: true,
+  imports: [VerificationDialogComponent, ShayariEditorComponent],
+  template: `
+    <main class="shayari-page">
+      <p class="eyebrow"><span class="eyebrow-line"></span> Poetry and shayari</p>
+      <h1>Words I <em>keep.</em></h1>
+      <p class="shayari-intro">A growing collection of shayari, arranged as fragments of feeling, memory, and observation.</p>
+      @if (verifiedUser.ready() && verifiedUser.user()?.isAdmin === true) {
+        @if (!verifiedUser.shayariIngestState()?.blocked || showShayariForm) {
+          <button class="shayari-verify-button shayari-add" type="button" (click)="toggleShayariForm()" [attr.aria-expanded]="showShayariForm" [attr.aria-controls]="editorOpened ? 'shayari-editor' : null">
+            {{ showShayariForm ? 'Close form' : 'Add Shayari' }}
+          </button>
+        }
+        @if (verifiedUser.shayariIngestState()?.blocked; as reason) {
+          <p class="shayari-load-error" role="alert">
+            @if (reason === 'lockout') {
+              Shayari ingestion is locked on the server. An administrator must reset the OTP lock on the server.
+            } @else if (reason === 'forbidden') {
+              This account is not authorized to add shayari. Admin mode is disabled for this session.
+            } @else if (reason === 'coordination') {
+              Admin mode is unavailable because session coordination failed. Check your browser storage settings.
+            } @else {
+              Admin mode is disabled for this session after three unsuccessful verification attempts. The server may also require its OTP lock to be reset.
+            }
+          </p>
+        }
+        @defer (when editorOpened) {
+          <app-shayari-editor [hidden]="!showShayariForm" (refreshRequested)="loadShayari()" />
+        } @error {
+          <p class="shayari-load-error" role="alert">The Shayari form could not be loaded. Please reload the page and try again.</p>
+        }
+      }
+      @if (!verifiedUser.ready()) {
+        <p class="shayari-intro" role="status">Checking your session...</p>
+      } @else if (verifiedUser.user() && loadError) {
+        <p class="shayari-load-error" role="alert">{{ loadError }}</p>
+        <button class="shayari-verify-button" type="button" (click)="loadShayari()">Try again</button>
+      } @else if (verifiedUser.user() && loadingShayari) {
+        <p class="shayari-intro" role="status">Loading shayari...</p>
+      } @else if (verifiedUser.user() && shayari.length === 0) {
+        <p class="shayari-intro">No shayari found.</p>
+      } @else if (verifiedUser.user()) {
+        <div class="shayari-grid" [class.masonry]="masonry">
+          @for (entry of visibleShayari; track $index) {
+            <article
+              class="shayari-card"
+              [class.wide]="entry.columns === 8"
+              [class.compact]="entry.columns === 4"
+              [class.verse-short]="entry.size === 'short'"
+              [class.verse-long]="entry.size === 'long'"
+              [class.accent-orange]="entry.accent === 'orange'"
+              [class.accent-ink]="entry.accent === 'ink'"
+              [class.accent-sand]="entry.accent === 'sand'"
+              [class.accent-rose]="entry.accent === 'rose'">
+              <div #cardContent class="shayari-content">
+                <p>{{ entry.text }}</p>
+                <time>{{ entry.date }}</time>
+              </div>
+            </article>
+          }
+        </div>
+        @if (shayari.length > 5 && !showAllShayari) {
+          <div class="shayari-more">
+            <button type="button" (click)="showAllShayari = true">See more shayari</button>
+          </div>
+        }
+      }
+      <app-verification-dialog context="shayari" />
+    </main>
+  `,
+  styles: [`
+    .shayari-page { margin: 0 auto; max-width: 1176px; min-height: calc(100vh - 150px); padding: 110px 28px 130px; }
+    .shayari-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(55px, 9vw, 112px); letter-spacing: -.07em; line-height: .9; margin: 0 0 35px; max-width: 850px; }
+    .shayari-page h1 em { color: #f45b36; font-style: normal; }
+    .shayari-intro { color: #716f6a; font-size: 16px; line-height: 1.7; margin: 0; max-width: 680px; }
+    .shayari-grid { display: grid; grid-template-columns: repeat(12, minmax(0, 1fr)); gap: 14px; margin-top: 55px; }
+    .shayari-grid.masonry { grid-auto-flow: row; grid-auto-rows: 8px; }
+    .shayari-card { background: rgba(244,91,54,.15); border: 1px solid rgba(244,91,54,.28); border-radius: 12px; color: #fff; grid-column: span 6; min-width: 0; }
+    .shayari-card.compact { grid-column: span 4; }
+    .shayari-card.wide { grid-column: span 8; }
+    .shayari-content { padding: 26px 28px; }
+    .shayari-card p { font-family: 'Space Grotesk', sans-serif; font-size: clamp(19px, 1.6vw, 23px); letter-spacing: -.02em; line-height: 1.5; margin: 0; overflow-wrap: anywhere; white-space: pre-line; }
+    .shayari-card.verse-short p { font-size: clamp(21px, 2vw, 27px); line-height: 1.4; }
+    .shayari-card.verse-long p { font-size: clamp(18px, 1.45vw, 20px); line-height: 1.55; }
+    .shayari-card time { border-top: 1px solid rgba(255,255,255,.24); display: block; font-size: 11px; font-weight: 700; letter-spacing: .12em; margin-top: 18px; padding-top: 12px; text-transform: uppercase; }
+    .accent-orange { background: rgba(244,91,54,.15); border-color: rgba(244,91,54,.28); }
+    .accent-ink { background: rgba(28,27,26,.18); border-color: rgba(216,211,202,.16); }
+    .accent-sand { background: rgba(217,199,168,.16); border-color: rgba(217,199,168,.25); }
+    .accent-rose { background: rgba(234,217,211,.16); border-color: rgba(234,217,211,.25); }
+    :host-context(html[data-theme='day']) .shayari-card { color: #1c1b1a; }
+    :host-context(html[data-theme='day']) .accent-orange { background: rgba(244,91,54,.28); border-color: rgba(244,91,54,.38); }
+    :host-context(html[data-theme='day']) .accent-ink { background: rgba(28,27,26,.10); border-color: rgba(28,27,26,.18); }
+    :host-context(html[data-theme='day']) .accent-sand { background: rgba(217,199,168,.58); border-color: rgba(217,199,168,.68); }
+    :host-context(html[data-theme='day']) .accent-rose { background: rgba(234,217,211,.72); border-color: rgba(234,217,211,.82); }
+    :host-context(html[data-theme='day']) .shayari-card time { border-top-color: rgba(28,27,26,.18); }
+    .shayari-load-error { color: #b3261e; margin-top: 50px; }
+    .shayari-more { margin-top: 36px; text-align: center; }
+    .shayari-more button, .shayari-verify-button { background: #f45b36; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; padding: 16px 24px; }
+    .shayari-verify-button:disabled { cursor: wait; opacity: .7; }
+    .shayari-more button:focus-visible, .shayari-verify-button:focus-visible { outline: 2px solid #f45b36; outline-offset: 4px; }
+    .shayari-add { margin-top: 30px; }
+    :host-context(html[data-theme='night']) .shayari-load-error { color: #ffb49f; }
+    @media (max-width: 800px) {
+      .shayari-page { margin: 0; padding: 75px 20px 90px; }
+      .shayari-card.compact, .shayari-card.wide { grid-column: span 6; }
+      .shayari-content { padding: 22px; }
+    }
+    @media (max-width: 600px) {
+      .shayari-card, .shayari-card.compact, .shayari-card.wide { grid-column: span 12; }
+    }
+  `]
+})
+export class ShayariComponent implements AfterViewInit, OnDestroy {
+  @ViewChildren('cardContent', { read: ElementRef })
+  private cardContents!: QueryList<ElementRef<HTMLElement>>;
+  @ViewChild(VerificationDialogComponent)
+  private verificationDialog?: VerificationDialogComponent;
+  protected shayari: ShayariCard[] = [];
+  protected loadError = '';
+  protected loadingShayari = true;
+  protected masonry = typeof ResizeObserver !== 'undefined';
+  protected showAllShayari = false;
+  protected showShayariForm = false;
+  protected editorOpened = false;
+  private resizeObserver?: ResizeObserver;
+  private cardChanges?: { unsubscribe(): void };
+  private loadController?: AbortController;
+  private destroyed = false;
+  private viewReady = false;
+  private requestedToken: string | null = null;
+
+  constructor(private readonly meta: Meta, protected readonly verifiedUser: VerifiedUserService) {
+    this.meta.updateTag({ name: 'robots', content: 'noindex, nofollow' });
+    effect(() => {
+      this.verifiedUser.ready();
+      this.verifiedUser.user();
+      queueMicrotask(() => this.synchronizeSession());
+    });
+  }
+
+  protected get visibleShayari(): ShayariCard[] {
+    return this.showAllShayari ? this.shayari : this.shayari.slice(0, 5);
+  }
+
+  protected toggleShayariForm(): void {
+    this.showShayariForm = !this.showShayariForm;
+    this.editorOpened = true;
+  }
+
+  private synchronizeSession(): void {
+    if (this.destroyed || !this.viewReady || !this.verifiedUser.ready()) {
+      return;
+    }
+    const token = this.verifiedUser.getAccessToken();
+    if (token) {
+      if (token !== this.requestedToken) {
+        this.showShayariForm = false;
+        this.editorOpened = false;
+        this.showAllShayari = false;
+        void this.loadShayari();
+      }
+    } else {
+      this.loadController?.abort();
+      this.requestedToken = null;
+      this.shayari = [];
+      this.showShayariForm = false;
+      this.editorOpened = false;
+      this.showAllShayari = false;
     }
   }
 
@@ -1319,7 +1463,7 @@ export class ShayariComponent implements AfterViewInit, OnDestroy {
   protected async loadShayari(): Promise<void> {
     const accessToken = this.verifiedUser.getAccessToken();
     if (!accessToken) {
-      this.openVerificationDialog();
+      this.verificationDialog?.open();
       return;
     }
     this.requestedToken = accessToken;
@@ -1348,8 +1492,7 @@ export class ShayariComponent implements AfterViewInit, OnDestroy {
         this.verifiedUser.clear();
         this.shayari = [];
         this.showAllShayari = false;
-        this.openVerificationDialog();
-        this.verificationError = 'Your session has expired or is no longer valid. Please sign in again.';
+        this.verificationDialog?.open('Your session has expired or is no longer valid. Please sign in again.');
         return;
       }
       if (response.status === 403) {
@@ -1432,8 +1575,25 @@ interface EssayContent extends EssayIndexItem {
   body: string;
 }
 
+interface EssayApiResponse extends EssayIndexItem {
+  html: string;
+  proof: unknown;
+}
+
 interface EssayManifest {
   essays: EssayIndexItem[];
+}
+
+function isEssayApiResponse(value: unknown): value is EssayApiResponse {
+  if (!value || typeof value !== 'object') {
+    return false;
+  }
+  const essay = value as Record<string, unknown>;
+  return ['slug', 'category', 'title', 'summary', 'author', 'file'].every((field) =>
+    typeof essay[field] === 'string' && Boolean(essay[field].trim())
+  ) && typeof essay['publishedAt'] === 'string' && Number.isFinite(Date.parse(essay['publishedAt'])) &&
+    typeof essay['html'] === 'string' && Boolean(essay['html'].trim()) &&
+    typeof essay['proof'] === 'object' && essay['proof'] !== null;
 }
 
 @Component({
@@ -1444,7 +1604,7 @@ interface EssayManifest {
       <p class="eyebrow"><span class="eyebrow-line"></span> Notes from the process</p>
       <h1>Blog and thought <em>essays.</em></h1>
       @if (loadError) {
-        <p class="essay-load-error">{{ loadError }}</p>
+        <p class="essay-load-error" role="alert">{{ loadError }}</p>
       } @else {
         <div class="essay-list-grid">
           @for (essay of essays; track essay.slug) {
@@ -1507,11 +1667,22 @@ export class EssayListComponent {
 @Component({
   selector: 'app-essay-page',
   standalone: true,
+  imports: [VerificationDialogComponent],
   template: `
     <main class="essay-page" data-context-category="essay" [attr.data-context-key]="essay?.slug">
       <button class="essay-close" type="button" (click)="closeEssay()">Close essay ×</button>
-      @if (loadError) {
-        <p class="essay-load-error">{{ loadError }}</p>
+      @if (!verifiedUser.ready()) {
+        <p role="status">Checking your session...</p>
+      } @else if (!verifiedUser.user()) {
+        <p class="eyebrow"><span class="eyebrow-line"></span> Essays</p>
+        <h1>A little introduction <em>first.</em></h1>
+      } @else if (loadError) {
+        <p class="essay-load-error" role="alert">{{ loadError }}</p>
+        @if (verifiedUser.user()) {
+          <button class="essay-retry" type="button" (click)="retryEssay()">Try again</button>
+        }
+      } @else if (loadingEssay) {
+        <p role="status">Loading essay...</p>
       } @else if (essay) {
         <p class="eyebrow"><span class="eyebrow-line"></span> {{ essay.category }}</p>
         <h1>{{ essay.title }}</h1>
@@ -1524,6 +1695,7 @@ export class EssayListComponent {
           <div [innerHTML]="essay.body"></div>
         </div>
       }
+      <app-verification-dialog context="essay" />
     </main>
   `,
   styles: [`
@@ -1531,6 +1703,7 @@ export class EssayListComponent {
     .eyebrow { align-items: center; color: #716f6a; display: flex; font-size: 11px; font-weight: 700; gap: 12px; letter-spacing: .12em; margin: 0 0 28px; text-transform: uppercase; }
     .eyebrow-line { background: #f45b36; display: inline-block; height: 1px; width: 26px; }
     .essay-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(48px, 8vw, 92px); letter-spacing: -.07em; line-height: .95; margin: 0 0 32px; max-width: 720px; }
+    .essay-page h1 em { color: #f45b36; font-style: normal; }
     .essay-summary { color: #716f6a; font-size: clamp(18px, 2vw, 24px); line-height: 1.55; margin: 0; max-width: 650px; }
     .essay-body { border-top: 1px solid #d8d3ca; margin-top: 64px; padding-top: 28px; }
     .essay-body { color: #1c1b1a; font-size: 18px; line-height: 1.8; max-width: 680px; }
@@ -1541,16 +1714,33 @@ export class EssayListComponent {
     .essay-meta time { display: block; }
     .essay-close { background: transparent; border: 0; color: #f45b36; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .1em; padding: 0; position: absolute; right: 28px; text-transform: uppercase; top: 80px; }
     .essay-close:hover { color: #1c1b1a; }
+    .essay-retry { background: #f45b36; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; margin-top: 20px; padding: 12px 18px; }
   `]
 })
-export class EssayPageComponent {
+export class EssayPageComponent implements OnDestroy {
   protected essay: EssayContent | null = null;
   protected loadError = '';
+  protected loadingEssay = false;
+  private readonly slug: string | null;
+  private loadController?: AbortController;
+  private requestedToken: string | null = null;
+  private destroyed = false;
+  @ViewChild(VerificationDialogComponent)
+  private verificationDialog?: VerificationDialogComponent;
 
-  constructor(route: ActivatedRoute, private readonly meta: Meta) {
-    const slug = route.snapshot.paramMap.get('slug');
-    void this.loadEssay(slug);
+  constructor(route: ActivatedRoute, private readonly meta: Meta, protected readonly verifiedUser: VerifiedUserService) {
+    this.slug = route.snapshot.paramMap.get('slug');
+    effect(() => {
+      this.verifiedUser.ready();
+      this.verifiedUser.user();
+      queueMicrotask(() => this.synchronizeSession());
+    });
     window.history.pushState(null, '', window.location.href);
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    this.loadController?.abort();
   }
 
   @HostListener('window:popstate')
@@ -1562,38 +1752,107 @@ export class EssayPageComponent {
     window.close();
   }
 
-  private async loadEssay(slug: string | null): Promise<void> {
+  protected retryEssay(): void {
+    const token = this.verifiedUser.getAccessToken();
+    if (!token) {
+      this.verificationDialog?.open();
+      return;
+    }
+    this.requestedToken = null;
+    this.synchronizeSession();
+  }
+
+  private synchronizeSession(): void {
+    if (this.destroyed || !this.verifiedUser.ready()) {
+      return;
+    }
+    const token = this.verifiedUser.getAccessToken();
+    if (!token) {
+      this.loadController?.abort();
+      this.requestedToken = null;
+      this.essay = null;
+      this.loadingEssay = false;
+      return;
+    }
+    if (token !== this.requestedToken) {
+      this.requestedToken = token;
+      this.essay = null;
+      this.loadError = '';
+      void this.loadEssay(token);
+    }
+  }
+
+  private async loadEssay(accessToken: string): Promise<void> {
+    this.loadController?.abort();
+    const controller = new AbortController();
+    this.loadController = controller;
+    this.loadingEssay = true;
+    this.loadError = '';
     try {
-      if (!slug) {
+      if (!this.slug) {
         this.loadError = 'This essay could not be found.';
         return;
       }
 
-      const manifestResponse = await fetch('assets/essays/essays.json');
-      if (!manifestResponse.ok) {
+      const profileResponse = await fetch('assets/profile/profile.json', { signal: controller.signal });
+      if (!profileResponse.ok) {
+        throw new Error(`Could not load API configuration (HTTP ${profileResponse.status}).`);
+      }
+      const profile: Pick<ProfileManifest, 'intelliChatEndpoint'> = await profileResponse.json();
+      const endpoint = new URL('/essays', profile.intelliChatEndpoint);
+      endpoint.searchParams.set('slug', this.slug);
+      const response = await fetch(endpoint, {
+        headers: { Authorization: `Bearer ${accessToken}` },
+        signal: controller.signal
+      });
+      if (this.verifiedUser.getAccessToken() !== accessToken) {
+        return;
+      }
+      if (response.status === 401) {
+        this.verifiedUser.clear();
+        this.verificationDialog?.open('Your session has expired or is no longer valid. Please sign in again.');
+        return;
+      }
+      if (response.status === 404) {
+        this.loadError = "This content isn't available right now.";
+        window.alert(this.loadError);
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(`Essay endpoint returned HTTP ${response.status}.`);
+      }
+
+      const result: unknown = await response.json();
+      if (!isEssayApiResponse(result) || result.slug !== this.slug) {
+        throw new Error('Essay endpoint returned an invalid response.');
+      }
+      if (this.verifiedUser.getAccessToken() !== accessToken) {
+        return;
+      }
+
+      this.essay = {
+        slug: result.slug,
+        category: result.category,
+        title: result.title,
+        summary: result.summary,
+        author: result.author,
+        publishedAt: result.publishedAt,
+        file: result.file,
+        body: result.html
+      };
+      this.meta.updateTag({ name: 'author', content: result.author });
+      this.meta.updateTag({ property: 'article:author', content: result.author });
+      this.meta.updateTag({ property: 'article:published_time', content: result.publishedAt });
+    } catch (error) {
+      if (!controller.signal.aborted) {
+        console.error('Could not load essay.', error);
         this.loadError = 'This essay could not be loaded right now.';
-        return;
       }
-
-      const manifest = await manifestResponse.json() as EssayManifest;
-      const entry = manifest.essays.find((essay) => essay.slug === slug);
-      if (!entry) {
-        this.loadError = 'This essay could not be found.';
-        return;
+    } finally {
+      if (this.loadController === controller) {
+        this.loadingEssay = false;
+        this.loadController = undefined;
       }
-
-      const bodyResponse = await fetch(`assets/essays/${entry.file}`);
-      if (!bodyResponse.ok) {
-        this.loadError = 'This essay could not be loaded right now.';
-        return;
-      }
-
-      this.essay = { ...entry, body: await bodyResponse.text() };
-      this.meta.updateTag({ name: 'author', content: entry.author });
-      this.meta.updateTag({ property: 'article:author', content: entry.author });
-      this.meta.updateTag({ property: 'article:published_time', content: entry.publishedAt });
-    } catch {
-      this.loadError = 'This essay could not be loaded right now.';
     }
   }
 
@@ -1609,7 +1868,7 @@ export class EssayPageComponent {
 @Component({
   selector: 'app-dummy-page',
   standalone: true,
-  imports: [FormsModule],
+  imports: [FormsModule, VerificationDialogComponent],
   template: `
     <main class="dummy-page" [attr.data-context-category]="content.contextCategory ?? null">
       <p class="eyebrow"><span class="eyebrow-line"></span> {{ content.eyebrow }}</p>
@@ -1805,9 +2064,9 @@ export class EssayPageComponent {
             @for (card of links; track card.title) {
               <article class="dummy-card">
                 @if (card.requiresReveal) {
-                  <h2><button class="dummy-card-link dummy-card-button" type="button" (click)="openPhoneDialog()">Phone <span aria-hidden="true">↗</span></button></h2>
+                  <h2><button class="dummy-card-link dummy-card-button" type="button" (click)="openPhoneDialog(card.requiresOAuth)">Phone <span aria-hidden="true">↗</span></button></h2>
                 } @else if (card.href) {
-                  <h2><a class="dummy-card-link" [href]="card.href" target="_blank" rel="noreferrer">{{ card.title }} <span aria-hidden="true">↗</span></a></h2>
+                  <h2><a class="dummy-card-link" [href]="card.href" target="_blank" rel="noreferrer" (click)="requireOAuth($event, card.requiresOAuth)">{{ card.title }} <span aria-hidden="true">↗</span></a></h2>
                 } @else {
                   <h2>{{ card.title }}</h2>
                 }
@@ -1817,6 +2076,9 @@ export class EssayPageComponent {
         </div>
       }
     </main>
+    @if (showLinksVerification) {
+      <app-verification-dialog context="links" />
+    }
     @if (phoneDialogOpen) {
       <div class="phone-dialog-backdrop" role="presentation" (click)="closePhoneDialog()">
         <section class="phone-dialog" role="dialog" aria-modal="true" aria-labelledby="phone-dialog-title" (click)="$event.stopPropagation()">
@@ -2085,8 +2347,17 @@ export class DummyPageComponent {
   protected phonePurpose = '';
   protected callbackNumber = '';
   protected phoneError = '';
+  protected showLinksVerification = false;
 
-  constructor(route: ActivatedRoute) {
+  constructor(route: ActivatedRoute, protected readonly verifiedUser: VerifiedUserService) {
+    effect(() => {
+      if (this.verifiedUser.user()) {
+        this.showLinksVerification = false;
+      } else {
+        this.phoneDialogOpen = false;
+        this.phoneRevealed = false;
+      }
+    });
     this.content = route.snapshot.data['content'] as PageContent;
     this.pageCards = this.content.cards;
     this.links = this.content.cards;
@@ -2268,7 +2539,18 @@ export class DummyPageComponent {
     this.toolkitOpacity = Math.max(0, 1 - toolkitProgress);
   }
 
-  protected openPhoneDialog(): void {
+  protected requireOAuth(event: Event, required = false): void {
+    if (required && !this.verifiedUser.user()) {
+      event.preventDefault();
+      this.showLinksVerification = true;
+    }
+  }
+
+  protected openPhoneDialog(requiresOAuth = false): void {
+    if (requiresOAuth && !this.verifiedUser.user()) {
+      this.showLinksVerification = true;
+      return;
+    }
     this.phoneDialogOpen = true;
     this.phoneError = '';
   }

@@ -1,0 +1,23 @@
+{
+  "shayari": {
+    "eyebrow": "Poetry and shayari",
+    "title": "Let me know",
+    "accent": "who you are.",
+    "description": "Please sign in with Google before reading my shayari. Your sign-in will be logged.",
+    "trigger": "Verify yourself to read shayari"
+  },
+  "essay": {
+    "eyebrow": "Essays",
+    "title": "Let me know",
+    "accent": "who you are.",
+    "description": "Please sign in with Google before reading my essay. Your sign-in will be logged.",
+    "trigger": "Verify yourself to read this essay"
+  },
+  "links": {
+    "eyebrow": "Contact options",
+    "title": "Let me know",
+    "accent": "who you are.",
+    "description": "Please sign in with Google before opening WhatsApp or requesting my phone number. Your sign-in will be logged.",
+    "trigger": "Verify yourself to continue"
+  }
+}

@@ -13,7 +13,8 @@
     {
       "title": "WhatsApp",
       "description": "Start a conversation directly on WhatsApp.",
-      "href": "https://wa.me/918999490870"
+      "href": "https://wa.me/918999490870",
+      "requiresOAuth": true
     },
     {
       "title": "Email",
@@ -23,7 +24,8 @@
     {
       "title": "Phone",
       "description": "Share your purpose before requesting a call.",
-      "requiresReveal": true
+      "requiresReveal": true,
+      "requiresOAuth": true
     }
   ]
 }

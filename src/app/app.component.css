@@ -85,7 +85,7 @@ nav a.active .nav-astronaut { animation: navAstronautDrift 48s linear infinite; 
   nav a.active, nav a.active .nav-astronaut { animation: none; }
 }
 .header-link { border-bottom: 1px solid #1c1b1a; padding-bottom: 5px; }
-.header-resume-button { background: transparent; border: 0; border-bottom: 1px solid #1c1b1a; color: inherit; cursor: pointer; font: inherit; padding: 0 0 5px; }
+.header-resume-button { background: transparent; border: 0; border-bottom: 1px solid #1c1b1a; color: inherit; cursor: pointer; font-family: inherit; padding: 0 0 5px; }
 .header-resume-button:disabled { cursor: wait; opacity: .65; }
 .header-resume-button:focus-visible { outline: 2px solid #f45b36; outline-offset: 3px; }
 .header-actions { align-items: center; display: flex; gap: 20px; }
@@ -114,10 +114,11 @@ nav a.active .nav-astronaut { animation: navAstronautDrift 48s linear infinite; 
 .theme-toggle { align-items: center; background: transparent; border: 1px solid #d8d3ca; border-radius: 100px; color: #1c1b1a; cursor: pointer; display: inline-flex; font: inherit; font-size: 11px; font-weight: 700; gap: 7px; padding: 8px 11px; white-space: nowrap; }
 .theme-toggle:hover { border-color: #f45b36; color: #f45b36; }
 .theme-toggle:focus-visible { outline: 2px solid #f45b36; outline-offset: 3px; }
-.resume-error { background: #fff1ed; color: #9c2f19; font-size: 13px; margin: 0; padding: 10px 24px; text-align: center; }
-.resume-success { background: #edf8ef; color: #216b35; font-size: 13px; margin: 0; padding: 10px 24px; text-align: center; }
+.resume-error, .resume-success { background: #fff1ed; color: #9c2f19; font-size: 13px; margin: 0; padding: 10px 24px; text-align: center; }
+.resume-success { border-top: 1px solid #e8c1b6; border-bottom: 1px solid #e8c1b6; }
 .session-status { background: #fff1ed; color: #9c2f19; font-size: 13px; margin: 0; padding: 10px 24px; text-align: center; }
-.session-status a { font-weight: 700; text-decoration: underline; }
+.session-status button { background: transparent; border: 0; color: inherit; cursor: pointer; font: inherit; font-weight: 700; padding: 0; text-decoration: underline; }
+.session-status button:focus-visible { outline: 2px solid currentColor; outline-offset: 3px; }
 
 .hero { display: grid; grid-template-columns: minmax(0, 1fr) minmax(300px, 1fr); gap: 7vw; isolation: isolate; margin: 0 auto; max-width: 1240px; min-height: 610px; padding: 94px 32px 110px; position: relative; }
 .hero-background { background: #090807; height: 100%; left: 50%; position: absolute; top: 0; transform: translateX(-50%); width: 100vw; z-index: -1; }

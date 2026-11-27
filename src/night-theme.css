@@ -113,9 +113,15 @@ html[data-theme='night'] .education-section .experience-company {
   color: #ff8d32;
 }
 
-html[data-theme='night'] .resume-error {
+html[data-theme='night'] .resume-error,
+html[data-theme='night'] .resume-success,
+html[data-theme='night'] .session-status {
   background: #3a211b;
   color: #ffb49f;
+}
+
+html[data-theme='night'] .resume-success {
+  border-color: transparent;
 }
 
 html[data-theme='night'] .chat-panel {

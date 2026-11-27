@@ -20,6 +20,13 @@
     "description": "Please sign in with Google before opening WhatsApp or requesting my phone number. Your sign-in will be logged.",
     "trigger": "Verify yourself to continue"
   },
+  "signin": {
+    "eyebrow": "Sign in",
+    "title": "Let me know",
+    "accent": "who you are.",
+    "description": "Sign in with Google to continue. Your sign-in will be logged.",
+    "trigger": "Continue with Google"
+  },
   "chat": {
     "eyebrow": "Keep the conversation going",
     "title": "Curiosity looks",

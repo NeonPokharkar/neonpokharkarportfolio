@@ -11,7 +11,7 @@ Configure matching CSP headers at the CDN, reverse proxy, or origin serving `htt
 Use this as a starting point and verify it against the deployed build and all sign-in flows:
 
 ```text
-Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'; script-src 'self' https://accounts.google.com/gsi/ https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; script-src-attr 'none'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://simba.vimba-buri.ts.net https://accounts.google.com/gsi/ https://www.google.com https://www.recaptcha.net https://www.gstatic.com/recaptcha/; font-src 'self' data: https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; frame-src https://accounts.google.com/gsi/ https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:; trusted-types angular angular#bundler portfolio-scripts; require-trusted-types-for 'script'; upgrade-insecure-requests
+Content-Security-Policy: default-src 'self'; base-uri 'self'; object-src 'none'; form-action 'self'; frame-ancestors 'none'; script-src 'self' https://accounts.google.com/gsi/ https://www.google.com/recaptcha/ https://www.gstatic.com/recaptcha/; script-src-attr 'none'; img-src 'self' data: blob: https://*.googleusercontent.com; connect-src 'self' https://simba.vimba-buri.ts.net https://accounts.google.com/gsi/ https://www.google.com https://www.recaptcha.net https://www.gstatic.com/recaptcha/; font-src 'self' data: https://fonts.gstatic.com; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://accounts.google.com/gsi/style; frame-src https://accounts.google.com/gsi/ https://www.google.com/recaptcha/ https://recaptcha.google.com/recaptcha/ https://www.recaptcha.net/recaptcha/; worker-src 'self' blob:; manifest-src 'self'; media-src 'self' blob:; trusted-types angular angular#bundler portfolio-scripts goog#html; require-trusted-types-for 'script'; upgrade-insecure-requests
 X-Content-Type-Options: nosniff
 Referrer-Policy: strict-origin-when-cross-origin
 X-Frame-Options: DENY
@@ -32,7 +32,7 @@ The `script-src` list covers Angular's same-origin bundles plus Google Identity 
 3. Fix only confirmed required sources, keep origins/path scope narrow, and move the same policy to `Content-Security-Policy`.
 4. Verify the generated production index contains the explicit script allowlist and no inline executable scripts. Re-run the production build and browser flow checks after Angular or third-party integration updates.
 
-Trusted Types currently permits Angular's `angular` and `angular#bundler` policies for AOT rendering and lazy chunks, plus the application's `portfolio-scripts` policy, which is restricted to the Google Identity and reCAPTCHA loader URLs. Do not add `angular#unsafe-bypass` or `angular#unsafe-jit` unless the corresponding APIs are intentionally introduced, reviewed, and tested.
+Trusted Types currently permits Angular's `angular` and `angular#bundler` policies for AOT rendering and lazy chunks, the application's `portfolio-scripts` policy for the Google Identity and reCAPTCHA loader URLs, and Google's `goog#html` policy used by Google Sign-In. Do not add `angular#unsafe-bypass` or `angular#unsafe-jit` unless the corresponding APIs are intentionally introduced, reviewed, and tested.
 
 ## HSTS, COOP, and origin isolation
 

@@ -6,6 +6,7 @@ import { Subscription } from 'rxjs';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
 import { isFriendLookupStatus, isValidFriendDetails, VerifiedUserService } from './verified-user.service';
 import { setTrustedScriptUrl } from './trusted-script-url';
+import { loadGoogleIdentity, renderGoogleSignInButton } from './google-identity';
 import type { EssayEditorComponent, EssayEditorRecord, EssayEditorSavedEvent } from './essay-editor.component';
 import { ShayariEditorComponent } from './shayari-editor.component';
 
@@ -865,54 +866,14 @@ interface RecaptchaEnterprise {
   execute(siteKey: string, options: { action: string }): Promise<string>;
 }
 
-interface GoogleIdentity {
-  initialize(options: { client_id: string; callback: (response: { credential: string }) => void }): void;
-  renderButton(element: HTMLElement, options: { theme: 'outline'; size: 'large'; text: 'signin_with' }): void;
-}
-
 declare global {
   interface Window {
     grecaptcha?: { enterprise?: RecaptchaEnterprise };
-    google?: { accounts?: { id?: GoogleIdentity } };
   }
 }
 
 const recaptchaSiteKey = '6LcEODUuAAAAAOltRtSI5hDjxPhK_KM7ELXXz10Q';
-const googleClientId = '1027876493531-mbun8jrtieocia9n0ns5le4q34332mus.apps.googleusercontent.com';
 const recaptchaAction = 'login';
-
-function loadGoogleIdentity(): Promise<GoogleIdentity> {
-  return new Promise((resolve, reject) => {
-    const existing = window.google?.accounts?.id;
-    if (existing) {
-      resolve(existing);
-      return;
-    }
-    const script = document.createElement('script');
-    const timer = window.setTimeout(() => {
-      script.remove();
-      reject(new Error('Google Sign-In did not load in time.'));
-    }, 15000);
-    setTrustedScriptUrl(script, 'https://accounts.google.com/gsi/client');
-    script.async = true;
-    script.onload = () => {
-      window.clearTimeout(timer);
-      const identity = window.google?.accounts?.id;
-      if (!identity) {
-        script.remove();
-        reject(new Error('Google Sign-In is unavailable.'));
-        return;
-      }
-      resolve(identity);
-    };
-    script.onerror = () => {
-      window.clearTimeout(timer);
-      script.remove();
-      reject(new Error('Could not load Google Sign-In.'));
-    };
-    document.head.appendChild(script);
-  });
-}
 
 function loadRecaptcha(): Promise<RecaptchaEnterprise> {
   return new Promise((resolve, reject) => {
@@ -1043,6 +1004,7 @@ export class VerificationDialogComponent implements OnInit, AfterViewInit, OnDes
   protected verificationError = '';
   private destroyed = false;
   private viewReady = false;
+  private unregisterGoogleButton?: () => void;
 
   constructor(protected readonly verifiedUser: VerifiedUserService) {
     effect(() => {
@@ -1074,6 +1036,7 @@ export class VerificationDialogComponent implements OnInit, AfterViewInit, OnDes
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.unregisterGoogleButton?.();
   }
 
   protected async loadPrompt(): Promise<void> {
@@ -1151,15 +1114,11 @@ export class VerificationDialogComponent implements OnInit, AfterViewInit, OnDes
       if (!this.googleSignIn) {
         throw new Error('Google Sign-In button is unavailable.');
       }
-      identity.initialize({
-        client_id: googleClientId,
-        callback: (response) => {
-          if (this.dialog?.nativeElement.open) {
-            void this.verify(response.credential);
-          }
+      this.unregisterGoogleButton = renderGoogleSignInButton(identity, this.googleSignIn.nativeElement, (credential) => {
+        if (!this.destroyed && this.dialog?.nativeElement.open) {
+          void this.verify(credential);
         }
       });
-      identity.renderButton(this.googleSignIn.nativeElement, { theme: 'outline', size: 'large', text: 'signin_with' });
       this.signInReady = true;
     } catch (error) {
       console.error('Could not load Google Sign-In.', error);

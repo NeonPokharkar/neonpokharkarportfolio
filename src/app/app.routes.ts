@@ -901,7 +901,7 @@ function loadRecaptcha(): Promise<RecaptchaEnterprise> {
       script = document.createElement('script');
       setTrustedScriptUrl(
         script,
-        `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(recaptchaSiteKey)}`
+        `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(recaptchaSiteKey)}&trustedtypes=true`
       );
       script.async = true;
       script.onload = ready;

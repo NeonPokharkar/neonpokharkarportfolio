@@ -214,8 +214,8 @@ test('production document restricts script sources and enforces Trusted Types', 
   assert.match(builtIndex, /http-equiv="Content-Security-Policy"/);
   assert.match(sourceIndex, /script-src 'self' https:\/\/accounts\.google\.com\/gsi\//);
   assert.match(sourceIndex, /script-src-attr 'none'/);
-  assert.match(sourceIndex, /trusted-types angular angular#bundler portfolio-scripts goog#html;/);
-  assert.match(builtIndex, /trusted-types angular angular#bundler portfolio-scripts goog#html;/);
+  assert.match(sourceIndex, /trusted-types angular angular#bundler portfolio-scripts goog#html recaptcha 'allow-duplicates';/);
+  assert.match(builtIndex, /trusted-types angular angular#bundler portfolio-scripts goog#html recaptcha 'allow-duplicates';/);
   assert.match(sourceIndex, /require-trusted-types-for 'script'/);
   assert.match(sourceIndex, /default-src 'self'/);
   assert.match(sourceIndex, /object-src 'none'/);

@@ -27,12 +27,16 @@ test('allows only the Google identity and configured reCAPTCHA script URLs', () 
 
   assert.equal(scripts.createTrustedScriptUrl('https://accounts.google.com/gsi/client'), 'https://accounts.google.com/gsi/client');
   assert.equal(
-    scripts.createTrustedScriptUrl('https://www.google.com/recaptcha/enterprise.js?render=site-key'),
-    'https://www.google.com/recaptcha/enterprise.js?render=site-key'
+    scripts.createTrustedScriptUrl('https://www.google.com/recaptcha/enterprise.js?render=site-key&trustedtypes=true'),
+    'https://www.google.com/recaptcha/enterprise.js?render=site-key&trustedtypes=true'
   );
   assert.throws(() => scripts.createTrustedScriptUrl('https://evil.example/gsi/client'), /not allowed/);
   assert.throws(() => scripts.createTrustedScriptUrl('https://accounts.google.com.evil.example/gsi/client'), /not allowed/);
   assert.throws(() => scripts.createTrustedScriptUrl('https://accounts.google.com/gsi/other.js'), /not allowed/);
+  assert.throws(() => scripts.createTrustedScriptUrl('https://www.google.com/recaptcha/enterprise.js?render=site-key'), /not allowed/);
+  assert.throws(() => scripts.createTrustedScriptUrl('https://www.google.com/recaptcha/enterprise.js?render=site-key&trustedtypes=false'), /not allowed/);
+  assert.throws(() => scripts.createTrustedScriptUrl('https://www.google.com/recaptcha/enterprise.js?render=site-key&trustedtypes=true&extra=1'), /not allowed/);
+  assert.throws(() => scripts.createTrustedScriptUrl('https://www.google.com/recaptcha/enterprise.js?render=site-key&trustedtypes=true&trustedtypes=true'), /not allowed/);
 });
 
 test('uses the named Trusted Types policy when supported', () => {

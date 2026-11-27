@@ -20,8 +20,9 @@ function isAllowedScriptUrl(url: URL): boolean {
     !url.hash;
   const isRecaptcha = url.origin === 'https://www.google.com' &&
     url.pathname === '/recaptcha/enterprise.js' &&
-    url.searchParams.size === 1 &&
+    url.searchParams.size === 2 &&
     !!url.searchParams.get('render') &&
+    url.searchParams.get('trustedtypes') === 'true' &&
     !url.hash;
   return isGoogleIdentity || isRecaptcha;
 }

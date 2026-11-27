@@ -49,7 +49,7 @@
     </button>
     @if (verifiedUser.user()) {
       <button class="header-link header-resume-button" type="button" (click)="emailResume()" [disabled]="resumeEmailSending">
-        {{ resumeEmailSending ? 'Sending resume…' : 'Email me my resume' }} <span aria-hidden="true">↗</span>
+        {{ resumeEmailSending ? 'Sending resume…' : 'Email me Resume' }} <span aria-hidden="true">↗</span>
       </button>
     } @else {
       <a class="header-link" [href]="resumeHref" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>

@@ -58,6 +58,26 @@ test('shayari route is excluded from discovery but remains available', async () 
   assert.doesNotMatch(homePage, /<meta name="robots" content="noindex/);
 });
 
+test('favicon links and manifest icons resolve in generated pages', async () => {
+  const iconFiles = ['favicon.ico', 'favicon-16x16.png', 'favicon-32x32.png', 'apple-touch-icon.png'];
+  for (const page of ['index.html', 'projects/index.html', 'essays/index.html']) {
+    const html = await built(page);
+    for (const file of iconFiles) {
+      assert.ok(html.includes(`href="/assets/favicon_io/${file}"`), `${page} missing ${file}`);
+    }
+    assert.ok(html.includes('href="/assets/favicon_io/site.webmanifest"'));
+  }
+  const manifest = JSON.parse(await built('assets/favicon_io/site.webmanifest'));
+  assert.equal(new URL(manifest.start_url, 'https://neonpokharkar.com/assets/favicon_io/site.webmanifest').pathname, '/');
+  for (const icon of manifest.icons) {
+    const url = new URL(icon.src, 'https://neonpokharkar.com/assets/favicon_io/site.webmanifest');
+    assert.ok((await readFile(path.join(output, url.pathname))).length > 0);
+  }
+  for (const file of iconFiles) {
+    assert.ok((await readFile(path.join(output, 'assets/favicon_io', file))).length > 0);
+  }
+});
+
 test('legal documents are directly available but noindex and excluded from discovery', async () => {
   const [privacy, terms, sitemap, robots, home, appTemplate] = await Promise.all([
     built('privacy-policy/index.html'),

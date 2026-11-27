@@ -7,6 +7,7 @@
     "build": "ng build",
     "postbuild": "node scripts/generate-static.mjs",
     "test:static": "node --test scripts/static.test.mjs",
+    "test:security": "node --test scripts/chat-session.test.mjs scripts/trusted-script-url.test.mjs",
     "watch": "ng build --watch --configuration development"
   },
   "dependencies": {

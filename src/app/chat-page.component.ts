@@ -1,9 +1,12 @@
-import { Component, ElementRef, HostListener, NgZone, OnDestroy, OnInit, Pipe, PipeTransform, ViewChild } from '@angular/core';
+import { Component, effect, ElementRef, HostListener, NgZone, OnDestroy, OnInit, Pipe, PipeTransform, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Marked } from 'marked';
 import { Subscription } from 'rxjs';
+import { chatAuthenticationPrompt, createChatRequestHeaders, isChatAuthenticationRequired } from './chat-auth';
+import { ChatSessionChannel, ChatSessionState, createChatSessionChannel } from './chat-session';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
+import { VerifiedUserService } from './verified-user.service';
 
 const chatMarkdown = new Marked({
   gfm: true,
@@ -79,6 +82,7 @@ export class ChatPageComponent implements OnInit, OnDestroy {
   protected chatBusy = false;
   protected chatInput = '';
   protected chatError = '';
+  protected chatRequiresSignIn = false;
   protected voiceError = '';
   protected actionNotice = '';
   protected welcomeContent: WelcomeContent | null = null;
@@ -101,37 +105,35 @@ export class ChatPageComponent implements OnInit, OnDestroy {
   private promptSubscription?: Subscription;
   private initialPromptHandled = false;
   private destroyed = false;
+  private chatSessionSync?: ChatSessionChannel;
   @ViewChild('messagesContainer') private messagesContainer?: ElementRef<HTMLDivElement>;
 
-  constructor(private route: ActivatedRoute, private router: Router, private zone: NgZone) {}
+  constructor(
+    private route: ActivatedRoute,
+    private router: Router,
+    private zone: NgZone,
+    protected readonly verifiedUser: VerifiedUserService
+  ) {
+    effect(() => {
+      if (this.verifiedUser.user()) {
+        this.chatRequiresSignIn = false;
+      }
+    });
+  }
 
   async ngOnInit(): Promise<void> {
+    this.initializeChatSessionSync(this.route.snapshot.fragment);
     void this.loadWelcomeContent();
     await this.loadProfile();
     if (this.destroyed) {
       return;
     }
 
-    try {
-      const savedMessages = sessionStorage.getItem('aditya_chat_messages');
-      const savedSummary = sessionStorage.getItem('aditya_chat_summary');
-      const savedLastConv = sessionStorage.getItem('aditya_chat_last_conv');
-      if (savedMessages) {
-        const messages = JSON.parse(savedMessages) as ChatMessage[];
-        this.chatMessages.splice(1); // Keep the initial message, remove the rest
-        this.chatMessages.push(...messages.slice(1)); // Add back saved messages
-        this.conversationSummary = savedSummary || '';
-        this.lastRelevantConversation = savedLastConv || '';
-        this.isWelcomeState = !messages.slice(1).some(message => message.content.trim().length > 0);
-      }
-    } catch (error) {
-      console.warn('Failed to restore chat messages', error);
-    }
-
     this.promptSubscription = this.route.queryParamMap.subscribe(params => {
       const prompt = params.get('prompt');
       if (prompt) {
         this.chatInput = prompt;
+        this.publishChatSessionState();
         if (params.get('autoSend') === '1' && !this.initialPromptHandled) {
           this.initialPromptHandled = true;
           void this.submitInitialPrompt();
@@ -165,8 +167,54 @@ export class ChatPageComponent implements OnInit, OnDestroy {
 
   ngOnDestroy(): void {
     this.destroyed = true;
+    this.chatSessionSync?.close();
     this.promptSubscription?.unsubscribe();
     this.cancelDictation();
+  }
+
+  protected onChatInputChange(value: string): void {
+    this.chatInput = value;
+    this.publishChatSessionState();
+  }
+
+  private initializeChatSessionSync(sessionId: string | null): void {
+    if (!sessionId) {
+      return;
+    }
+
+    this.chatSessionSync = createChatSessionChannel(
+      sessionId,
+      (state) => this.zone.run(() => this.applyChatSessionState(state)),
+      () => this.chatSessionSync?.publish(this.getChatSessionState())
+    ) ?? undefined;
+    this.chatSessionSync?.requestInitialState();
+  }
+
+  private getChatSessionState(): ChatSessionState {
+    return {
+      messages: this.chatMessages.slice(1).map(({ role, content }) => ({ role, content })),
+      draft: this.chatInput,
+      conversationSummary: this.conversationSummary,
+      lastRelevantConversation: this.lastRelevantConversation,
+      busy: this.chatBusy,
+      requiresSignIn: this.chatRequiresSignIn
+    };
+  }
+
+  private applyChatSessionState(state: ChatSessionState): void {
+    this.chatMessages.splice(1, this.chatMessages.length - 1, ...state.messages);
+    this.chatInput = state.draft;
+    this.conversationSummary = state.conversationSummary;
+    this.lastRelevantConversation = state.lastRelevantConversation;
+    this.chatBusy = state.busy;
+    this.chatRequiresSignIn = state.requiresSignIn;
+    this.isWelcomeState = !state.messages.some(message => message.content.trim().length > 0);
+    this.hasNewTurn = state.messages.length > 0;
+    this.updateConversationScroll();
+  }
+
+  private publishChatSessionState(): void {
+    this.chatSessionSync?.publish(this.getChatSessionState());
   }
 
   private async submitInitialPrompt(): Promise<void> {
@@ -302,7 +350,12 @@ export class ChatPageComponent implements OnInit, OnDestroy {
 
   protected async sendChatMessage(): Promise<void> {
     const content = this.chatInput.trim();
-    if (!content || this.chatBusy) {
+    if (!content || this.chatBusy || this.chatRequiresSignIn) {
+      return;
+    }
+
+    if (!this.verifiedUser.ready()) {
+      this.chatError = 'Checking your sign-in session. Please try again in a moment.';
       return;
     }
 
@@ -316,25 +369,39 @@ export class ChatPageComponent implements OnInit, OnDestroy {
     this.chatMessages.push({ role: 'user', content });
     this.chatInput = '';
     this.chatError = '';
+    this.chatRequiresSignIn = false;
     this.actionNotice = '';
     this.chatBusy = true;
     const assistantMessage: ChatMessage = { role: 'assistant', content: '' };
     this.chatMessages.push(assistantMessage);
+    this.publishChatSessionState();
 
     this.hasNewTurn = true;
     this.followConversation = true;
     this.updateConversationScroll();
 
     try {
+      const accessToken = this.verifiedUser.getAccessToken();
       const response = await fetch(this.intelliChatEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: createChatRequestHeaders(accessToken),
         body: JSON.stringify({
           query: content,
           conversation_summary: this.conversationSummary,
           last_relevant_conversation: this.lastRelevantConversation
         })
       });
+
+      if (await isChatAuthenticationRequired(response)) {
+        if (accessToken) {
+          this.verifiedUser.clear();
+        }
+        this.chatMessages.splice(this.chatMessages.indexOf(assistantMessage), 1);
+        this.chatRequiresSignIn = true;
+        this.publishChatSessionState();
+        this.updateConversationScroll();
+        return;
+      }
 
       if (!response.ok) {
         throw new Error(`The AI chat server returned HTTP ${response.status}.`);
@@ -344,6 +411,7 @@ export class ChatPageComponent implements OnInit, OnDestroy {
         response,
         (answer) => {
           assistantMessage.content = answer;
+          this.publishChatSessionState();
           this.updateConversationScroll();
         }
       );
@@ -352,6 +420,7 @@ export class ChatPageComponent implements OnInit, OnDestroy {
         .filter(Boolean)
         .join('\n');
       this.lastRelevantConversation = `User: ${content}\nAssistant: ${assistantMessage.content}`;
+      this.publishChatSessionState();
       this.updateConversationScroll();
     } catch (error: unknown) {
       const assistantMessageIndex = this.chatMessages.indexOf(assistantMessage);
@@ -361,15 +430,26 @@ export class ChatPageComponent implements OnInit, OnDestroy {
       this.chatError = error instanceof Error
         ? `${error.message} Make sure the API is running at ${this.intelliChatEndpoint} and allows requests from this app.`
         : `Unable to connect to the AI chat server at ${this.intelliChatEndpoint}.`;
+      this.publishChatSessionState();
       this.updateConversationScroll();
     } finally {
       this.chatBusy = false;
+      this.publishChatSessionState();
     }
+  }
+
+  protected openGoogleSignIn(): void {
+    window.dispatchEvent(new CustomEvent('open-chat-signin'));
+  }
+
+  protected get chatAuthenticationMessage(): string {
+    return chatAuthenticationPrompt;
   }
 
   protected submitSuggestion(suggestion: string): void {
     this.cancelDictation();
     this.chatInput = suggestion;
+    this.publishChatSessionState();
     // Send the message after a brief delay to allow Angular change detection
     setTimeout(() => {
       this.sendChatMessage();

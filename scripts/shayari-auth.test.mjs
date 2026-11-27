@@ -174,7 +174,7 @@ test('shares the session and sends one heartbeat across active tabs', async () =
   assert.equal(browser.requests.length, 2);
 });
 
-test('shares the verified friend profile across tabs', async () => {
+test('shares the verified relationship profile across tabs', async () => {
   const browser = createBrowser();
   const first = browser.tab();
   const second = browser.tab();
@@ -196,6 +196,28 @@ test('shares the verified friend profile across tabs', async () => {
   assert.equal(second.service.user().friendLookupStatus, 'matched');
 });
 
+test('preserves relationship labels from profile data for any lookup result', async () => {
+  const browser = createBrowser();
+  const first = browser.tab();
+  const second = browser.tab();
+  const relationship = {
+    name: 'Sam',
+    typeOfRelationship: 'Colleague',
+    fromWhatPhase: 'Work',
+    since: '2021',
+    cardEmoji: '💼'
+  };
+  first.service.setSession({
+    name: 'Google account name',
+    picture: null,
+    friend: relationship,
+    friendLookupStatus: 'stranger'
+  }, 'synthetic-token', 7200);
+  await browser.flush();
+  assert.deepEqual(second.service.user().friend, relationship);
+  assert.equal(second.service.user().friendLookupStatus, 'stranger');
+});
+
 test('rejects shared sessions with malformed friend details', async () => {
   const browser = createBrowser();
   const first = browser.tab();
@@ -208,7 +230,7 @@ test('rejects shared sessions with malformed friend details', async () => {
       typeOfRelationship: 'Stranger',
       fromWhatPhase: null,
       since: null,
-      cardEmoji: '🙂'
+      cardEmoji: ''
     },
     friendLookupStatus: 'stranger'
   }, 'synthetic-token', 7200);

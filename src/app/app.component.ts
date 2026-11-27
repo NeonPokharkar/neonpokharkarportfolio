@@ -1,9 +1,12 @@
 // MARKER: COMPONENT_START - Main app component with portfolio, navigation, theme, and AI chat
-import { Component, HostListener, OnDestroy } from '@angular/core';
+import { Component, effect, HostListener, NgZone, OnDestroy, ViewChild } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { NavigationStart, Router, RouterLink, RouterLinkActive, RouterOutlet } from '@angular/router';
+import { chatAuthenticationPrompt, createChatRequestHeaders, isChatAuthenticationRequired } from './chat-auth';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
 import { VerifiedUserService } from './verified-user.service';
+import { VerificationDialogComponent } from './app.routes';
+import { ChatSessionChannel, ChatSessionState, clearLegacyChatSnapshots, createChatSessionChannel } from './chat-session';
 
 // MARKER: INTERFACES_SECTION - Data structure definitions for portfolio content
 interface PortfolioItem {
@@ -126,7 +129,7 @@ type ContextQuestions = Record<ContextQuestionCategory, { generic: string[]; spe
 @Component({
   selector: 'app-root',
   standalone: true,
-  imports: [FormsModule, RouterLink, RouterLinkActive, RouterOutlet],
+  imports: [FormsModule, RouterLink, RouterLinkActive, RouterOutlet, VerificationDialogComponent],
   templateUrl: './app.component.html',
   styleUrl: './app.component.css'
 })
@@ -145,7 +148,17 @@ export class AppComponent implements OnDestroy {
   // MARKER: THEME_SYSTEM_END
 
   // MARKER: LIFECYCLE_AND_ROUTING - Constructor, route checks (home vs essays vs dynamic)
-  constructor(protected readonly router: Router, protected readonly verifiedUser: VerifiedUserService) {
+  constructor(
+    protected readonly router: Router,
+    protected readonly verifiedUser: VerifiedUserService,
+    private readonly zone: NgZone
+  ) {
+    clearLegacyChatSnapshots();
+    effect(() => {
+      if (this.verifiedUser.user()) {
+        this.chatRequiresSignIn = false;
+      }
+    });
     this.initializeTheme();
     void this.loadHomeData();
     void this.loadProfile();
@@ -164,6 +177,7 @@ export class AppComponent implements OnDestroy {
   private readonly routerEvents;
 
   ngOnDestroy(): void {
+    this.chatSessionSync?.close();
     this.cancelContextHover();
     if (this.contextStatusTimer !== undefined) {
       clearTimeout(this.contextStatusTimer);
@@ -242,12 +256,18 @@ export class AppComponent implements OnDestroy {
   protected chatBusy = false;
   protected chatInput = '';
   protected chatError = '';
+  protected chatRequiresSignIn = false;
+  protected readonly chatAuthenticationMessage = chatAuthenticationPrompt;
+  private chatSessionSync?: ChatSessionChannel;
+  private chatSessionId?: string;
   protected readonly chatMessages: ChatMessage[] = [
     {
       role: 'assistant',
       content: 'Hi! I am Aditya\'s AI assistant. Ask me about his experience, projects, or technical skills.'
     }
   ];
+  @ViewChild(VerificationDialogComponent)
+  private chatVerificationDialog?: VerificationDialogComponent;
   // MARKER: CHAT_SYSTEM_END
 
   // MARKER: PORTFOLIO_ARRAYS_SECTION - Skills, interests, projects, experience, education
@@ -1082,15 +1102,68 @@ export class AppComponent implements OnDestroy {
   }
 
   protected expandChat(): void {
-    // Save conversation state to sessionStorage so the full-page chat can restore it
-    try {
-      sessionStorage.setItem('aditya_chat_messages', JSON.stringify(this.chatMessages));
-      sessionStorage.setItem('aditya_chat_summary', this.conversationSummary);
-      sessionStorage.setItem('aditya_chat_last_conv', this.lastRelevantConversation);
-    } catch (e) {
-      console.warn('Failed to save chat state to sessionStorage', e);
+    let newChannel: ChatSessionChannel | undefined;
+    let sessionId = this.chatSessionId;
+
+    if (!sessionId) {
+      if (typeof crypto.randomUUID !== 'function') {
+        this.chatError = 'This browser cannot securely open a synchronized chat window. Continue chatting here instead.';
+        return;
+      }
+
+      sessionId = crypto.randomUUID();
+      const channel = createChatSessionChannel(
+        sessionId,
+        (state) => this.zone.run(() => this.applyChatSessionState(state)),
+        () => this.chatSessionSync?.publish(this.getChatSessionState())
+      );
+      if (!channel) {
+        this.chatError = 'This browser does not support private live chat handoff. Continue chatting here instead.';
+        return;
+      }
+      this.chatSessionSync = channel;
+      this.chatSessionId = sessionId;
+      newChannel = channel;
     }
-    window.open('/chat', 'AditysAI', 'width=900,height=700,resizable=yes,scrollbars=yes');
+
+    const chatUrl = new URL('/chat', window.location.origin);
+    chatUrl.hash = sessionId;
+    const chatWindow = window.open(chatUrl.href, 'AditysAI', 'width=900,height=700,resizable=yes,scrollbars=yes');
+    if (!chatWindow && newChannel) {
+      newChannel.close();
+      this.chatSessionSync = undefined;
+      this.chatSessionId = undefined;
+      this.chatError = 'Allow pop-ups for this site to open the full chat window.';
+    }
+  }
+
+  protected onChatInputChange(value: string): void {
+    this.chatInput = value;
+    this.publishChatSessionState();
+  }
+
+  private getChatSessionState(): ChatSessionState {
+    return {
+      messages: this.chatMessages.slice(1).map(({ role, content }) => ({ role, content })),
+      draft: this.chatInput,
+      conversationSummary: this.conversationSummary,
+      lastRelevantConversation: this.lastRelevantConversation,
+      busy: this.chatBusy,
+      requiresSignIn: this.chatRequiresSignIn
+    };
+  }
+
+  private applyChatSessionState(state: ChatSessionState): void {
+    this.chatMessages.splice(1, this.chatMessages.length - 1, ...state.messages);
+    this.chatInput = state.draft;
+    this.conversationSummary = state.conversationSummary;
+    this.lastRelevantConversation = state.lastRelevantConversation;
+    this.chatBusy = state.busy;
+    this.chatRequiresSignIn = state.requiresSignIn;
+  }
+
+  private publishChatSessionState(): void {
+    this.chatSessionSync?.publish(this.getChatSessionState());
   }
 
   // MARKER: CHAT_SYSTEM_START - AI chat message handling with Intelli Chat API
@@ -1100,6 +1173,11 @@ export class AppComponent implements OnDestroy {
     this.chatOpen = true;
     this.chatInput = prompt;
     this.chatError = '';
+  }
+
+  @HostListener('window:open-chat-signin')
+  protected openChatSignIn(): void {
+    this.chatVerificationDialog?.open();
   }
 
   protected onChatInputKeydown(event: KeyboardEvent): void {
@@ -1126,7 +1204,12 @@ export class AppComponent implements OnDestroy {
 
   protected async sendChatMessage(): Promise<void> {
     const content = this.chatInput.trim();
-    if (!content || this.chatBusy) {
+    if (!content || this.chatBusy || this.chatRequiresSignIn) {
+      return;
+    }
+
+    if (!this.verifiedUser.ready()) {
+      this.chatError = 'Checking your sign-in session. Please try again in a moment.';
       return;
     }
 
@@ -1138,14 +1221,17 @@ export class AppComponent implements OnDestroy {
     this.chatMessages.push({ role: 'user', content });
     this.chatInput = '';
     this.chatError = '';
+    this.chatRequiresSignIn = false;
     this.chatBusy = true;
     const assistantMessage: ChatMessage = { role: 'assistant', content: '' };
     this.chatMessages.push(assistantMessage);
+    this.publishChatSessionState();
 
     try {
+      const accessToken = this.verifiedUser.getAccessToken();
       const response = await fetch(this.intelliChatEndpoint, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: createChatRequestHeaders(accessToken),
         body: JSON.stringify({
           query: content,
           conversation_summary: this.conversationSummary,
@@ -1153,19 +1239,33 @@ export class AppComponent implements OnDestroy {
         })
       });
 
+      if (await isChatAuthenticationRequired(response)) {
+        if (accessToken) {
+          this.verifiedUser.clear();
+        }
+        this.chatMessages.splice(this.chatMessages.indexOf(assistantMessage), 1);
+        this.chatRequiresSignIn = true;
+        this.publishChatSessionState();
+        return;
+      }
+
       if (!response.ok) {
         throw new Error(`The AI chat server returned HTTP ${response.status}.`);
       }
 
       assistantMessage.content = await readIntelliChatFinalAnswer(
         response,
-        (answer) => assistantMessage.content = answer
+        (answer) => {
+          assistantMessage.content = answer;
+          this.publishChatSessionState();
+        }
       );
 
       this.conversationSummary = [this.conversationSummary, this.lastRelevantConversation]
         .filter(Boolean)
         .join('\n');
       this.lastRelevantConversation = `User: ${content}\nAssistant: ${assistantMessage.content}`;
+      this.publishChatSessionState();
     } catch (error: unknown) {
       const assistantMessageIndex = this.chatMessages.indexOf(assistantMessage);
       if (assistantMessageIndex !== -1) {
@@ -1174,8 +1274,10 @@ export class AppComponent implements OnDestroy {
       this.chatError = error instanceof Error
         ? `${error.message} Make sure the API is running at ${this.intelliChatEndpoint} and allows requests from this app.`
         : `Unable to connect to the AI chat server at ${this.intelliChatEndpoint}.`;
+      this.publishChatSessionState();
     } finally {
       this.chatBusy = false;
+      this.publishChatSessionState();
     }
   }
   // MARKER: CHAT_SYSTEM_END

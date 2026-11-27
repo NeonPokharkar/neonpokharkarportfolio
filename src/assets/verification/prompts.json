@@ -19,5 +19,12 @@
     "accent": "who you are.",
     "description": "Please sign in with Google before opening WhatsApp or requesting my phone number. Your sign-in will be logged.",
     "trigger": "Verify yourself to continue"
+  },
+  "chat": {
+    "eyebrow": "Keep the conversation going",
+    "title": "Curiosity looks",
+    "accent": "good on you.",
+    "description": "I'm glad you're curious. Sign in with Google so I know who's joining the conversation, and we can keep exploring.",
+    "trigger": "Continue with Google"
   }
 }

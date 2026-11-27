@@ -30,15 +30,9 @@ export function isValidFriendDetails(value: unknown, status: unknown): value is 
       !('cardEmoji' in value) || typeof value.cardEmoji !== 'string' || !value.cardEmoji.trim()) {
     return false;
   }
-  if (status === 'matched') {
-    return typeof value.fromWhatPhase === 'string' && !!value.fromWhatPhase.trim() &&
-      typeof value.since === 'string' && !!value.since.trim();
-  }
-  return (status === 'stranger' || status === 'unavailable') &&
-    value.typeOfRelationship === 'Stranger' &&
-    value.fromWhatPhase === null &&
-    value.since === null &&
-    value.cardEmoji === '👋';
+  return isFriendLookupStatus(status) &&
+    (value.fromWhatPhase === null || typeof value.fromWhatPhase === 'string' && !!value.fromWhatPhase.trim()) &&
+    (value.since === null || typeof value.since === 'string' && !!value.since.trim());
 }
 
 interface SharedSession {

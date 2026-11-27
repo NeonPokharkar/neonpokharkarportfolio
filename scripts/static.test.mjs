@@ -100,6 +100,22 @@ test('static essays and project index contain manifest content', async () => {
   }
 });
 
+test('essay list prompts for sign-in only after an explicit choice', async () => {
+  const routes = await read('src/app/app.routes.ts');
+  const essayList = routes.slice(
+    routes.indexOf("selector: 'app-essay-list'"),
+    routes.indexOf("selector: 'app-essay-editor-outlet'")
+  );
+  const essayPage = routes.slice(
+    routes.indexOf("selector: 'app-essay-page'"),
+    routes.indexOf('export class EssayPageComponent')
+  );
+  assert.match(essayList, /<app-verification-dialog context="essay" \[autoOpen\]="false" \/>/);
+  assert.match(essayList, /\(click\)="openSignIn\(\)"/);
+  assert.match(essayList, /\[routerLink\]="\['\/essays', essay\.slug\]"/);
+  assert.match(essayPage, /<app-verification-dialog context="essay" \/>/);
+});
+
 test('built contextual question manifest contains usable templates', async () => {
   const [source, output] = await Promise.all([
     read('src/assets/context-questions.json').then(JSON.parse),
@@ -156,14 +172,12 @@ test('built contextual question manifest contains usable templates', async () =>
 });
 
 test('applies the saved theme before stylesheets can paint the page', async () => {
-  const [source, builtIndex] = await Promise.all([
-    read('src/index.html'),
+  const [themeScript, builtIndex] = await Promise.all([
+    read('src/assets/theme-init.js'),
     built('index.html')
   ]);
-  const inlineScript = source.match(/<script>([\s\S]*?)<\/script>/)?.[1];
-  assert.ok(inlineScript);
   const document = { documentElement: { dataset: {} } };
-  vm.runInNewContext(inlineScript, {
+  vm.runInNewContext(themeScript, {
     document,
     window: {
       localStorage: { getItem: (key) => key === 'aditya-portfolio-theme' ? 'night' : null },
@@ -174,6 +188,37 @@ test('applies the saved theme before stylesheets can paint the page', async () =
 
   const stylesheetIndex = builtIndex.indexOf('media="print"');
   assert.ok(stylesheetIndex > 0);
-  assert.ok(builtIndex.slice(0, stylesheetIndex).includes('aditya-portfolio-theme'));
+  assert.ok(builtIndex.slice(0, stylesheetIndex).includes('assets/theme-init.js'));
   assert.match(builtIndex.slice(0, stylesheetIndex), /html\[data-theme='night'\].*color-scheme: dark/s);
+});
+
+test('production document restricts script sources and enforces Trusted Types', async () => {
+  const [builtIndex, sourceIndex] = await Promise.all([
+    built('index.html'),
+    read('src/index.html')
+  ]);
+  assert.match(builtIndex, /http-equiv="Content-Security-Policy"/);
+  assert.match(sourceIndex, /script-src 'self' https:\/\/accounts\.google\.com\/gsi\//);
+  assert.match(sourceIndex, /script-src-attr 'none'/);
+  assert.match(sourceIndex, /trusted-types angular angular#bundler portfolio-scripts/);
+  assert.match(sourceIndex, /require-trusted-types-for 'script'/);
+  assert.match(sourceIndex, /default-src 'self'/);
+  assert.match(sourceIndex, /object-src 'none'/);
+  assert.match(sourceIndex, /frame-src https:\/\/accounts\.google\.com\/gsi\//);
+  assert.match(sourceIndex, /name="referrer" content="strict-origin-when-cross-origin"/);
+  assert.doesNotMatch(sourceIndex, /unsafe-eval/);
+  const scriptTags = [...builtIndex.matchAll(/<script\b([^>]*)>/g)].map((match) => match[1]);
+  assert.ok(scriptTags.length > 0 && scriptTags.every((attributes) => /\bsrc=/.test(attributes)));
+});
+
+test('chat window handoff does not persist transcript or draft state in web storage', async () => {
+  const [app, chatPage, sync] = await Promise.all([
+    read('src/app/app.component.ts'),
+    read('src/app/chat-page.component.ts'),
+    read('src/app/chat-session.ts')
+  ]);
+  assert.doesNotMatch(app, /sessionStorage\.(?:setItem|getItem)\(['"]aditya_chat_/);
+  assert.doesNotMatch(chatPage, /sessionStorage\.(?:setItem|getItem)\(['"]aditya_chat_/);
+  assert.match(sync, /new BroadcastChannel/);
+  assert.doesNotMatch(sync, /accessToken|Authorization/);
 });

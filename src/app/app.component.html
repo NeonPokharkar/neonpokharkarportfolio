@@ -375,6 +375,8 @@
   <p class="context-hint" [style.left.px]="contextHint.x + 16" [style.top.px]="contextHint.y + 16">Press Alt+Q or right click twice to open AI command palette</p>
 }
 
+<app-verification-dialog context="chat" [autoOpen]="false" />
+
 <!-- MARKER: CUSTOM_CURSOR_ANIMATION - Animated astronaut following mouse cursor -->
 <div
   class="cursor-astronaut"
@@ -429,18 +431,25 @@
     @if (chatError) {
       <p class="chat-error">{{ chatError }}</p>
     }
+    @if (chatRequiresSignIn) {
+      <div class="chat-auth-prompt" role="status">
+        <p>{{ chatAuthenticationMessage }}</p>
+        <button type="button" (click)="openChatSignIn()">Continue with Google</button>
+      </div>
+    }
 
     <form class="chat-form" (ngSubmit)="sendChatMessage()">
       <textarea
         name="chatInput"
         [(ngModel)]="chatInput"
+        (ngModelChange)="onChatInputChange($event)"
         placeholder="Ask a question..."
         rows="1"
-        [disabled]="chatBusy"
+        [disabled]="chatBusy || chatRequiresSignIn"
         aria-label="Message for AI assistant"
         (input)="resizeChatInput($event)"
         (keydown)="onChatInputKeydown($event)"></textarea>
-      <button type="submit" [disabled]="chatBusy || !chatInput.trim()" aria-label="Send message">↗</button>
+      <button type="submit" [disabled]="chatBusy || chatRequiresSignIn || !chatInput.trim()" aria-label="Send message">↗</button>
     </form>
     <p class="chat-footnote">Connected to the portfolio AI assistant</p>
   </aside>

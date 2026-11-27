@@ -5,6 +5,7 @@ import { Meta } from '@angular/platform-browser';
 import { Subscription } from 'rxjs';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
 import { isFriendLookupStatus, isValidFriendDetails, VerifiedUserService } from './verified-user.service';
+import { setTrustedScriptUrl } from './trusted-script-url';
 import type { EssayEditorComponent, EssayEditorRecord, EssayEditorSavedEvent } from './essay-editor.component';
 import { ShayariEditorComponent } from './shayari-editor.component';
 
@@ -892,7 +893,7 @@ function loadGoogleIdentity(): Promise<GoogleIdentity> {
       script.remove();
       reject(new Error('Google Sign-In did not load in time.'));
     }, 15000);
-    script.src = 'https://accounts.google.com/gsi/client';
+    setTrustedScriptUrl(script, 'https://accounts.google.com/gsi/client');
     script.async = true;
     script.onload = () => {
       window.clearTimeout(timer);
@@ -937,7 +938,10 @@ function loadRecaptcha(): Promise<RecaptchaEnterprise> {
       ready();
     } else {
       script = document.createElement('script');
-      script.src = `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(recaptchaSiteKey)}`;
+      setTrustedScriptUrl(
+        script,
+        `https://www.google.com/recaptcha/enterprise.js?render=${encodeURIComponent(recaptchaSiteKey)}`
+      );
       script.async = true;
       script.onload = ready;
       script.onerror = () => {
@@ -972,7 +976,7 @@ interface VerificationPrompt {
   selector: 'app-verification-dialog',
   standalone: true,
   template: `
-    @if (verifiedUser.ready() && !verifiedUser.user()) {
+    @if (autoOpen && verifiedUser.ready() && !verifiedUser.user()) {
       @if (prompt) {
         <button class="verify-button trigger" type="button" (click)="open()">{{ prompt.trigger }}</button>
       } @else if (promptError) {
@@ -1028,6 +1032,7 @@ interface VerificationPrompt {
 })
 export class VerificationDialogComponent implements OnInit, AfterViewInit, OnDestroy {
   @Input({ required: true }) context!: string;
+  @Input() autoOpen = true;
   @ViewChild('googleSignIn', { read: ElementRef }) private googleSignIn?: ElementRef<HTMLElement>;
   @ViewChild('dialog', { read: ElementRef }) private dialog?: ElementRef<HTMLDialogElement>;
   protected prompt: VerificationPrompt | null = null;
@@ -1049,7 +1054,7 @@ export class VerificationDialogComponent implements OnInit, AfterViewInit, OnDes
         }
         if (user) {
           this.dialog?.nativeElement.close();
-        } else {
+        } else if (this.autoOpen) {
           this.open();
         }
       });
@@ -1062,7 +1067,7 @@ export class VerificationDialogComponent implements OnInit, AfterViewInit, OnDes
 
   ngAfterViewInit(): void {
     this.viewReady = true;
-    if (this.verifiedUser.ready() && !this.verifiedUser.user()) {
+    if (this.autoOpen && this.verifiedUser.ready() && !this.verifiedUser.user()) {
       this.open();
     }
   }
@@ -1668,13 +1673,14 @@ function isEssayListResponse(value: unknown): value is { essays: EssayIndexItem[
         <p class="essay-load-error" role="status">No essays are available right now.</p>
       }
     </main>
-    <app-verification-dialog context="essay" />
+    <app-verification-dialog context="essay" [autoOpen]="false" />
   `,
   styles: [`
     .essay-list-page { margin: 0 auto; max-width: 1080px; padding: 110px 28px 120px; }
     .essay-list-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(48px, 8vw, 92px); letter-spacing: -.07em; line-height: .95; margin: 0; max-width: 760px; }
     .essay-list-page h1 em { color: #f45b36; font-style: normal; }
-    .essay-admin-button { background: #f45b36; border: 0; border-radius: 6px; color: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; margin-top: 30px; padding: 14px 18px; }
+    .essay-admin-button { background: transparent; border: 1px solid #f45b36; border-radius: 6px; color: #f45b36; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; margin-top: 30px; padding: 13px 18px; transition: background-color .18s ease, color .18s ease; }
+    .essay-admin-button:hover { background: #f45b36; color: #1c1b1a; }
     .essay-admin-button:focus-visible { outline: 2px solid #f45b36; outline-offset: 4px; }
     .essay-list-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 85px; }
     .essay-list-card { border: 1px solid #d8d3ca; min-height: 210px; min-width: 0; padding: 28px 32px; }

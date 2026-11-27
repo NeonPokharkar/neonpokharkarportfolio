@@ -23,14 +23,15 @@
                 <textarea
                   name="chatInput"
                   [(ngModel)]="chatInput"
+                  (ngModelChange)="onChatInputChange($event)"
                   placeholder="Ask a question..."
                   rows="1"
-                  [disabled]="chatBusy"
+                  [disabled]="chatBusy || chatRequiresSignIn"
                   aria-label="Message for AI assistant"
                   class="chat-input-welcome"
                   (input)="resizeChatInput($event)"
                   (keydown)="onChatInputKeydown($event)"></textarea>
-                <button type="button" class="input-icon-button voice-button" (click)="toggleDictation()" [class.voice-listening]="voiceListening" [disabled]="chatBusy || voiceStopping" [attr.aria-pressed]="voiceListening" [attr.aria-label]="voiceListening ? 'Stop voice input' : 'Start voice input'" [title]="voiceListening ? 'Stop voice input' : 'Start voice input'">
+                <button type="button" class="input-icon-button voice-button" (click)="toggleDictation()" [class.voice-listening]="voiceListening" [disabled]="chatBusy || chatRequiresSignIn || voiceStopping" [attr.aria-pressed]="voiceListening" [attr.aria-label]="voiceListening ? 'Stop voice input' : 'Start voice input'" [title]="voiceListening ? 'Stop voice input' : 'Start voice input'">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="9" y="3" width="6" height="12" rx="3"></rect>
                     <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"></path>
@@ -46,6 +47,12 @@
               @if (chatError) {
                 <p class="chat-error">{{ chatError }}</p>
               }
+              @if (chatRequiresSignIn) {
+                <div class="chat-auth-prompt" role="status">
+                  <p>{{ chatAuthenticationMessage }}</p>
+                  <button type="button" (click)="openGoogleSignIn()">Continue with Google</button>
+                </div>
+              }
             </form>
           </div>
 
@@ -53,7 +60,7 @@
           @if (welcomeContent; as welcome) {
             <div class="chat-suggestions-welcome">
               @for (suggestion of welcome.suggestions; track $index) {
-                <button type="button" class="suggestion-item-welcome" (click)="submitSuggestion(suggestion.prompt)" [disabled]="chatBusy">
+                <button type="button" class="suggestion-item-welcome" (click)="submitSuggestion(suggestion.prompt)" [disabled]="chatBusy || chatRequiresSignIn">
                   <span class="suggestion-icon" aria-hidden="true">{{ suggestion.icon }}</span>
                   <span>{{ suggestion.label }}</span>
                 </button>
@@ -119,19 +126,20 @@
                 <textarea
                   name="chatInput"
                   [(ngModel)]="chatInput"
+                  (ngModelChange)="onChatInputChange($event)"
                   placeholder="Ask a question..."
                   rows="1"
-                  [disabled]="chatBusy"
+                  [disabled]="chatBusy || chatRequiresSignIn"
                   aria-label="Message for AI assistant"
                   class="chat-input-expanded"
                   (input)="resizeChatInput($event)"
                   (keydown)="onChatInputKeydown($event)"></textarea>
-                <button type="submit" [disabled]="chatBusy || !chatInput.trim()" aria-label="Send message" title="Send message" class="input-icon-button">
+                <button type="submit" [disabled]="chatBusy || chatRequiresSignIn || !chatInput.trim()" aria-label="Send message" title="Send message" class="input-icon-button">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <path d="M12 19V5M5 12l7-7 7 7"></path>
                   </svg>
                 </button>
-                <button type="button" class="input-icon-button voice-button" (click)="toggleDictation()" [class.voice-listening]="voiceListening" [disabled]="chatBusy || voiceStopping" [attr.aria-pressed]="voiceListening" [attr.aria-label]="voiceListening ? 'Stop voice input' : 'Start voice input'" [title]="voiceListening ? 'Stop voice input' : 'Start voice input'">
+                <button type="button" class="input-icon-button voice-button" (click)="toggleDictation()" [class.voice-listening]="voiceListening" [disabled]="chatBusy || chatRequiresSignIn || voiceStopping" [attr.aria-pressed]="voiceListening" [attr.aria-label]="voiceListening ? 'Stop voice input' : 'Start voice input'" [title]="voiceListening ? 'Stop voice input' : 'Start voice input'">
                   <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                     <rect x="9" y="3" width="6" height="12" rx="3"></rect>
                     <path d="M5.5 11.5a6.5 6.5 0 0 0 13 0M12 18v3M9 21h6"></path>
@@ -151,6 +159,12 @@
                 <div class="chat-error chat-error-dismissible" role="alert">
                   <span>{{ chatError }}</span>
                   <button type="button" (click)="chatError = ''" aria-label="Dismiss chat error">×</button>
+                </div>
+              }
+              @if (chatRequiresSignIn) {
+                <div class="chat-auth-prompt" role="status">
+                  <p>{{ chatAuthenticationMessage }}</p>
+                  <button type="button" (click)="openGoogleSignIn()">Continue with Google</button>
                 </div>
               }
               @if (actionNotice) {

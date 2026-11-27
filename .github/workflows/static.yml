@@ -39,6 +39,9 @@ jobs:
       - name: Test generated discovery files
         run: npm run test:static
 
+      - name: Test security helpers and chat synchronization
+        run: npm run test:security
+
       - name: Prepare SPA fallback
         run: |
           cp ./dist/neon-portfolio/browser/index.html ./dist/neon-portfolio/browser/404.html

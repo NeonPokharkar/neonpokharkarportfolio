@@ -4,6 +4,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
+import vm from 'node:vm';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const output = path.join(root, 'dist', 'neon-portfolio', 'browser');
@@ -152,4 +153,27 @@ test('built contextual question manifest contains usable templates', async () =>
       `Unknown home section or service: ${key}`
     );
   }
+});
+
+test('applies the saved theme before stylesheets can paint the page', async () => {
+  const [source, builtIndex] = await Promise.all([
+    read('src/index.html'),
+    built('index.html')
+  ]);
+  const inlineScript = source.match(/<script>([\s\S]*?)<\/script>/)?.[1];
+  assert.ok(inlineScript);
+  const document = { documentElement: { dataset: {} } };
+  vm.runInNewContext(inlineScript, {
+    document,
+    window: {
+      localStorage: { getItem: (key) => key === 'aditya-portfolio-theme' ? 'night' : null },
+      matchMedia: () => ({ matches: false })
+    }
+  });
+  assert.equal(document.documentElement.dataset.theme, 'night');
+
+  const stylesheetIndex = builtIndex.indexOf('media="print"');
+  assert.ok(stylesheetIndex > 0);
+  assert.ok(builtIndex.slice(0, stylesheetIndex).includes('aditya-portfolio-theme'));
+  assert.match(builtIndex.slice(0, stylesheetIndex), /html\[data-theme='night'\].*color-scheme: dark/s);
 });

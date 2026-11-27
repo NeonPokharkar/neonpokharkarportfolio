@@ -285,8 +285,10 @@ h2 { font-size: clamp(42px, 5vw, 69px); line-height: .95; margin: 0; }
 .chat-footnote { color: #716f6a; font-size: 10px; margin: 0; padding: 0 14px 14px; }
 footer { color: #716f6a; display: flex; font-size: 11px; justify-content: space-between; margin: 0 auto; max-width: 1240px; padding: 28px 32px; }
 footer a { color: #1c1b1a; font-weight: 700; }
-.site-footer .recaptcha-disclosure { flex-basis: 100%; font-size: 10px; }
-.site-footer .recaptcha-disclosure a { text-decoration: underline; }
+.site-footer { flex-wrap: wrap; }
+.site-footer .footer-identity { display: grid; gap: 4px; }
+.site-footer .recaptcha-disclosure { flex: 0 0 100%; font-size: 10px; margin-top: 30px; text-align: center; }
+.site-footer .recaptcha-disclosure a { color: #f45b36; text-decoration: underline; }
 
 @media (max-width: 1100px) {
   .site-header { padding: 22px 20px; position: relative; z-index: 20; }

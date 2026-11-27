@@ -425,8 +425,10 @@
 <!-- MARKER: FOOTER_SECTION - Copyright, attribution, and route navigation -->
 @if (!isChatRoute) {
 <footer class="site-footer">
-  <span>© {{ copyrightYear }} Aditya Pokharkar</span>
-  <span>High-Ownership Product &amp; Systems Engineer</span>
+  <div class="footer-identity">
+    <span>© {{ copyrightYear }} Aditya Pokharkar</span>
+    <span>High-Ownership Product &amp; Systems Engineer</span>
+  </div>
   @if (isHomeRoute) {
     <a href="#top">Back to top ↑</a>
   } @else {

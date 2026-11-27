@@ -1,9 +1,11 @@
-import { AfterViewInit, Component, effect, ElementRef, HostListener, Input, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
-import { ActivatedRoute, Routes } from '@angular/router';
+import { AfterViewInit, Component, ComponentRef, effect, ElementRef, EventEmitter, HostListener, Input, OnChanges, OnDestroy, OnInit, Output, QueryList, SimpleChanges, ViewChild, ViewChildren, ViewContainerRef } from '@angular/core';
+import { ActivatedRoute, Router, RouterLink, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Meta } from '@angular/platform-browser';
+import { Subscription } from 'rxjs';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
 import { isFriendLookupStatus, isValidFriendDetails, VerifiedUserService } from './verified-user.service';
+import type { EssayEditorComponent, EssayEditorRecord, EssayEditorSavedEvent } from './essay-editor.component';
 import { ShayariEditorComponent } from './shayari-editor.component';
 
 interface PageContent {
@@ -1583,7 +1585,8 @@ interface EssayIndexItem {
   summary: string;
   author: string;
   publishedAt: string;
-  file: string;
+  file: string | null;
+  timeZone?: string;
 }
 
 interface EssayContent extends EssayIndexItem {
@@ -1593,51 +1596,86 @@ interface EssayContent extends EssayIndexItem {
 interface EssayApiResponse extends EssayIndexItem {
   html: string;
   proof: unknown;
+  updatedAt?: string;
+  updatedTimeZone?: string;
 }
 
-interface EssayManifest {
-  essays: EssayIndexItem[];
-}
-
-function isEssayApiResponse(value: unknown): value is EssayApiResponse {
+function isEssayIndexItem(value: unknown): value is EssayIndexItem {
   if (!value || typeof value !== 'object') {
     return false;
   }
   const essay = value as Record<string, unknown>;
-  return ['slug', 'category', 'title', 'summary', 'author', 'file'].every((field) =>
-    typeof essay[field] === 'string' && Boolean(essay[field].trim())
-  ) && typeof essay['publishedAt'] === 'string' && Number.isFinite(Date.parse(essay['publishedAt'])) &&
-    typeof essay['html'] === 'string' && Boolean(essay['html'].trim()) &&
-    typeof essay['proof'] === 'object' && essay['proof'] !== null;
+  return typeof essay['slug'] === 'string' && /^[a-z0-9]+(?:-[a-z0-9]+)*$/.test(essay['slug']) &&
+    ['category', 'title', 'author'].every((field) =>
+      typeof essay[field] === 'string' && Boolean(essay[field].trim())
+    ) && typeof essay['summary'] === 'string' &&
+    typeof essay['publishedAt'] === 'string' && Number.isFinite(Date.parse(essay['publishedAt'])) &&
+    'file' in essay && (essay['file'] === null || typeof essay['file'] === 'string') &&
+    (!('timeZone' in essay) || typeof essay['timeZone'] === 'string');
+}
+
+function isEssayApiResponse(value: unknown): value is EssayApiResponse {
+  if (!isEssayIndexItem(value)) {
+    return false;
+  }
+  return 'html' in value && typeof value.html === 'string' &&
+    'proof' in value && typeof value.proof === 'object' && value.proof !== null && !Array.isArray(value.proof);
+}
+
+function isEssayListResponse(value: unknown): value is { essays: EssayIndexItem[] } {
+  if (!value || typeof value !== 'object' || !('essays' in value) || !Array.isArray(value.essays)) {
+    return false;
+  }
+  return value.essays.every(isEssayIndexItem);
 }
 
 @Component({
   selector: 'app-essay-list',
   standalone: true,
+  imports: [RouterLink, VerificationDialogComponent],
   template: `
     <main class="essay-list-page">
       <p class="eyebrow"><span class="eyebrow-line"></span> Notes from the process</p>
       <h1>Blog and thought <em>essays.</em></h1>
+      @if (verifiedUser.ready() && verifiedUser.user()?.isAdmin === true) {
+        <button class="essay-admin-button" type="button" (click)="addEssay()">Add New Essay</button>
+      }
       @if (loadError) {
         <p class="essay-load-error" role="alert">{{ loadError }}</p>
-      } @else {
+      }
+      @if (authLoadError) {
+        <p class="essay-load-error" role="alert">{{ authLoadError }}</p>
+      }
+      @if (essays.length) {
         <div class="essay-list-grid">
           @for (essay of essays; track essay.slug) {
             <article class="essay-list-card" data-context-category="essay" [attr.data-context-key]="essay.slug">
               <p>{{ essay.category }}</p>
-              <h2><a [href]="'/essays/' + essay.slug" target="_blank" rel="noreferrer">{{ essay.title }} <span aria-hidden="true">↗</span></a></h2>
+              <h2><a [routerLink]="['/essays', essay.slug]" target="_blank" rel="noreferrer">{{ essay.title }} <span aria-hidden="true">↗</span></a></h2>
               <small>By {{ essay.author }}</small>
               <div>{{ essay.summary }}</div>
             </article>
           }
+          @if (verifiedUser.ready() && !verifiedUser.user()) {
+            <article class="essay-list-card essay-signin-card">
+              <p>More to read</p>
+              <h2>Tell me who you are to read more of my essays.</h2>
+              <button class="essay-admin-button" type="button" (click)="openSignIn()">Continue with Google</button>
+            </article>
+          }
         </div>
+      } @else if (!loadError) {
+        <p class="essay-load-error" role="status">No essays are available right now.</p>
       }
     </main>
+    <app-verification-dialog context="essay" />
   `,
   styles: [`
     .essay-list-page { margin: 0 auto; max-width: 1080px; padding: 110px 28px 120px; }
     .essay-list-page h1 { font-family: 'Space Grotesk', sans-serif; font-size: clamp(48px, 8vw, 92px); letter-spacing: -.07em; line-height: .95; margin: 0; max-width: 760px; }
     .essay-list-page h1 em { color: #f45b36; font-style: normal; }
+    .essay-admin-button { background: #f45b36; border: 0; border-radius: 6px; color: #fff; cursor: pointer; font: inherit; font-size: 13px; font-weight: 700; margin-top: 30px; padding: 14px 18px; }
+    .essay-admin-button:focus-visible { outline: 2px solid #f45b36; outline-offset: 4px; }
     .essay-list-grid { display: grid; gap: 16px; grid-template-columns: repeat(2, minmax(0, 1fr)); margin-top: 85px; }
     .essay-list-card { border: 1px solid #d8d3ca; min-height: 210px; min-width: 0; padding: 28px 32px; }
     .essay-list-card:nth-child(odd), .essay-list-card:nth-child(even) { border-right: 1px solid #d8d3ca; padding-left: 32px; padding-right: 32px; }
@@ -1647,6 +1685,8 @@ function isEssayApiResponse(value: unknown): value is EssayApiResponse {
     .essay-list-card h2 a:hover { color: #f45b36; }
     .essay-list-card div { color: #716f6a; font-size: 14px; line-height: 1.6; max-width: 400px; overflow-wrap: anywhere; }
     .essay-list-card small { color: #1c1b1a; display: block; font-size: 12px; margin-bottom: 10px; }
+    .essay-signin-card h2 { font-size: 24px; line-height: 1.2; max-width: 360px; }
+    .essay-signin-card .essay-admin-button { margin-top: 22px; }
     .essay-load-error { color: #b3261e; margin-top: 50px; }
     @media (max-width: 800px) {
       .essay-list-page { padding: 75px 20px 90px; }
@@ -1655,26 +1695,189 @@ function isEssayApiResponse(value: unknown): value is EssayApiResponse {
     }
   `]
 })
-export class EssayListComponent {
+export class EssayListComponent implements OnDestroy {
   protected essays: EssayIndexItem[] = [];
   protected loadError = '';
+  protected authLoadError = '';
+  @ViewChild(VerificationDialogComponent)
+  private verificationDialog?: VerificationDialogComponent;
+  private defaultEssays: EssayIndexItem[] = [];
+  private authenticatedEssays: EssayIndexItem[] = [];
+  private listToken: string | null = null;
+  private listController?: AbortController;
+  private destroyed = false;
 
-  constructor() {
+  constructor(
+    private readonly router: Router,
+    protected readonly verifiedUser: VerifiedUserService
+  ) {
     void this.loadEssays();
+    effect(() => {
+      this.verifiedUser.ready();
+      const user = this.verifiedUser.user();
+      if (!this.verifiedUser.ready()) {
+        return;
+      }
+      const token = user ? this.verifiedUser.getAccessToken() : null;
+      if (token) {
+        if (token !== this.listToken) {
+          void this.loadAuthenticatedEssays(token);
+        }
+      } else {
+        this.listController?.abort();
+        this.listToken = null;
+        this.authenticatedEssays = [];
+        this.authLoadError = '';
+        this.refreshList();
+      }
+    });
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    this.listController?.abort();
+  }
+
+  protected addEssay(): void {
+    void this.router.navigate(['/essays/new']);
+  }
+
+  protected openSignIn(): void {
+    this.verificationDialog?.open();
   }
 
   private async loadEssays(): Promise<void> {
     try {
       const response = await fetch('assets/essays/essays.json');
       if (!response.ok) {
+        throw new Error(`Essay index returned HTTP ${response.status}.`);
+      }
+      const manifest: unknown = await response.json();
+      if (!manifest || typeof manifest !== 'object' || !('essays' in manifest) ||
+          !Array.isArray(manifest.essays) || !manifest.essays.every(isEssayIndexItem)) {
+        throw new Error('Essay index has an invalid shape.');
+      }
+      this.defaultEssays = manifest.essays;
+      this.refreshList();
+    } catch (error: unknown) {
+      if (!this.destroyed) {
+        console.error('Could not load the public essay index.', error);
         this.loadError = 'Essays could not be loaded right now.';
+      }
+    }
+  }
+
+  private async loadAuthenticatedEssays(token: string): Promise<void> {
+    this.listController?.abort();
+    const controller = new AbortController();
+    this.listController = controller;
+    this.listToken = token;
+    this.authLoadError = '';
+    try {
+      const profileResponse = await fetch('assets/profile/profile.json', { signal: controller.signal });
+      if (!profileResponse.ok) {
+        throw new Error(`Could not load API configuration (HTTP ${profileResponse.status}).`);
+      }
+      const profile: unknown = await profileResponse.json();
+      if (!profile || typeof profile !== 'object' || !('intelliChatEndpoint' in profile) ||
+          typeof profile.intelliChatEndpoint !== 'string') {
+        throw new Error('Invalid API configuration.');
+      }
+      const response = await fetch(new URL('/essays/list', profile.intelliChatEndpoint), {
+        cache: 'no-store',
+        headers: { Authorization: `Bearer ${token}` },
+        signal: controller.signal
+      });
+      if (this.verifiedUser.getAccessToken() !== token) {
         return;
       }
+      if (response.status === 401) {
+        this.verifiedUser.clear();
+        this.verificationDialog?.open('Your sign-in session has expired. Sign in again to load all essays.');
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(`Essay list endpoint returned HTTP ${response.status}.`);
+      }
+      const result: unknown = await response.json();
+      if (!isEssayListResponse(result)) {
+        throw new Error('Essay list endpoint returned an invalid response.');
+      }
+      if (!this.destroyed && this.verifiedUser.getAccessToken() === token) {
+        this.authenticatedEssays = result.essays;
+        this.refreshList();
+      }
+    } catch (error: unknown) {
+      if (!controller.signal.aborted && !this.destroyed) {
+        console.error('Could not load authenticated essays.', error);
+        this.authLoadError = 'Additional essays could not be loaded right now.';
+      }
+    } finally {
+      if (this.listController === controller) {
+        this.listController = undefined;
+      }
+    }
+  }
 
-      const manifest = await response.json() as EssayManifest;
-      this.essays = manifest.essays;
-    } catch {
-      this.loadError = 'Essays could not be loaded right now.';
+  private refreshList(): void {
+    const essaysBySlug = new Map(this.defaultEssays.map((essay) => [essay.slug, essay]));
+    for (const essay of this.authenticatedEssays) {
+      essaysBySlug.set(essay.slug, essay);
+    }
+    this.essays = [...essaysBySlug.values()];
+  }
+}
+
+@Component({
+  selector: 'app-essay-editor-outlet',
+  standalone: true,
+  template: `
+    <ng-container #editorOutlet></ng-container>
+    @if (loadError) {
+      <p class="essay-load-error" role="alert">{{ loadError }}</p>
+    }
+  `
+})
+export class EssayEditorOutletComponent implements AfterViewInit, OnChanges, OnDestroy {
+  @Input() essay: EssayEditorRecord | null = null;
+  @Output() readonly saved = new EventEmitter<EssayEditorSavedEvent>();
+  @Output() readonly cancelled = new EventEmitter<void>();
+  @ViewChild('editorOutlet', { read: ViewContainerRef }) private editorOutlet!: ViewContainerRef;
+  protected loadError = '';
+  private editorRef?: ComponentRef<EssayEditorComponent>;
+  private subscriptions = new Subscription();
+  private destroyed = false;
+
+  ngAfterViewInit(): void {
+    void this.loadEditor();
+  }
+
+  ngOnChanges(changes: SimpleChanges): void {
+    if (changes['essay']) {
+      this.editorRef?.setInput('essay', this.essay);
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.destroyed = true;
+    this.subscriptions.unsubscribe();
+  }
+
+  private async loadEditor(): Promise<void> {
+    try {
+      const { EssayEditorComponent } = await import('./essay-editor.component');
+      if (this.destroyed) {
+        return;
+      }
+      this.editorRef = this.editorOutlet.createComponent(EssayEditorComponent);
+      this.editorRef.setInput('essay', this.essay);
+      this.subscriptions.add(this.editorRef.instance.saved.subscribe((result) => this.saved.emit(result)));
+      this.subscriptions.add(this.editorRef.instance.cancelled.subscribe(() => this.cancelled.emit()));
+    } catch (error: unknown) {
+      if (!this.destroyed) {
+        console.error('The essay editor could not be loaded.', error);
+        this.loadError = 'The essay editor could not be loaded. Please try again.';
+      }
     }
   }
 }
@@ -1682,12 +1885,24 @@ export class EssayListComponent {
 @Component({
   selector: 'app-essay-page',
   standalone: true,
-  imports: [VerificationDialogComponent],
+  imports: [VerificationDialogComponent, EssayEditorOutletComponent],
   template: `
     <main class="essay-page" data-context-category="essay" [attr.data-context-key]="essay?.slug">
-      <button class="essay-close" type="button" (click)="closeEssay()">Close essay ×</button>
+      <button class="essay-close" type="button" (click)="closeEssay()">{{ isCreatePage ? 'Back to essays' : 'Close essay ×' }}</button>
       @if (!verifiedUser.ready()) {
         <p role="status">Checking your session...</p>
+      } @else if (isCreatePage && verifiedUser.user()?.isAdmin === true) {
+        <p class="eyebrow"><span class="eyebrow-line"></span> Essays / New</p>
+        <h1>A new <em>essay.</em></h1>
+      } @else if (isCreatePage && !verifiedUser.user()) {
+        <p class="eyebrow"><span class="eyebrow-line"></span> Essays</p>
+        <h1>Tell me who you <em>are.</em></h1>
+        <p class="essay-summary">Sign in with Google using an authorized admin account to create an essay.</p>
+        <button class="essay-retry" type="button" (click)="openSignIn()">Continue with Google</button>
+      } @else if (isCreatePage) {
+        <p class="eyebrow"><span class="eyebrow-line"></span> Essays</p>
+        <h1>Admin access <em>required.</em></h1>
+        <p class="essay-summary">This account is not authorized to create essays.</p>
       } @else if (!verifiedUser.user()) {
         <p class="eyebrow"><span class="eyebrow-line"></span> Essays</p>
         <h1>A little introduction <em>first.</em></h1>
@@ -1699,16 +1914,30 @@ export class EssayListComponent {
       } @else if (loadingEssay) {
         <p role="status">Loading essay...</p>
       } @else if (essay) {
-        <p class="eyebrow"><span class="eyebrow-line"></span> {{ essay.category }}</p>
-        <h1>{{ essay.title }}</h1>
-        <p class="essay-summary">{{ essay.summary }}</p>
-        <div class="essay-body">
-          <div class="essay-meta">
-            <p>By {{ essay.author }}</p>
-            <time [attr.datetime]="essay.publishedAt">{{ formatPublishedAt(essay.publishedAt) }}</time>
+        @if (verifiedUser.user()?.isAdmin === true && !editingEssay) {
+          <button class="essay-edit" type="button" (click)="beginEdit()">Edit essay</button>
+        }
+        @if (!editingEssay) {
+          <p class="eyebrow"><span class="eyebrow-line"></span> {{ essay.category }}</p>
+          <h1>{{ essay.title }}</h1>
+          <p class="essay-summary">{{ essay.summary }}</p>
+          <div class="essay-body">
+            <div class="essay-meta">
+              <p>By {{ essay.author }}</p>
+              <time [attr.datetime]="essay.publishedAt">{{ formatPublishedAt(essay.publishedAt) }}</time>
+            </div>
+            <div [innerHTML]="essay.body"></div>
           </div>
-          <div [innerHTML]="essay.body"></div>
-        </div>
+        }
+      }
+      @if (creatingEssay || editingEssay) {
+        @defer (when creatingEssay || editingEssay) {
+          <app-essay-editor-outlet [essay]="editingEssay ? editableEssay : null" (cancelled)="cancelEditor()" (saved)="handleEssaySaved($event)" />
+        } @loading {
+          <p role="status">Loading essay editor...</p>
+        } @error {
+          <p class="essay-load-error" role="alert">The essay editor could not be loaded. Please try again.</p>
+        }
       }
       <app-verification-dialog context="essay" />
     </main>
@@ -1729,13 +1958,20 @@ export class EssayListComponent {
     .essay-meta time { display: block; }
     .essay-close { background: transparent; border: 0; color: #f45b36; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .1em; padding: 0; position: absolute; right: 28px; text-transform: uppercase; top: 80px; }
     .essay-close:hover { color: #1c1b1a; }
+    .essay-edit { background: transparent; border: 1px solid #f45b36; border-radius: 6px; color: #f45b36; cursor: pointer; font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .08em; margin: 0 0 28px; padding: 10px 14px; text-transform: uppercase; }
+    .essay-edit:hover { background: #f45b36; color: #fff; }
+    .essay-edit:focus-visible { outline: 2px solid #f45b36; outline-offset: 3px; }
     .essay-retry { background: #f45b36; border: 0; border-radius: 8px; color: #fff; cursor: pointer; font: inherit; font-weight: 700; margin-top: 20px; padding: 12px 18px; }
   `]
 })
 export class EssayPageComponent implements OnDestroy {
   protected essay: EssayContent | null = null;
+  protected editableEssay: EssayEditorRecord | null = null;
+  protected creatingEssay = false;
+  protected editingEssay = false;
   protected loadError = '';
   protected loadingEssay = false;
+  protected readonly isCreatePage: boolean;
   private readonly slug: string | null;
   private loadController?: AbortController;
   private requestedToken: string | null = null;
@@ -1743,8 +1979,14 @@ export class EssayPageComponent implements OnDestroy {
   @ViewChild(VerificationDialogComponent)
   private verificationDialog?: VerificationDialogComponent;
 
-  constructor(route: ActivatedRoute, private readonly meta: Meta, protected readonly verifiedUser: VerifiedUserService) {
-    this.slug = route.snapshot.paramMap.get('slug');
+  constructor(
+    route: ActivatedRoute,
+    private readonly meta: Meta,
+    private readonly router: Router,
+    protected readonly verifiedUser: VerifiedUserService
+  ) {
+    this.isCreatePage = route.snapshot.data['createEssay'] === true;
+    this.slug = this.isCreatePage ? null : route.snapshot.paramMap.get('slug');
     effect(() => {
       this.verifiedUser.ready();
       this.verifiedUser.user();
@@ -1764,7 +2006,59 @@ export class EssayPageComponent implements OnDestroy {
   }
 
   protected closeEssay(): void {
-    window.close();
+    if (window.opener) {
+      window.close();
+    } else {
+      void this.router.navigate(['/essays']);
+    }
+  }
+
+  protected beginEdit(): void {
+    if (!this.essay) {
+      return;
+    }
+    this.editableEssay = { ...this.essay, html: this.essay.body };
+    this.editingEssay = true;
+  }
+
+  protected cancelEdit(): void {
+    this.editingEssay = false;
+    this.editableEssay = null;
+  }
+
+  protected cancelEditor(): void {
+    if (this.isCreatePage) {
+      void this.router.navigate(['/essays']);
+    } else {
+      this.cancelEdit();
+    }
+  }
+
+  protected openSignIn(): void {
+    this.verificationDialog?.open();
+  }
+
+  protected handleEssaySaved(result: EssayEditorSavedEvent): void {
+    if (this.isCreatePage && result.created) {
+      this.creatingEssay = false;
+      void this.router.navigate(['/essays', result.essay.slug]);
+      return;
+    }
+    if (result.created || !this.essay || result.essay.slug !== this.essay.slug) {
+      return;
+    }
+    this.essay = {
+      ...this.essay,
+      category: result.essay.category,
+      title: result.essay.title,
+      summary: result.essay.summary,
+      author: result.essay.author,
+      publishedAt: result.essay.publishedAt,
+      file: result.essay.file,
+      body: result.essay.html
+    };
+    this.editingEssay = false;
+    this.editableEssay = null;
   }
 
   protected retryEssay(): void {
@@ -1779,6 +2073,13 @@ export class EssayPageComponent implements OnDestroy {
 
   private synchronizeSession(): void {
     if (this.destroyed || !this.verifiedUser.ready()) {
+      return;
+    }
+    if (this.isCreatePage) {
+      this.loadController?.abort();
+      this.essay = null;
+      this.loadError = '';
+      this.creatingEssay = this.verifiedUser.user()?.isAdmin === true;
       return;
     }
     const token = this.verifiedUser.getAccessToken();
@@ -2685,8 +2986,13 @@ export const routes: Routes = [
     component: EssayListComponent
   },
   {
-   path: 'essays/:slug',
-   component: EssayPageComponent,
+    path: 'essays/new',
+    component: EssayPageComponent,
+    data: { createEssay: true }
+  },
+  {
+    path: 'essays/:slug',
+    component: EssayPageComponent
   },
   {
     path: 'invest',

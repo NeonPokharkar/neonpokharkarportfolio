@@ -154,6 +154,7 @@ export class AppComponent implements OnDestroy {
       if (event instanceof NavigationStart) {
         this.cancelContextHover();
         this.closeContextMenu();
+        this.closeProfileMenu();
         this.hoveredContext = null;
         this.dismissedContext = null;
       }
@@ -193,6 +194,7 @@ export class AppComponent implements OnDestroy {
   protected clickPointerX = 0;
   protected clickPointerY = 0;
   protected menuOpen = false;
+  protected profileMenuOpen = false;
   private clickPointerTimer: ReturnType<typeof setTimeout> | undefined;
   protected contextMenu: { title: string; questions: string[] } | null = null;
   protected contextStatus = '';
@@ -615,12 +617,47 @@ export class AppComponent implements OnDestroy {
   // MARKER: EVENT_LISTENERS_START - @HostListener for scroll, mouse, keyboard
   @HostListener('window:scroll')
   protected updateScrollProgress(): void {
+    this.closeProfileMenu();
     this.cancelContextHover();
     if (!this.contextMenu) {
       this.hoveredContext = null;
     }
     const scrollableHeight = Math.max(document.documentElement.scrollHeight - window.innerHeight, 1);
     this.scrollProgress = Math.min(window.scrollY / scrollableHeight, 1);
+  }
+
+  @HostListener('document:click', ['$event'])
+  protected closeProfileMenuOnOutsideClick(event: MouseEvent): void {
+    if (this.profileMenuOpen && event.target instanceof Element &&
+        !event.target.closest('.user-profile-menu')) {
+      this.closeProfileMenu();
+    }
+  }
+
+  @HostListener('document:keydown.escape')
+  protected closeProfileMenuOnEscape(): void {
+    this.closeProfileMenu();
+  }
+
+  protected openProfileMenu(): void {
+    this.profileMenuOpen = true;
+  }
+
+  protected closeProfileMenu(): void {
+    this.profileMenuOpen = false;
+  }
+
+  protected closeProfileMenuOnFocusOut(event: FocusEvent): void {
+    if (!(event.currentTarget instanceof HTMLElement) ||
+        !(event.relatedTarget instanceof Node) ||
+        !event.currentTarget.contains(event.relatedTarget)) {
+      this.closeProfileMenu();
+    }
+  }
+
+  protected signOut(): void {
+    void this.verifiedUser.logout();
+    this.closeProfileMenu();
   }
 
   @HostListener('document:mousemove', ['$event'])

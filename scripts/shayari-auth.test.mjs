@@ -20,6 +20,7 @@ function createBrowser({ heartbeatMessageDelay = 0 } = {}) {
   const storage = new Map();
   const requests = [];
   let heartbeatResponse = { status: 200, body: { authenticated: true, expires_in: 7200 } };
+  let logoutResponse = { status: 200, body: { logged_out: true } };
 
   const setTimer = (callback, delay = 0) => {
     const id = ++nextTimer;
@@ -67,7 +68,15 @@ function createBrowser({ heartbeatMessageDelay = 0 } = {}) {
     if (typeof url === 'string') {
       return { ok: true, json: async () => ({ intelliChatEndpoint: 'https://example.test/intelli-chat' }) };
     }
-    requests.push({ url: String(url), ...options });
+    const request = { url: String(url), ...options };
+    requests.push(request);
+    if (request.url.endsWith('/auth/logout')) {
+      return {
+        ok: logoutResponse.status === 200,
+        status: logoutResponse.status,
+        json: async () => logoutResponse.body
+      };
+    }
     if (heartbeatResponse.error) {
       throw new Error('Simulated network failure');
     }
@@ -135,7 +144,8 @@ function createBrowser({ heartbeatMessageDelay = 0 } = {}) {
 
   return {
     tab, advance, flush, requests, storage,
-    respond(response) { heartbeatResponse = response; }
+    respond(response) { heartbeatResponse = response; },
+    respondLogout(response) { logoutResponse = response; }
   };
 }
 
@@ -302,6 +312,39 @@ test('clears every tab when the heartbeat is rejected', async () => {
   assert.equal(first.service.getAccessToken(), null);
   assert.equal(second.service.getAccessToken(), null);
   assert.match(second.service.sessionNotice(), /sign in again/);
+});
+
+test('revokes the signed-out session and stops its heartbeat', async () => {
+  const browser = createBrowser();
+  const tab = browser.tab();
+  tab.service.setSession({ name: 'Example', picture: null }, 'synthetic-token', 7200);
+  await browser.flush();
+
+  const logout = tab.service.logout();
+  assert.equal(tab.service.getAccessToken(), null);
+  await logout;
+  assert.match(tab.service.sessionNotice(), /signed out/i);
+
+  const request = browser.requests.find((item) => item.url === 'https://example.test/auth/logout');
+  assert.ok(request);
+  assert.equal(request.method, 'POST');
+  assert.equal(request.headers.Authorization, 'Bearer synthetic-token');
+  assert.equal(request.body, undefined);
+
+  await browser.advance(31 * 60 * 1000);
+  assert.equal(browser.requests.filter((item) => item.url === 'https://example.test/auth/logout').length, 1);
+});
+
+test('treats an already-revoked logout token as signed out', async () => {
+  const browser = createBrowser();
+  const tab = browser.tab();
+  tab.service.setSession({ name: 'Example', picture: null }, 'synthetic-token', 7200);
+  await browser.flush();
+  browser.respondLogout({ status: 401, body: {} });
+
+  await tab.service.logout();
+  assert.equal(tab.service.user(), null);
+  assert.match(tab.service.sessionNotice(), /signed out/i);
 });
 
 test('reports a failed heartbeat and retries only once across tabs', async () => {

@@ -49,13 +49,32 @@
     </button>
     <a class="header-link" [href]="resumeHref" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
     @if (verifiedUser.user(); as user) {
-      <div class="user-profile" role="status" [attr.aria-label]="'Signed in as ' + user.name" [title]="user.name">
-        @if (user.picture && user.picture !== failedProfilePicture) {
-          <img class="user-profile-avatar" [src]="user.picture" alt="" referrerpolicy="no-referrer" (error)="failedProfilePicture = user.picture">
-        } @else {
-          <span class="user-profile-avatar user-profile-initial" aria-hidden="true">{{ user.name.charAt(0).toUpperCase() }}</span>
+      <div
+        class="user-profile-menu"
+        (mouseenter)="openProfileMenu()"
+        (mouseleave)="closeProfileMenu()"
+        (focusin)="openProfileMenu()"
+        (focusout)="closeProfileMenuOnFocusOut($event)">
+        <button
+          class="user-profile"
+          type="button"
+          [attr.aria-expanded]="profileMenuOpen"
+          [attr.aria-controls]="profileMenuOpen ? 'profile-dropdown' : null"
+          [attr.aria-label]="'Signed in as ' + user.name + '. Account options'"
+          [title]="user.name"
+          (click)="openProfileMenu()">
+          @if (user.picture && user.picture !== failedProfilePicture) {
+            <img class="user-profile-avatar" [src]="user.picture" alt="" referrerpolicy="no-referrer" (error)="failedProfilePicture = user.picture">
+          } @else {
+            <span class="user-profile-avatar user-profile-initial" aria-hidden="true">{{ user.name.charAt(0).toUpperCase() }}</span>
+          }
+          <span class="user-profile-name">{{ user.name }}</span>
+        </button>
+        @if (profileMenuOpen) {
+          <div class="profile-dropdown" id="profile-dropdown">
+            <button class="profile-signout" type="button" (click)="signOut()">Sign out</button>
+          </div>
         }
-        <span class="user-profile-name">{{ user.name }}</span>
       </div>
     }
   </div>

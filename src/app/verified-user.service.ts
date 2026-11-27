@@ -133,6 +133,52 @@ export class VerifiedUserService {
     }
   }
 
+  async logout(): Promise<void> {
+    const accessToken = this.getAccessToken();
+    this.clear();
+    this.notice.set('You have signed out.');
+    if (!accessToken) {
+      return;
+    }
+
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), 15000);
+    try {
+      const profileResponse = await fetch('assets/profile/profile.json', { signal: controller.signal });
+      if (!profileResponse.ok) {
+        throw new Error(`Could not load API configuration (HTTP ${profileResponse.status}).`);
+      }
+      const profile: unknown = await profileResponse.json();
+      if (!profile || typeof profile !== 'object' || !('intelliChatEndpoint' in profile) ||
+          typeof profile.intelliChatEndpoint !== 'string' || !profile.intelliChatEndpoint.trim()) {
+        throw new Error('Invalid API configuration.');
+      }
+      const endpoint = new URL('/auth/logout', profile.intelliChatEndpoint);
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` },
+        signal: controller.signal
+      });
+      if (response.status === 401) {
+        return;
+      }
+      if (!response.ok) {
+        throw new Error(`Logout endpoint returned HTTP ${response.status}.`);
+      }
+      const result: unknown = await response.json();
+      if (!result || typeof result !== 'object' || !('logged_out' in result) || result.logged_out !== true) {
+        throw new Error('Logout endpoint returned an invalid response.');
+      }
+    } catch (error) {
+      console.error('Could not revoke the signed-out session.', error);
+      if (!this.session) {
+        this.notice.set('You are signed out here, but server logout could not be confirmed.');
+      }
+    } finally {
+      clearTimeout(timer);
+    }
+  }
+
   async recordShayariIngestFailure(accessToken: string): Promise<void> {
     await this.updateShayariIngestState(accessToken, 'failure');
   }

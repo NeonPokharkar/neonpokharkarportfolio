@@ -174,6 +174,48 @@ test('shares the session and sends one heartbeat across active tabs', async () =
   assert.equal(browser.requests.length, 2);
 });
 
+test('shares the verified friend profile across tabs', async () => {
+  const browser = createBrowser();
+  const first = browser.tab();
+  const second = browser.tab();
+  const friend = {
+    name: 'Friend',
+    typeOfRelationship: 'Classmate',
+    fromWhatPhase: 'College',
+    since: '2018',
+    cardEmoji: '🎓'
+  };
+  first.service.setSession({
+    name: 'Google account name',
+    picture: null,
+    friend,
+    friendLookupStatus: 'matched'
+  }, 'synthetic-token', 7200);
+  await browser.flush();
+  assert.deepEqual(second.service.user().friend, friend);
+  assert.equal(second.service.user().friendLookupStatus, 'matched');
+});
+
+test('rejects shared sessions with malformed friend details', async () => {
+  const browser = createBrowser();
+  const first = browser.tab();
+  const second = browser.tab();
+  first.service.setSession({
+    name: 'Example',
+    picture: null,
+    friend: {
+      name: 'Stranger',
+      typeOfRelationship: 'Stranger',
+      fromWhatPhase: null,
+      since: null,
+      cardEmoji: '🙂'
+    },
+    friendLookupStatus: 'stranger'
+  }, 'synthetic-token', 7200);
+  await browser.flush();
+  assert.equal(second.service.user(), null);
+});
+
 test('shares the admin flag across tabs and clears it on sign-out', async () => {
   const browser = createBrowser();
   const first = browser.tab();

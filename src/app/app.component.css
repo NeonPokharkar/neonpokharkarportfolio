@@ -95,10 +95,12 @@ nav a.active .nav-astronaut { animation: navAstronautDrift 48s linear infinite; 
 .user-profile-initial { align-items: center; background: #f45b36; color: #fff; display: flex; font-size: 13px; font-weight: 700; justify-content: center; }
 .user-profile-name { font-size: 12px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .profile-dropdown { background: #f7f5f0; border: 1px solid #d8d3ca; border-radius: 10px; box-shadow: 0 12px 30px #1c1b1a26; min-width: 150px; padding: 6px; position: absolute; right: 0; top: calc(100% - 1px); z-index: 50; }
+.profile-relationship { color: #716f6a; font-size: 12px; line-height: 1.5; margin: 0; padding: 8px 10px 12px; white-space: nowrap; }
 .profile-signout { background: transparent; border: 0; border-radius: 6px; color: #1c1b1a; cursor: pointer; display: block; font: inherit; font-size: 12px; padding: 10px 12px; text-align: left; width: 100%; }
 .profile-signout:hover, .profile-signout:focus-visible { background: #f45b36; color: #fff; outline: none; }
 :host-context(html[data-theme='night']) .user-profile { border-color: #514c46; color: #f2efe9; }
 :host-context(html[data-theme='night']) .profile-dropdown { background: #1c1b1a; border-color: #514c46; }
+:host-context(html[data-theme='night']) .profile-relationship { color: #bdb7ad; }
 :host-context(html[data-theme='night']) .profile-signout { color: #f2efe9; }
 @media (min-width: 1101px) {
   .site-header.has-user-profile { column-gap: 16px; flex-wrap: nowrap; }

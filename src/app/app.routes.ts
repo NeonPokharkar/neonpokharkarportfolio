@@ -3,7 +3,7 @@ import { ActivatedRoute, Routes } from '@angular/router';
 import { FormsModule } from '@angular/forms';
 import { Meta } from '@angular/platform-browser';
 import { readIntelliChatFinalAnswer } from './intelli-chat-stream';
-import { VerifiedUserService } from './verified-user.service';
+import { isFriendLookupStatus, isValidFriendDetails, VerifiedUserService } from './verified-user.service';
 import { ShayariEditorComponent } from './shayari-editor.component';
 
 interface PageContent {
@@ -1215,20 +1215,35 @@ export class VerificationDialogComponent implements OnInit, AfterViewInit, OnDes
           throw new Error('Verification endpoint returned an invalid session.');
         }
         if (!('user' in result) || !result.user || typeof result.user !== 'object' ||
-            !('name' in result.user) || typeof result.user.name !== 'string' || !result.user.name.trim() ||
-            ('picture' in result.user && result.user.picture !== null && typeof result.user.picture !== 'string')) {
+            !('sub' in result.user) || typeof result.user.sub !== 'string' || !result.user.sub.trim() ||
+            !('email' in result.user) || (result.user.email !== null && typeof result.user.email !== 'string') ||
+            !('name' in result.user) || (result.user.name !== null && typeof result.user.name !== 'string') ||
+            !('picture' in result.user) || (result.user.picture !== null && typeof result.user.picture !== 'string')) {
           throw new Error('Verification endpoint returned an invalid user profile.');
         }
         if ('is_admin' in result && typeof result.is_admin !== 'boolean') {
           throw new Error('Verification endpoint returned an invalid admin flag.');
         }
-        const picture = 'picture' in result.user ? result.user.picture : null;
+        const friendLookupStatus: unknown = 'friend_lookup_status' in result ? result.friend_lookup_status : undefined;
+        const friend: unknown = 'friend' in result ? result.friend : undefined;
+        if (!isFriendLookupStatus(friendLookupStatus) || !isValidFriendDetails(friend, friendLookupStatus)) {
+          throw new Error('Verification endpoint returned an invalid friend profile.');
+        }
+        const googleName = typeof result.user.name === 'string' && result.user.name.trim()
+          ? result.user.name
+          : friend.name;
+        const picture = result.user.picture;
         if (this.destroyed || !this.dialog?.nativeElement.open) {
           return;
         }
         this.verifiedUser.setSession(
-          { name: result.user.name, picture: typeof picture === 'string' ? picture || null : null,
-            isAdmin: 'is_admin' in result && result.is_admin === true },
+          {
+            name: googleName,
+            picture: typeof picture === 'string' ? picture || null : null,
+            isAdmin: 'is_admin' in result && result.is_admin === true,
+            friend,
+            friendLookupStatus
+          },
           result.access_token,
           result.expires_in
         );

@@ -4,6 +4,41 @@ export interface VerifiedUser {
   name: string;
   picture: string | null;
   isAdmin?: boolean;
+  friend?: FriendProfile;
+  friendLookupStatus?: FriendLookupStatus;
+}
+
+export interface FriendProfile {
+  name: string;
+  typeOfRelationship: string;
+  fromWhatPhase: string | null;
+  since: string | null;
+  cardEmoji: string;
+}
+
+export type FriendLookupStatus = 'matched' | 'stranger' | 'unavailable';
+
+export function isFriendLookupStatus(value: unknown): value is FriendLookupStatus {
+  return value === 'matched' || value === 'stranger' || value === 'unavailable';
+}
+
+export function isValidFriendDetails(value: unknown, status: unknown): value is FriendProfile {
+  if (!value || typeof value !== 'object' ||
+      !('name' in value) || typeof value.name !== 'string' || !value.name.trim() ||
+      !('typeOfRelationship' in value) || typeof value.typeOfRelationship !== 'string' || !value.typeOfRelationship.trim() ||
+      !('fromWhatPhase' in value) || !('since' in value) ||
+      !('cardEmoji' in value) || typeof value.cardEmoji !== 'string' || !value.cardEmoji.trim()) {
+    return false;
+  }
+  if (status === 'matched') {
+    return typeof value.fromWhatPhase === 'string' && !!value.fromWhatPhase.trim() &&
+      typeof value.since === 'string' && !!value.since.trim();
+  }
+  return (status === 'stranger' || status === 'unavailable') &&
+    value.typeOfRelationship === 'Stranger' &&
+    value.fromWhatPhase === null &&
+    value.since === null &&
+    value.cardEmoji === '👋';
 }
 
 interface SharedSession {
@@ -580,10 +615,22 @@ export class VerifiedUserService {
   }
 
   private isSharedSession(value: unknown): value is SharedSession {
-    if (!value || typeof value !== 'object' || !('user' in value) || !value.user || typeof value.user !== 'object' ||
-        !('name' in value.user) || typeof value.user.name !== 'string' || !value.user.name.trim() ||
-        !('picture' in value.user) || (value.user.picture !== null && typeof value.user.picture !== 'string') ||
-        ('isAdmin' in value.user && typeof value.user.isAdmin !== 'boolean')) {
+    if (!value || typeof value !== 'object' || !('user' in value) || !value.user || typeof value.user !== 'object') {
+      return false;
+    }
+    const user = value.user as Record<string, unknown>;
+    if (!('name' in user) || typeof user['name'] !== 'string' || !user['name'].trim() ||
+        !('picture' in user) || (user['picture'] !== null && typeof user['picture'] !== 'string') ||
+        ('isAdmin' in user && typeof user['isAdmin'] !== 'boolean')) {
+      return false;
+    }
+    const hasFriend = 'friend' in user;
+    const hasFriendLookupStatus = 'friendLookupStatus' in user;
+    if (hasFriend !== hasFriendLookupStatus) {
+      return false;
+    }
+    if (hasFriend && (!isFriendLookupStatus(user['friendLookupStatus']) ||
+        !isValidFriendDetails(user['friend'], user['friendLookupStatus']))) {
       return false;
     }
     return 'id' in value && typeof value.id === 'string' && !!value.id &&

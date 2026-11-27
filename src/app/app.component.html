@@ -60,18 +60,25 @@
           type="button"
           [attr.aria-expanded]="profileMenuOpen"
           [attr.aria-controls]="profileMenuOpen ? 'profile-dropdown' : null"
-          [attr.aria-label]="'Signed in as ' + user.name + '. Account options'"
-          [title]="user.name"
+          [attr.aria-label]="'Signed in as ' + (user.friend?.name || user.name) + '. Account options'"
+          [title]="user.friend?.name || user.name"
           (click)="openProfileMenu()">
           @if (user.picture && user.picture !== failedProfilePicture) {
             <img class="user-profile-avatar" [src]="user.picture" alt="" referrerpolicy="no-referrer" (error)="failedProfilePicture = user.picture">
           } @else {
-            <span class="user-profile-avatar user-profile-initial" aria-hidden="true">{{ user.name.charAt(0).toUpperCase() }}</span>
+            <span class="user-profile-avatar user-profile-initial" aria-hidden="true">{{ (user.friend?.name || user.name).charAt(0).toUpperCase() }}</span>
           }
-          <span class="user-profile-name">{{ user.name }}</span>
+          <span class="user-profile-name">{{ user.friend?.name || user.name }}</span>
         </button>
         @if (profileMenuOpen) {
           <div class="profile-dropdown" id="profile-dropdown">
+            @if (user.friend; as friend) {
+              <p class="profile-relationship">
+                You are my {{ friend.typeOfRelationship }}
+                @if (friend.since) { since {{ friend.since }} }
+                {{ friend.cardEmoji }}.
+              </p>
+            }
             <button class="profile-signout" type="button" (click)="signOut()">Sign out</button>
           </div>
         }

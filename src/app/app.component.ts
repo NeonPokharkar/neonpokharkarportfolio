@@ -276,6 +276,9 @@ export class AppComponent implements OnDestroy {
   protected interests: string[] = [];
 
   protected resumeError = '';
+  protected resumeEmailError = '';
+  protected resumeEmailMessage = '';
+  protected resumeEmailSending = false;
   private resumePreparation: Promise<void> | undefined;
   private resumeIncludesPhone: boolean | undefined;
 
@@ -362,6 +365,83 @@ export class AppComponent implements OnDestroy {
       this.resumeIncludesPhone = includePhone;
       this.resumePreparation = this.createResumeDownload(includePhone);
     }
+  }
+
+  protected async emailResume(): Promise<void> {
+    const accessToken = this.verifiedUser.getAccessToken();
+    if (this.resumeEmailSending) {
+      return;
+    }
+    if (!accessToken) {
+      this.resumeEmailError = 'Sign in with Google to email yourself a resume.';
+      this.resumeEmailMessage = '';
+      return;
+    }
+
+    this.resumeEmailSending = true;
+    this.resumeEmailError = '';
+    this.resumeEmailMessage = '';
+    try {
+      let apiEndpoint = this.intelliChatEndpoint;
+      if (!apiEndpoint) {
+        const profileResponse = await fetch('assets/profile/profile.json');
+        if (!profileResponse.ok) {
+          throw new Error(`Could not load API configuration (HTTP ${profileResponse.status}).`);
+        }
+        const profile = await profileResponse.json() as { intelliChatEndpoint?: unknown };
+        if (typeof profile.intelliChatEndpoint !== 'string' || !profile.intelliChatEndpoint.trim()) {
+          throw new Error('Invalid API configuration.');
+        }
+        apiEndpoint = profile.intelliChatEndpoint;
+      }
+
+      const response = await fetch(new URL('/resume/generate', apiEndpoint), {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${accessToken}` }
+      });
+      if (this.verifiedUser.getAccessToken() !== accessToken) {
+        return;
+      }
+
+      const result = await this.readResumeEmailResponse(response);
+      if (response.status === 401) {
+        this.verifiedUser.clear();
+        this.resumeEmailError = 'Your sign-in has expired. Sign in with Google again to email your resume.';
+      } else if (response.status === 403) {
+        this.resumeEmailError = 'Your Google account does not have a verified email address.';
+      } else if (response.status === 429) {
+        this.resumeEmailError = 'Please wait five minutes before requesting another resume.';
+      } else if (response.status === 503) {
+        this.resumeEmailError = 'Resume generation or email delivery is unavailable. Delivery may be uncertain; check your inbox before trying again.';
+      } else if (!response.ok) {
+        this.resumeEmailError = result.detail || `The resume email request failed (HTTP ${response.status}).`;
+      } else if (result.sent === true) {
+        this.resumeEmailMessage = 'Resume emailed to your verified Google address. Check your inbox.';
+      } else {
+        this.resumeEmailError = result.detail || 'The server did not confirm that your resume was emailed.';
+      }
+    } catch (error) {
+      console.error('Resume email request failed.', error);
+      this.resumeEmailError = 'Could not confirm whether the resume request completed. Check your inbox before trying again.';
+    } finally {
+      this.resumeEmailSending = false;
+    }
+  }
+
+  private async readResumeEmailResponse(response: Response): Promise<{ sent?: boolean; detail?: string }> {
+    let payload: unknown;
+    try {
+      payload = await response.json();
+    } catch {
+      return {};
+    }
+    if (!payload || typeof payload !== 'object') {
+      return {};
+    }
+    return {
+      sent: 'sent' in payload && typeof payload.sent === 'boolean' ? payload.sent : undefined,
+      detail: 'detail' in payload && typeof payload.detail === 'string' ? payload.detail : undefined
+    };
   }
 
   private async createResumeDownload(includePhone: boolean): Promise<void> {

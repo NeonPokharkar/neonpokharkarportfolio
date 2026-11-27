@@ -47,7 +47,13 @@
       <span aria-hidden="true">{{ themeMode === 'day' ? '☀' : '☾' }}</span>
       <span>{{ themeMode === 'day' ? 'Day' : 'Night' }}</span>
     </button>
-    <a class="header-link" [href]="resumeHref" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
+    @if (verifiedUser.user()) {
+      <button class="header-link header-resume-button" type="button" (click)="emailResume()" [disabled]="resumeEmailSending">
+        {{ resumeEmailSending ? 'Sending resume…' : 'Email me my resume' }} <span aria-hidden="true">✉</span>
+      </button>
+    } @else {
+      <a class="header-link" [href]="resumeHref" download="Aditya-Pokharkar-Resume.pdf" (mouseenter)="prepareResumeDownload()" (focus)="prepareResumeDownload()">Download resume <span aria-hidden="true">↓</span></a>
+    }
     @if (verifiedUser.user(); as user) {
       <div
         class="user-profile-menu"
@@ -114,6 +120,12 @@
 <!-- MARKER: RESUME_ERROR_ALERT - Error message if resume generation fails -->
 @if (resumeError) {
   <p class="resume-error" role="alert">{{ resumeError }}</p>
+}
+@if (resumeEmailError) {
+  <p class="resume-error" role="alert">{{ resumeEmailError }}</p>
+}
+@if (resumeEmailMessage) {
+  <p class="resume-success" role="status">{{ resumeEmailMessage }}</p>
 }
 @if (verifiedUser.heartbeatError(); as heartbeatError) {
   <p class="session-status" role="alert">{{ heartbeatError }}</p>

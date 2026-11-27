@@ -85,6 +85,9 @@ nav a.active .nav-astronaut { animation: navAstronautDrift 48s linear infinite; 
   nav a.active, nav a.active .nav-astronaut { animation: none; }
 }
 .header-link { border-bottom: 1px solid #1c1b1a; padding-bottom: 5px; }
+.header-resume-button { background: transparent; border: 0; border-bottom: 1px solid #1c1b1a; color: inherit; cursor: pointer; font: inherit; padding: 0 0 5px; }
+.header-resume-button:disabled { cursor: wait; opacity: .65; }
+.header-resume-button:focus-visible { outline: 2px solid #f45b36; outline-offset: 3px; }
 .header-actions { align-items: center; display: flex; gap: 20px; }
 .site-header.has-user-profile { column-gap: 20px; flex-wrap: wrap; row-gap: 14px; }
 .has-user-profile .header-actions { margin-left: auto; }
@@ -112,6 +115,7 @@ nav a.active .nav-astronaut { animation: navAstronautDrift 48s linear infinite; 
 .theme-toggle:hover { border-color: #f45b36; color: #f45b36; }
 .theme-toggle:focus-visible { outline: 2px solid #f45b36; outline-offset: 3px; }
 .resume-error { background: #fff1ed; color: #9c2f19; font-size: 13px; margin: 0; padding: 10px 24px; text-align: center; }
+.resume-success { background: #edf8ef; color: #216b35; font-size: 13px; margin: 0; padding: 10px 24px; text-align: center; }
 .session-status { background: #fff1ed; color: #9c2f19; font-size: 13px; margin: 0; padding: 10px 24px; text-align: center; }
 .session-status a { font-weight: 700; text-decoration: underline; }
 
